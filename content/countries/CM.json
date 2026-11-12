@@ -1,0 +1,36 @@
+{
+  "code": "CM",
+  "name": "Cameroun",
+  "currency": "XAF",
+  "packLevel": "partial",
+  "version": 1,
+  "verifiedAt": "2026-11-01",
+  "regions": {
+    "LT": { "name": "Littoral (Douala)" },
+    "CE": { "name": "Centre (Yaoundé)" },
+    "OU": { "name": "Ouest (Bafoussam)" }
+  },
+  "savingsAccounts": [
+    { "id": "tontine", "name": { "fr": "Tontine / Djangui", "en": "Tontine Rotating Savings" }, "lessonId": "cm_tontine_101" },
+    { "id": "mobile_money_save", "name": { "fr": "Épargne Mobile Money (OM/MoMo)", "en": "Mobile Money Savings" }, "lessonId": "cm_momo_101" }
+  ],
+  "retirement": {
+    "publicPlans": ["CNPS"],
+    "accounts": []
+  },
+  "regulatorNotice": {
+    "fr": "Contenu informatif et éducatif.",
+    "en": "Informational and educational content."
+  },
+  "economySources": ["beac", "ins_cameroun", "worldbank"],
+  "defaultFixedExpenses": [
+    "rent",
+    "water_camwater",
+    "electricity_eneo",
+    "internet_data",
+    "groceries_market",
+    "transport_taxi",
+    "family_support"
+  ]
+}
+

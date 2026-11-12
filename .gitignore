@@ -1,0 +1,150 @@
+# ──────────────────────────────────────────────
+# Sipho — .gitignore
+# Flutter + Firebase + Node.js + macOS/IDE
+# ──────────────────────────────────────────────
+
+# ======================
+# FLUTTER / DART
+# ======================
+
+# Build outputs
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+
+# Generated code (toujours regénérable via build_runner)
+*.g.dart
+*.freezed.dart
+*.mocks.dart
+*.gr.dart
+
+# Coverage
+coverage/
+lcov.info
+
+# Pub cache
+.pub-cache/
+.pub/
+
+# macOS Flutter
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Flutter/Generated.xcconfig
+
+# Android Flutter
+**/android/local.properties
+**/android/key.properties
+**/android/.gradle/
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+
+# ======================
+# FIREBASE / SECRETS
+# ======================
+
+# Config files Firebase (NE PAS committer les vrais fichiers)
+google-services.json
+GoogleService-Info.plist
+
+# Options Firebase générées par flutterfire configure
+# EXCEPTION : firebase_options_dev.dart peut être commis (placeholder / valeurs non sensibles)
+app/lib/core/firebase/firebase_options_staging.dart
+app/lib/core/firebase/firebase_options_prod.dart
+firebase_options.dart
+
+# Firebase credentials
+.firebaserc.local
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+database-debug.log
+
+# ======================
+# VARIABLES D'ENVIRONNEMENT
+# ======================
+
+.env
+.env.*
+!.env.example
+*.env
+
+# ======================
+# NODE / CLOUD FUNCTIONS
+# ======================
+
+node_modules/
+functions/node_modules/
+functions/lib/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+
+# ======================
+# MACOS / IDE
+# ======================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+
+# Xcode
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+DerivedData/
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivefile
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+.gradle/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+
+# VS Code
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json.example
+
+# ======================
+# DIVERS
+# ======================
+
+# Logs
+*.log
+
+# Compressed files
+*.zip
+*.tar.gz
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# Clés de signature (NE JAMAIS committer)
+*.jks
+*.keystore
+*.p12
+*.cer
+*.p8
+AuthKey_*.p8

@@ -1,0 +1,30 @@
+{
+  "code": "generic",
+  "name": "International",
+  "currency": "USD",
+  "packLevel": "generic",
+  "version": 1,
+  "verifiedAt": "2026-11-01",
+  "regions": {},
+  "savingsAccounts": [
+    { "id": "high_yield_savings", "name": { "fr": "Compte épargne rémunéré", "en": "High-Yield Savings" }, "lessonId": "gen_savings_101" }
+  ],
+  "retirement": {
+    "publicPlans": [],
+    "accounts": []
+  },
+  "regulatorNotice": {
+    "fr": "Contenu éducatif, pas un conseil financier personnalisé.",
+    "en": "Educational content, not personalized financial advice."
+  },
+  "economySources": ["worldbank", "imf"],
+  "defaultFixedExpenses": [
+    "rent",
+    "internet",
+    "utilities",
+    "groceries",
+    "transport",
+    "insurance"
+  ]
+}
+

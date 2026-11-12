@@ -1,0 +1,60 @@
+{
+  "code": "CA",
+  "name": "Canada",
+  "currency": "CAD",
+  "packLevel": "full",
+  "version": 3,
+  "verifiedAt": "2026-11-01",
+  "regions": {
+    "QC": {
+      "name": "Québec",
+      "salesTax": [
+        { "code": "GST", "rate": 0.05 },
+        { "code": "QST", "rate": 0.09975 }
+      ]
+    },
+    "ON": {
+      "name": "Ontario",
+      "salesTax": [
+        { "code": "HST", "rate": 0.13 }
+      ]
+    },
+    "BC": {
+      "name": "British Columbia",
+      "salesTax": [
+        { "code": "GST", "rate": 0.05 },
+        { "code": "PST", "rate": 0.07 }
+      ]
+    },
+    "AB": {
+      "name": "Alberta",
+      "salesTax": [
+        { "code": "GST", "rate": 0.05 }
+      ]
+    }
+  },
+  "savingsAccounts": [
+    { "id": "tfsa", "name": { "fr": "CELI", "en": "TFSA" }, "lessonId": "ca_tfsa_101" },
+    { "id": "rrsp", "name": { "fr": "REER", "en": "RRSP" }, "lessonId": "ca_rrsp_101" },
+    { "id": "fhsa", "name": { "fr": "CELIAPP", "en": "FHSA" }, "lessonId": "ca_fhsa_101" }
+  ],
+  "retirement": {
+    "publicPlans": ["CPP_QPP", "OAS"],
+    "accounts": ["rrsp"]
+  },
+  "regulatorNotice": {
+    "fr": "Contenu éducatif, pas un conseil financier personnalisé.",
+    "en": "Educational content, not personalized financial advice."
+  },
+  "economySources": ["boc_valet", "statcan", "worldbank"],
+  "defaultFixedExpenses": [
+    "rent",
+    "internet",
+    "electricity",
+    "phone",
+    "groceries",
+    "transport",
+    "insurance"
+  ]
+}
+

@@ -1,0 +1,41 @@
+{
+  "id": "unit_1_budget_basics",
+  "unit": 1,
+  "order": 1,
+  "countries": ["*"],
+  "title": {
+    "fr": "Les bases du budget et le Reste à Vivre",
+    "en": "Budget Basics & Disposable Income"
+  },
+  "steps": [
+    {
+      "type": "story",
+      "siphoEmotion": "happy",
+      "text": {
+        "fr": "Bienvenue ! Sipho t'explique la règle d'or : tes revenus moins tes dépenses fixes te donnent ton « Reste à Vivre ». C'est ton véritable pouvoir d'achat du mois !",
+        "en": "Welcome! Sipho explains the golden rule: your income minus your fixed expenses gives your 'Disposable Income'. That is your real spending power for the month!"
+      }
+    },
+    {
+      "type": "quiz",
+      "question": {
+        "fr": "Si ton revenu est de 2 500 $ et tes dépenses fixes (loyer, factures) de 1 500 $, quel est ton reste à vivre ?",
+        "en": "If your income is $2,500 and your fixed expenses (rent, bills) are $1,500, what is your disposable income?"
+      },
+      "options": [
+        { "text": { "fr": "1 000 $", "en": "$1,000" }, "correct": true },
+        { "text": { "fr": "2 500 $", "en": "$2,500" }, "correct": false },
+        { "text": { "fr": "500 $", "en": "$500" }, "correct": false },
+        { "text": { "fr": "1 500 $", "en": "$1,500" }, "correct": false }
+      ],
+      "explanation": {
+        "fr": "Bravo ! 2 500 $ - 1 500 $ = 1 000 $ pour tes dépenses variables et ton épargne.",
+        "en": "Great! $2,500 - $1,500 = $1,000 for your variable expenses and savings."
+      }
+    }
+  ],
+  "rewardXp": 20,
+  "rewardGems": 5,
+  "version": 1
+}
+

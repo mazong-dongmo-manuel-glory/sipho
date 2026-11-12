@@ -1,0 +1,190 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helpers ────────────────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    // ─── Users ──────────────────────────────────────────────────────────────
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasAll(['displayName', 'countryCode', 'currency', 'locale', 'timezone', 'onboardingDone'])
+        && request.resource.data.displayName is string
+        && request.resource.data.countryCode is string;
+      allow update: if isOwner(uid)
+        // Client cannot write plan field
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan']);
+
+      // ── Game state: CLIENT READ ONLY, Functions write ──────────────────
+      match /game/state {
+        allow read: if isOwner(uid);
+        allow write: if false; // Functions only
+      }
+
+      // ── Fixed expenses ──────────────────────────────────────────────────
+      match /fixedExpenses/{expenseId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.amountCents is int
+          && request.resource.data.amountCents > 0
+          && request.resource.data.amountCents < 100000000
+          && request.resource.data.dueDay is int
+          && request.resource.data.dueDay >= 1
+          && request.resource.data.dueDay <= 31;
+      }
+
+      // ── Monthly aggregates: Functions write ──────────────────────────────
+      match /months/{monthId} {
+        allow read: if isOwner(uid);
+        allow write: if false; // Functions only
+      }
+
+      // ── Transactions ─────────────────────────────────────────────────────
+      match /transactions/{txId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.amountCents is int
+          && request.resource.data.amountCents > 0
+          && request.resource.data.amountCents < 10000000
+          && request.resource.data.source in ['manual', 'receipt']
+          && request.resource.data.currency is string
+          && request.resource.data.date is string;
+      }
+
+      // ── Receipts ─────────────────────────────────────────────────────────
+      match /receipts/{receiptId} {
+        allow read, delete: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && request.resource.data.storagePath is string
+          && request.resource.data.storagePath.matches('receipts/' + uid + '/.*')
+          && request.resource.data.status in ['pending', 'processing', 'done', 'error'];
+        allow update: if isOwner(uid)
+          && request.resource.data.status in ['pending', 'processing', 'done', 'error'];
+      }
+
+      // ── Budgets ──────────────────────────────────────────────────────────
+      match /budgets/{monthId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // ── Goals ────────────────────────────────────────────────────────────
+      match /goals/{goalId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // ── Quests: Functions write ──────────────────────────────────────────
+      match /quests/{questId} {
+        allow read: if isOwner(uid);
+        allow write: if false; // Functions only
+      }
+
+      // ── Lesson progress: Functions write ────────────────────────────────
+      match /lessonProgress/{lessonId} {
+        allow read: if isOwner(uid);
+        allow write: if false; // Functions only
+      }
+
+      // ── Insights: Functions write ────────────────────────────────────────
+      match /insights/{insightId} {
+        allow read: if isOwner(uid);
+        // Allow dismiss (client writes dismissed: true only)
+        allow update: if isOwner(uid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['dismissed']);
+        allow create, delete: if false; // Functions only
+      }
+
+      // ── Devices ──────────────────────────────────────────────────────────
+      match /devices/{deviceId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // ── Notification state ───────────────────────────────────────────────
+      match /notifState/state {
+        allow read: if isOwner(uid);
+        // Client can only update prefs and preferredHour
+        allow update: if isOwner(uid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['prefs', 'preferredHour']);
+        allow create: if false; // Functions (onUserCreate)
+      }
+
+      // ── Generic subcollections: read-only for owner ──────────────────────
+      match /{sub=**} {
+        allow read: if isOwner(uid);
+      }
+    }
+
+    // ─── Public Profiles ────────────────────────────────────────────────────
+    // No amounts, only XP / level / streak / league / badges
+    match /publicProfiles/{uid} {
+      allow read: if isSignedIn();
+      allow write: if false; // Functions only
+    }
+
+    // ─── Friendships ────────────────────────────────────────────────────────
+    match /friendships/{pairId} {
+      allow read: if isSignedIn()
+        && resource.data.users.hasAny([request.auth.uid]);
+      allow write: if false; // Functions only
+    }
+
+    // ─── Leagues ────────────────────────────────────────────────────────────
+    match /leagues/{leagueId} {
+      allow read: if isSignedIn();
+      allow write: if false; // Functions only
+    }
+
+    // ─── Referrals ──────────────────────────────────────────────────────────
+    match /referrals/{code} {
+      allow read: if isSignedIn();
+      allow write: if false; // Functions only
+    }
+
+    // ─── Country packs ──────────────────────────────────────────────────────
+    match /countries/{code} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ─── Economy data ────────────────────────────────────────────────────────
+    match /economy/{code} {
+      allow read: if isSignedIn();
+      allow write: if false; // Functions only
+    }
+
+    // ─── FX rates ────────────────────────────────────────────────────────────
+    match /fx/{doc} {
+      allow read: if isSignedIn();
+      allow write: if false; // Functions only
+    }
+
+    // ─── Lessons ────────────────────────────────────────────────────────────
+    match /lessons/{lessonId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ─── Quest templates ────────────────────────────────────────────────────
+    match /questTemplates/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ─── Notification templates ─────────────────────────────────────────────
+    match /notifTemplates/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+  }
+}
+

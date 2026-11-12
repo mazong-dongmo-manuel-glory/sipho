@@ -1,0 +1,38 @@
+{
+  "code": "FR",
+  "name": "France",
+  "currency": "EUR",
+  "packLevel": "full",
+  "version": 2,
+  "verifiedAt": "2026-11-01",
+  "regions": {
+    "IDF": { "name": "Île-de-France" },
+    "ARA": { "name": "Auvergne-Rhône-Alpes" },
+    "PAC": { "name": "Provence-Alpes-Côte d'Azur" }
+  },
+  "savingsAccounts": [
+    { "id": "livret_a", "name": { "fr": "Livret A", "en": "Livret A" }, "lessonId": "fr_livreta_101" },
+    { "id": "pea", "name": { "fr": "PEA (Plan d'Épargne en Actions)", "en": "PEA" }, "lessonId": "fr_pea_101" },
+    { "id": "per", "name": { "fr": "PER (Plan d'Épargne Retraite)", "en": "PER" }, "lessonId": "fr_per_101" },
+    { "id": "assurance_vie", "name": { "fr": "Assurance-vie", "en": "Life Insurance Contract" }, "lessonId": "fr_av_101" }
+  ],
+  "retirement": {
+    "publicPlans": ["Retraite de base", "Agirc-Arrco"],
+    "accounts": ["per"]
+  },
+  "regulatorNotice": {
+    "fr": "Contenu éducatif sans valeur de conseil en investissement (AMF).",
+    "en": "Educational content, not investment advice (AMF compliant)."
+  },
+  "economySources": ["insee", "banque_de_france", "eurostat"],
+  "defaultFixedExpenses": [
+    "rent",
+    "internet",
+    "electricity_gas",
+    "phone",
+    "groceries",
+    "navigo_transport",
+    "mutuelle_health"
+  ]
+}
+
