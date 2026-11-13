@@ -90,6 +90,39 @@ abstract final class AppTextStyles {
     height: 1.4,
   );
 
+  // ── Welcome (02 · Bienvenue) ─────────────────────────────────────────────
+  static const TextStyle welcomeWordmark = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 14,
+    fontWeight: FontWeight.w900,
+    color: AppColors.primary,
+    height: 1.2,
+  );
+
+  static const TextStyle welcomeTitle = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 34,
+    fontWeight: FontWeight.w900,
+    color: AppColors.primaryDark,
+    height: 1.2,
+  );
+
+  static const TextStyle welcomeSubtitle = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 17,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textSecondary,
+    height: 1.2,
+  );
+
+  static const TextStyle welcomeLegal = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textSecondary,
+    height: 1.2,
+  );
+
   // ── Button ───────────────────────────────────────────────────────────────
   static const TextStyle button = TextStyle(
     fontFamily: _fontFamily,

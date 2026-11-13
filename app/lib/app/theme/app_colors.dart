@@ -4,6 +4,7 @@ abstract final class AppColors {
   // ── Brand ───────────────────────────────────────────────────────────────────
   static const Color primary = Color(0xFF1F9D55);        // Vert Sipho
   static const Color primaryDark = Color(0xFF14342B);    // Vert profond
+  static const Color ink = Color(0xFF17221D);            // Face du bouton Apple
   static const Color accent = Color(0xFFF2B705);         // Jaune tisserin
   static const Color terracotta = Color(0xFFC8553D);     // Terre cuite
 

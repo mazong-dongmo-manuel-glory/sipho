@@ -17,6 +17,8 @@ class SiphoButton3D extends StatefulWidget {
     this.enabled = true,
     this.height = 56,
     this.shadowOffset = 4.0,
+    this.shadowColor,
+    this.borderRadius,
   }) : label = label ?? text ?? '';
 
   final String label;
@@ -28,6 +30,8 @@ class SiphoButton3D extends StatefulWidget {
   final bool enabled;
   final double height;
   final double shadowOffset;
+  final Color? shadowColor;
+  final BorderRadius? borderRadius;
 
   @override
   State<SiphoButton3D> createState() => _SiphoButton3DState();
@@ -36,11 +40,16 @@ class SiphoButton3D extends StatefulWidget {
 class _SiphoButton3DState extends State<SiphoButton3D> {
   bool _pressed = false;
 
-  Color get _shadowColor => HSLColor.fromColor(widget.color)
-      .withLightness(
-        (HSLColor.fromColor(widget.color).lightness - 0.15).clamp(0, 1),
-      )
-      .toColor();
+  Color get _shadowColor =>
+      widget.shadowColor ??
+      HSLColor.fromColor(widget.color)
+          .withLightness(
+            (HSLColor.fromColor(widget.color).lightness - 0.15).clamp(0, 1),
+          )
+          .toColor();
+
+  BorderRadius get _borderRadius =>
+      widget.borderRadius ?? AppRadius.buttonRadius;
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +72,7 @@ class _SiphoButton3DState extends State<SiphoButton3D> {
         height: widget.height + widget.shadowOffset,
         decoration: BoxDecoration(
           color: _shadowColor,
-          borderRadius: AppRadius.buttonRadius,
+          borderRadius: _borderRadius,
         ),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 80),
@@ -71,7 +80,7 @@ class _SiphoButton3DState extends State<SiphoButton3D> {
           height: widget.height,
           decoration: BoxDecoration(
             color: widget.enabled ? widget.color : AppColors.border,
-            borderRadius: AppRadius.buttonRadius,
+            borderRadius: _borderRadius,
           ),
           alignment: Alignment.center,
           child: widget.isLoading
@@ -92,11 +101,12 @@ class _SiphoButton3DState extends State<SiphoButton3D> {
                     ],
                     Text(
                       widget.label,
-                      style: AppTextStyles.labelLarge.copyWith(
+                      style: AppTextStyles.button.copyWith(
+                        height: 1.2,
+                        letterSpacing: 0,
                         color: widget.enabled
                             ? widget.textColor
                             : AppColors.textSecondary,
-                        fontSize: 16,
                       ),
                     ),
                   ],
