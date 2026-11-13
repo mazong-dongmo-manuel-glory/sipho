@@ -58,7 +58,6 @@ export const onUserCreate = functions.auth.user().onCreate(async (user) => {
   });
 
   // 4. Initial Onboarding Quests
-  const todayStr = new Date().toISOString().split('T')[0];
   const initialQuestRef = db.doc(`users/${uid}/quests/welcome_nest`);
   batch.set(initialQuestRef, {
     templateId: 'build_nest',

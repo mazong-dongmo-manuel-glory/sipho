@@ -184,7 +184,7 @@
 | `cloud_firestore` | ^5.4.4 | Base de données |
 | `cloud_functions` | ^5.1.3 | Cloud Functions |
 | `firebase_messaging` | ^15.1.3 | Notifications push |
-| `firebase_ai` | ^1.1.0 | Gemini / AI Logic |
+| `firebase_ai` | ^2.3.0 | Gemini / AI Logic |
 | `firebase_app_check` | ^0.3.1+3 | Sécurité API |
 | `firebase_remote_config` | ^5.1.3 | Config à distance |
 | `firebase_analytics` | ^11.3.3 | Analytics |
