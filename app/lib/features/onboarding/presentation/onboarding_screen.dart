@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/app_spacing.dart';
-import '../../../app/theme/app_text_styles.dart';
-import '../../../core/widgets/sipho_bubble.dart';
-import '../../../core/widgets/sipho_button_3d.dart';
-import 'onboarding_name_step.dart';
-import 'onboarding_country_step.dart';
-import 'onboarding_goal_step.dart';
+import 'package:sipho/app/theme/app_colors.dart';
+import 'package:sipho/app/theme/app_spacing.dart';
+import 'package:sipho/core/widgets/sipho_button_3d.dart';
+import 'package:sipho/features/onboarding/presentation/onboarding_country_step.dart';
+import 'package:sipho/features/onboarding/presentation/onboarding_goal_step.dart';
+import 'package:sipho/features/onboarding/presentation/onboarding_name_step.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -30,7 +28,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (_currentStep < _totalSteps - 1) {
       setState(() => _currentStep++);
     } else {
-      context.go('/onboarding/celebration');
+      context.go(
+        '/onboarding/celebration',
+        extra: {
+          'name': _name,
+          'country': _country,
+          'currency': _currency,
+          'goal': _goal,
+        },
+      );
     }
   }
 

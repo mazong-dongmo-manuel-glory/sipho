@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../app/theme/app_spacing.dart';
-import '../../../app/theme/app_text_styles.dart';
-import '../../../core/widgets/sipho_bubble.dart';
+import 'package:sipho/app/theme/app_spacing.dart';
+import 'package:sipho/app/theme/app_text_styles.dart';
+import 'package:sipho/core/widgets/sipho_bubble.dart';
 
 class OnboardingNameStep extends StatelessWidget {
   final ValueChanged<String> onNameChanged;

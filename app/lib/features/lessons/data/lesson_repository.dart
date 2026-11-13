@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../domain/lesson.dart';
+import 'package:sipho/features/lessons/domain/lesson.dart';
 
 final lessonRepositoryProvider = Provider<LessonRepository>((ref) {
   return LessonRepository(FirebaseFirestore.instance);
@@ -14,7 +14,7 @@ class LessonRepository {
   Stream<List<Lesson>> watchUnitLessons(int unit) {
     return _firestore
         .collection('lessons')
-        .where('unit', '==', unit)
+        .where('unit', isEqualTo: unit)
         .orderBy('order')
         .snapshots()
         .map((snap) => snap.docs.map((d) => Lesson.fromJson(d.data())).toList());

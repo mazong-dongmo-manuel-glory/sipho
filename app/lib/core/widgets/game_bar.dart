@@ -7,9 +7,10 @@ class GameBar extends StatelessWidget implements PreferredSizeWidget {
   const GameBar({
     super.key,
     required this.streakDays,
-    required this.seeds,
+    int? seeds,
+    int? gems,
     required this.level,
-  });
+  }) : seeds = seeds ?? gems ?? 0;
 
   final int streakDays;
   final int seeds;

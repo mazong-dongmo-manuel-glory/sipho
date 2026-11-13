@@ -7,7 +7,8 @@ import 'package:sipho/app/theme/app_text_styles.dart';
 class SiphoButton3D extends StatefulWidget {
   const SiphoButton3D({
     super.key,
-    required this.label,
+    String? label,
+    String? text,
     required this.onPressed,
     this.color = AppColors.primary,
     this.textColor = Colors.white,
@@ -16,7 +17,7 @@ class SiphoButton3D extends StatefulWidget {
     this.enabled = true,
     this.height = 56,
     this.shadowOffset = 4.0,
-  });
+  }) : label = label ?? text ?? '';
 
   final String label;
   final VoidCallback? onPressed;

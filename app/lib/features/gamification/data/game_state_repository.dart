@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../domain/game_state.dart';
-import '../domain/quest.dart';
+import 'package:sipho/features/gamification/domain/game_state.dart';
+import 'package:sipho/features/gamification/domain/quest.dart';
 
 final gameStateRepositoryProvider = Provider<GameStateRepository>((ref) {
   return GameStateRepository(FirebaseFirestore.instance);

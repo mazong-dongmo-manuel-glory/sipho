@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/app_radius.dart';
-import '../../../app/theme/app_spacing.dart';
-import '../../../app/theme/app_text_styles.dart';
+import 'package:sipho/app/theme/app_colors.dart';
+import 'package:sipho/app/theme/app_radius.dart';
+import 'package:sipho/app/theme/app_spacing.dart';
+import 'package:sipho/app/theme/app_text_styles.dart';
 
 class LearnScreen extends StatelessWidget {
   const LearnScreen({super.key});
@@ -19,16 +19,16 @@ class LearnScreen extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(AppSpacing.cardPadding),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.primary,
                 borderRadius: AppRadius.cardRadius,
               ),
-              child: Column(
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('UNITÉ 1', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 4),
-                  const Text(
+                  Text('UNITÉ 1', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w700)),
+                  SizedBox(height: 4),
+                  Text(
                     'Les bases du budget & Reste à Vivre',
                     style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800),
                   ),

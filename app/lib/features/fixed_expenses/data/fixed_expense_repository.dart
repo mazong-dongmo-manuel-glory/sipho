@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../domain/fixed_expense.dart';
+import 'package:sipho/features/fixed_expenses/domain/fixed_expense.dart';
 
 final fixedExpenseRepositoryProvider = Provider<FixedExpenseRepository>((ref) {
   return FixedExpenseRepository(FirebaseFirestore.instance);
@@ -14,7 +14,7 @@ class FixedExpenseRepository {
   Stream<List<FixedExpense>> watchFixedExpenses(String uid) {
     return _firestore
         .collection('users/$uid/fixedExpenses')
-        .where('active', '==', true)
+        .where('active', isEqualTo: true)
         .snapshots()
         .map((snap) => snap.docs.map((d) {
               final data = d.data();

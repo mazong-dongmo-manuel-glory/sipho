@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/app_radius.dart';
-import '../../../app/theme/app_spacing.dart';
-import '../../../app/theme/app_text_styles.dart';
+import 'package:sipho/app/theme/app_colors.dart';
+import 'package:sipho/app/theme/app_radius.dart';
+import 'package:sipho/app/theme/app_spacing.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});

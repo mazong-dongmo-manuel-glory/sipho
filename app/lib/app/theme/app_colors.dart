@@ -9,6 +9,7 @@ abstract final class AppColors {
 
   // ── Surfaces ────────────────────────────────────────────────────────────────
   static const Color background = Color(0xFFFFF8EC);     // Crème
+  static const Color cream = Color(0xFFFFF8EC);          // Alias crème
   static const Color surface = Color(0xFFFFFFFF);        // Blanc cartes
   static const Color border = Color(0xFFEDE6D8);
 

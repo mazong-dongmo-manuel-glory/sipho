@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/app_radius.dart';
-import '../../../app/theme/app_spacing.dart';
-import '../../../app/theme/app_text_styles.dart';
-import '../../../core/widgets/gauge_horizontal.dart';
+import 'package:sipho/app/theme/app_colors.dart';
+import 'package:sipho/app/theme/app_radius.dart';
+import 'package:sipho/app/theme/app_spacing.dart';
+import 'package:sipho/app/theme/app_text_styles.dart';
+import 'package:sipho/core/widgets/gauge_horizontal.dart';
 
 class BudgetScreen extends ConsumerWidget {
   const BudgetScreen({super.key});
@@ -18,7 +18,7 @@ class BudgetScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.pagePadding),
           children: [
-            Text('Budgets par catégorie', style: AppTextStyles.h2),
+            const Text('Budgets par catégorie', style: AppTextStyles.h2),
             const SizedBox(height: AppSpacing.md),
             _buildCategoryRow('Restos', '180 \$ / 200 \$', 0.90, AppColors.budgetWarn, '🍔'),
             _buildCategoryRow('Épicerie', '240 \$ / 400 \$', 0.60, AppColors.budgetOk, '🛒'),

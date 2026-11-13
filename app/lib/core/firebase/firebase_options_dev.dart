@@ -31,28 +31,28 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'REPLACE_ME',
-    appId: 'REPLACE_ME',
-    messagingSenderId: 'REPLACE_ME',
-    projectId: 'sipho-dev',
-    storageBucket: 'sipho-dev.appspot.com',
+    apiKey: 'AIzaSyC_M1cL3IQr1kvW5lUFnSF0DbBPQWArlhY',
+    appId: '1:303740226831:android:b8b1622ba3d6b7f869827a',
+    messagingSenderId: '303740226831',
+    projectId: 'sipho-f5a01',
+    storageBucket: 'sipho-f5a01.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'REPLACE_ME',
-    appId: 'REPLACE_ME',
-    messagingSenderId: 'REPLACE_ME',
-    projectId: 'sipho-dev',
-    storageBucket: 'sipho-dev.appspot.com',
-    iosBundleId: 'com.sipho.app.dev',
+    apiKey: 'AIzaSyByD_vZ0lPWcOYF96-rT07UcHWsG47w4vQ',
+    appId: '1:303740226831:ios:a34848cb0a23cd8e69827a',
+    messagingSenderId: '303740226831',
+    projectId: 'sipho-f5a01',
+    storageBucket: 'sipho-f5a01.firebasestorage.app',
+    iosBundleId: 'com.cargonomade.sipho',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'REPLACE_ME',
-    appId: 'REPLACE_ME',
-    messagingSenderId: 'REPLACE_ME',
-    projectId: 'sipho-dev',
-    storageBucket: 'sipho-dev.appspot.com',
-    iosBundleId: 'com.sipho.app.dev',
+    apiKey: 'AIzaSyByD_vZ0lPWcOYF96-rT07UcHWsG47w4vQ',
+    appId: '1:303740226831:ios:a34848cb0a23cd8e69827a',
+    messagingSenderId: '303740226831',
+    projectId: 'sipho-f5a01',
+    storageBucket: 'sipho-f5a01.firebasestorage.app',
+    iosBundleId: 'com.cargonomade.sipho',
   );
 }

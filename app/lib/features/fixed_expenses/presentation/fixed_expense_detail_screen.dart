@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/app_spacing.dart';
-import '../../../app/theme/app_text_styles.dart';
-import '../../../core/widgets/amount_keypad.dart';
-import '../../../core/widgets/sipho_button_3d.dart';
+import 'package:sipho/app/theme/app_colors.dart';
+import 'package:sipho/app/theme/app_spacing.dart';
+import 'package:sipho/app/theme/app_text_styles.dart';
+import 'package:sipho/core/widgets/amount_keypad.dart';
+import 'package:sipho/core/widgets/sipho_button_3d.dart';
 
 class FixedExpenseDetailScreen extends StatefulWidget {
   final String? id;
@@ -18,8 +18,8 @@ class FixedExpenseDetailScreen extends StatefulWidget {
 
 class _FixedExpenseDetailScreenState extends State<FixedExpenseDetailScreen> {
   String _amountStr = '0';
-  int _dueDay = 1;
-  bool _autoPay = true;
+  final int _dueDay = 1;
+  final bool _autoPay = true;
 
   void _onDigit(String d) {
     setState(() {
@@ -58,7 +58,9 @@ class _FixedExpenseDetailScreenState extends State<FixedExpenseDetailScreen> {
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'Prélevé le $_dueDay du mois',
+              _autoPay
+                  ? 'Prélevé automatiquement le $_dueDay du mois'
+                  : 'À payer le $_dueDay du mois',
               style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
             ),
             const Spacer(),

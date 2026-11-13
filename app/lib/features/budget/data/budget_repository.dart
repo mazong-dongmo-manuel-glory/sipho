@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../domain/budget.dart';
+import 'package:sipho/features/budget/domain/budget.dart';
 
 final budgetRepositoryProvider = Provider<BudgetRepository>((ref) {
   return BudgetRepository(FirebaseFirestore.instance);

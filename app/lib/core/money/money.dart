@@ -4,6 +4,7 @@ part 'money.freezed.dart';
 
 @freezed
 class Money with _$Money {
+  // ignore: unused_element
   const Money._();
   const factory Money({
     required int cents,

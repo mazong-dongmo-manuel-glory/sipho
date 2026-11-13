@@ -13,26 +13,44 @@ Future<void> bootstrap(FirebaseOptions options, {required String flavor}) async 
     () async {
       WidgetsFlutterBinding.ensureInitialized();
 
-      await Firebase.initializeApp(options: options);
+      try {
+        if (Firebase.apps.isEmpty) {
+          await Firebase.initializeApp(options: options);
+        }
+      } catch (e) {
+        debugPrint('Firebase.initializeApp warning: $e');
+      }
 
-      await FirebaseAppCheck.instance.activate(
-        androidProvider: kDebugMode
-            ? AndroidProvider.debug
-            : AndroidProvider.playIntegrity,
-        appleProvider:
-            kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
-      );
+      try {
+        await FirebaseAppCheck.instance.activate(
+          androidProvider: kDebugMode
+              ? AndroidProvider.debug
+              : AndroidProvider.playIntegrity,
+          appleProvider:
+              kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+        );
+      } catch (e) {
+        debugPrint('FirebaseAppCheck warning: $e');
+      }
 
-      FlutterError.onError =
-          FirebaseCrashlytics.instance.recordFlutterFatalError;
-      PlatformDispatcher.instance.onError = (error, stack) {
-        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-        return true;
-      };
+      try {
+        FlutterError.onError =
+            FirebaseCrashlytics.instance.recordFlutterFatalError;
+        PlatformDispatcher.instance.onError = (error, stack) {
+          FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+          return true;
+        };
+      } catch (e) {
+        debugPrint('FirebaseCrashlytics warning: $e');
+      }
 
       runApp(ProviderScope(child: SiphoApp(flavor: flavor)));
     },
-    (error, stack) =>
-        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true),
+    (error, stack) {
+      debugPrint('Unhandled bootstrap error: $error\n$stack');
+      try {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      } catch (_) {}
+    },
   );
 }

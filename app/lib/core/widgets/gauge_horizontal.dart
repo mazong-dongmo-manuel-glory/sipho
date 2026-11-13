@@ -7,20 +7,29 @@ import 'package:sipho/app/theme/app_text_styles.dart';
 class GaugeHorizontal extends StatelessWidget {
   const GaugeHorizontal({
     super.key,
-    required this.spentCents,
-    required this.totalCents,
+    this.spentCents,
+    this.totalCents,
+    this.progress,
     this.label,
     this.height = 12,
+    this.color,
+    this.backgroundColor,
   });
 
-  final int spentCents;
-  final int totalCents;
+  final int? spentCents;
+  final int? totalCents;
+  final double? progress;
+  final Color? color;
+  final Color? backgroundColor;
   final String? label;
   final double height;
 
   Color get _gaugeColor {
-    if (totalCents == 0) return AppColors.budgetOk;
-    final ratio = spentCents / totalCents;
+    if (color != null) return color!;
+    final total = totalCents ?? 100;
+    if (total == 0) return AppColors.budgetOk;
+    final spent = spentCents ?? ((progress ?? 0.0) * total).round();
+    final ratio = spent / total;
     if (ratio < 0.75) return AppColors.budgetOk;
     if (ratio < 1.0) return AppColors.budgetWarn;
     return AppColors.budgetOver;
@@ -28,9 +37,9 @@ class GaugeHorizontal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pct = totalCents > 0
-        ? (spentCents / totalCents).clamp(0.0, 1.0)
-        : 0.0;
+    final total = totalCents ?? 100;
+    final pct = progress ??
+        (total > 0 ? ((spentCents ?? 0) / total).clamp(0.0, 1.0) : 0.0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,7 +55,7 @@ class GaugeHorizontal extends StatelessWidget {
           child: LinearProgressIndicator(
             value: pct,
             minHeight: height,
-            backgroundColor: AppColors.border,
+            backgroundColor: backgroundColor ?? AppColors.border,
             valueColor: AlwaysStoppedAnimation(_gaugeColor),
           ),
         ),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'app_colors.dart';
+import 'package:sipho/app/theme/app_colors.dart';
 
 /// Typographie Sipho — Police Nunito
 /// Titres ExtraBold, montants Black, corps Regular/SemiBold
@@ -98,4 +98,13 @@ abstract final class AppTextStyles {
     letterSpacing: 0.5,
     height: 1.0,
   );
+
+  // ── Material 3 / Semantic Aliases ─────────────────────────────────────────
+  static const TextStyle displayLarge = displayLg;
+  static const TextStyle headlineMedium = h2;
+  static const TextStyle bodyLarge = bodyLg;
+  static const TextStyle bodyMedium = body;
+  static const TextStyle labelLarge = label;
+  static const TextStyle labelMedium = labelSm;
+  static const TextStyle amountDisplay = displayXl;
 }

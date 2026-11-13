@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/app_spacing.dart';
-import '../../../app/theme/app_text_styles.dart';
-import '../../../core/money/money.dart';
-import '../../../core/widgets/game_bar.dart';
-import 'remaining_budget_card.dart';
-import 'next_fixed_expense_card.dart';
-import 'quest_card.dart';
-import 'economy_card.dart';
+import 'package:sipho/app/theme/app_colors.dart';
+import 'package:sipho/app/theme/app_spacing.dart';
+import 'package:sipho/app/theme/app_text_styles.dart';
+import 'package:sipho/core/money/money.dart';
+import 'package:sipho/core/widgets/game_bar.dart';
+import 'package:sipho/features/home/presentation/economy_card.dart';
+import 'package:sipho/features/home/presentation/next_fixed_expense_card.dart';
+import 'package:sipho/features/home/presentation/quest_card.dart';
+import 'package:sipho/features/home/presentation/remaining_budget_card.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -37,7 +37,7 @@ class HomeScreen extends ConsumerWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Bonjour Amina !', style: AppTextStyles.h2),
+                      const Text('Bonjour Amina !', style: AppTextStyles.h2),
                       Text(
                         'Prête à tresser ton nid ?',
                         style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
@@ -63,7 +63,7 @@ class HomeScreen extends ConsumerWidget {
                 onPay: () {},
               ),
               const SizedBox(height: AppSpacing.lg),
-              Text('Quêtes du jour', style: AppTextStyles.h3),
+              const Text('Quêtes du jour', style: AppTextStyles.h3),
               const SizedBox(height: AppSpacing.sm),
               const QuestCard(
                 title: 'Note 3 dépenses',

@@ -1,25 +1,28 @@
 import 'package:intl/intl.dart';
-import 'money.dart';
+import 'package:sipho/core/money/money.dart';
 
 class MoneyFormatter {
   MoneyFormatter(this.locale);
 
   final String locale;
 
-  String format(Money money, {bool compact = false}) {
+  static String format(Money money, {String locale = 'fr_CA', bool compact = false}) {
     final amount = money.amount;
-    final format = compact
+    final formatter = compact
         ? NumberFormat.compactCurrency(locale: locale, symbol: _symbol(money.currency))
         : NumberFormat.currency(locale: locale, symbol: _symbol(money.currency));
-    return format.format(amount);
+    return formatter.format(amount);
   }
 
+  String formatWithLocale(Money money, {bool compact = false}) =>
+      format(money, locale: locale, compact: compact);
+
   String formatCents(int cents, String currency) =>
-      format(Money(cents: cents, currency: currency));
+      format(Money(cents: cents, currency: currency), locale: locale);
 
   String formatDiff(Money money) {
     final sign = money.isNegative ? '-' : '+';
-    return '$sign${format(money.abs())}';
+    return '$sign${format(money.abs(), locale: locale)}';
   }
 
   static String _symbol(String currency) {

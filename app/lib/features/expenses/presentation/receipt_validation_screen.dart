@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/app_radius.dart';
-import '../../../app/theme/app_spacing.dart';
-import '../../../app/theme/app_text_styles.dart';
-import '../../../core/widgets/sipho_bubble.dart';
-import '../../../core/widgets/sipho_button_3d.dart';
+import 'package:sipho/app/theme/app_colors.dart';
+import 'package:sipho/app/theme/app_radius.dart';
+import 'package:sipho/app/theme/app_spacing.dart';
+import 'package:sipho/core/widgets/sipho_bubble.dart';
+import 'package:sipho/core/widgets/sipho_button_3d.dart';
 
 class ReceiptValidationScreen extends StatefulWidget {
   const ReceiptValidationScreen({super.key});
@@ -18,7 +17,7 @@ class _ReceiptValidationScreenState extends State<ReceiptValidationScreen> {
   final _merchantCtrl = TextEditingController(text: 'IGA Supermarché');
   final _amountCtrl = TextEditingController(text: '48.49');
   final _dateCtrl = TextEditingController(text: '2026-11-10');
-  String _category = 'groceries';
+  final String _category = 'groceries';
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +65,7 @@ class _ReceiptValidationScreenState extends State<ReceiptValidationScreen> {
               SiphoButton3D(
                 text: 'VALIDER (+15 XP)',
                 onPressed: () {
-                  context.go('/home');
+                  context.go('/home', extra: {'category': _category});
                 },
               ),
             ],

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'app_colors.dart';
-import 'app_radius.dart';
-import 'app_text_styles.dart';
+import 'package:sipho/app/theme/app_colors.dart';
+import 'package:sipho/app/theme/app_radius.dart';
+import 'package:sipho/app/theme/app_text_styles.dart';
 
 /// ThemeData Material 3 complet pour Sipho
 /// Toujours utiliser les tokens de ce fichier, jamais de couleurs/rayons en dur
@@ -15,7 +15,7 @@ class AppTheme {
     final isDark = brightness == Brightness.dark;
 
     final colorScheme = isDark
-        ? ColorScheme.dark(
+        ? const ColorScheme.dark(
             primary: AppColors.primary,
             onPrimary: Colors.white,
             secondary: AppColors.accent,
@@ -24,7 +24,7 @@ class AppTheme {
             surface: AppColors.surfaceDark,
             onSurface: AppColors.textPrimaryDark,
           )
-        : ColorScheme.light(
+        : const ColorScheme.light(
             primary: AppColors.primary,
             onPrimary: Colors.white,
             secondary: AppColors.accent,
@@ -55,7 +55,7 @@ class AppTheme {
       ),
 
       // ── Card ──────────────────────────────────────────────────────────────
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: isDark ? AppColors.surfaceDark : AppColors.surface,
         elevation: 0,
         shape: const RoundedRectangleBorder(
@@ -91,17 +91,17 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: isDark ? AppColors.surfaceDark : AppColors.surface,
-        border: OutlineInputBorder(
+        border: const OutlineInputBorder(
           borderRadius: AppRadius.cardRadius,
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.border),
         ),
-        enabledBorder: OutlineInputBorder(
+        enabledBorder: const OutlineInputBorder(
           borderRadius: AppRadius.cardRadius,
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.border),
         ),
-        focusedBorder: OutlineInputBorder(
+        focusedBorder: const OutlineInputBorder(
           borderRadius: AppRadius.cardRadius,
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
         ),
         labelStyle: AppTextStyles.label,
         hintStyle:
@@ -141,7 +141,7 @@ class AppTheme {
       ),
 
       // ── Text ──────────────────────────────────────────────────────────────
-      textTheme: TextTheme(
+      textTheme: const TextTheme(
         displayLarge: AppTextStyles.displayXl,
         displayMedium: AppTextStyles.displayLg,
         headlineLarge: AppTextStyles.h1,

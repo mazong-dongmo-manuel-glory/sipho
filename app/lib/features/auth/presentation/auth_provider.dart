@@ -12,7 +12,7 @@ Stream<User?> authState(AuthStateRef ref) =>
 class AuthNotifier extends _$AuthNotifier {
   @override
   AsyncValue<User?> build() {
-    return const AsyncValue.loading();
+    return const AsyncValue.data(null);
   }
 
   Future<void> signInWithGoogle() async {
@@ -21,7 +21,17 @@ class AuthNotifier extends _$AuthNotifier {
       () => ref
           .read(authRepositoryProvider)
           .signInWithGoogle()
-          .then((cred) => cred.user),
+          .then((cred) => cred?.user),
+    );
+  }
+
+  Future<void> signInWithApple() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(
+      () => ref
+          .read(authRepositoryProvider)
+          .signInWithApple()
+          .then((cred) => cred?.user),
     );
   }
 

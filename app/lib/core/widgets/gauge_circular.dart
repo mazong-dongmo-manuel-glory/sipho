@@ -7,20 +7,33 @@ import 'package:sipho/app/theme/app_text_styles.dart';
 class GaugeCircular extends StatelessWidget {
   const GaugeCircular({
     super.key,
-    required this.spentCents,
-    required this.totalCents,
-    required this.label,
+    this.spentCents,
+    this.totalCents,
+    this.label = '',
+    this.progress,
+    this.strokeWidth,
+    this.color,
+    this.backgroundColor,
     this.radius = 60,
   });
 
-  final int spentCents;
-  final int totalCents;
+  final int? spentCents;
+  final int? totalCents;
   final String label;
   final double radius;
+  final double? progress;
+  final double? strokeWidth;
+  final Color? color;
+  final Color? backgroundColor;
 
   Color get _gaugeColor {
-    if (totalCents == 0) return AppColors.budgetOk;
-    final ratio = spentCents / totalCents;
+    final c = color;
+    if (c != null) return c;
+    final total = totalCents ?? 100;
+    if (total == 0) return AppColors.budgetOk;
+    final spent = spentCents ??
+        (progress != null ? ((1.0 - progress!) * total).round() : 0);
+    final ratio = spent / total;
     if (ratio < 0.75) return AppColors.budgetOk;
     if (ratio < 1.0) return AppColors.budgetWarn;
     return AppColors.budgetOver;
@@ -28,8 +41,12 @@ class GaugeCircular extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final remaining = (totalCents - spentCents).clamp(0, totalCents);
-    final pct = totalCents > 0 ? remaining / totalCents : 0.0;
+    final total = totalCents ?? 100;
+    final spent = spentCents ??
+        (progress != null ? ((1.0 - progress!) * total).round() : 0);
+    final remaining = (total - spent).clamp(0, total);
+    final pct = progress ?? (total > 0 ? remaining / total : 0.0);
+    final sectionRadius = strokeWidth ?? (radius * 0.35);
 
     return SizedBox(
       width: radius * 2,
@@ -41,28 +58,29 @@ class GaugeCircular extends StatelessWidget {
             PieChartData(
               startDegreeOffset: -90,
               sectionsSpace: 0,
-              centerSpaceRadius: radius * 0.65,
+              centerSpaceRadius: radius - sectionRadius,
               sections: [
                 PieChartSectionData(
-                  value: pct,
+                  value: pct.clamp(0.0, 1.0),
                   color: _gaugeColor,
-                  radius: radius * 0.35,
+                  radius: sectionRadius,
                   showTitle: false,
                 ),
                 PieChartSectionData(
-                  value: 1 - pct,
-                  color: AppColors.border,
-                  radius: radius * 0.35,
+                  value: (1.0 - pct.clamp(0.0, 1.0)),
+                  color: backgroundColor ?? AppColors.border,
+                  radius: sectionRadius,
                   showTitle: false,
                 ),
               ],
             ),
           ),
-          Text(
-            label,
-            style: AppTextStyles.labelMedium,
-            textAlign: TextAlign.center,
-          ),
+          if (label.isNotEmpty)
+            Text(
+              label,
+              style: AppTextStyles.labelMedium,
+              textAlign: TextAlign.center,
+            ),
         ],
       ),
     );

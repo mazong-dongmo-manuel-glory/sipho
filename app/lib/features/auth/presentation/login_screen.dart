@@ -1,18 +1,53 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_spacing.dart';
 import 'package:sipho/app/theme/app_text_styles.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
 import 'package:sipho/features/auth/presentation/auth_provider.dart';
 
-class LoginScreen extends ConsumerWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final authNotifier = ref.watch(authNotifierProvider.notifier);
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends ConsumerState<LoginScreen> {
+  bool _isGoogleLoading = false;
+  bool _isAppleLoading = false;
+
+  Future<void> _handleGoogleSignIn() async {
+    if (_isGoogleLoading || _isAppleLoading) return;
+    setState(() => _isGoogleLoading = true);
+    try {
+      await ref.read(authNotifierProvider.notifier).signInWithGoogle();
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
+    }
+  }
+
+  Future<void> _handleAppleSignIn() async {
+    if (_isGoogleLoading || _isAppleLoading) return;
+    setState(() => _isAppleLoading = true);
+    try {
+      await ref.read(authNotifierProvider.notifier).signInWithApple();
+    } finally {
+      if (mounted) setState(() => _isAppleLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authNotifierProvider);
+    final l10n = AppLocalizations.of(context);
+    final isBusy = _isGoogleLoading || _isAppleLoading;
+
+    final isApplePlatform = !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.iOS ||
+            defaultTargetPlatform == TargetPlatform.macOS);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -28,7 +63,7 @@ class LoginScreen extends ConsumerWidget {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -38,10 +73,10 @@ class LoginScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
-              Text('Sipho', style: AppTextStyles.displayLarge),
+              const Text('Sipho', style: AppTextStyles.displayLarge),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                'Master your money',
+                l10n.tagline,
                 style: AppTextStyles.bodyLarge
                     .copyWith(color: AppColors.textSecondary),
               ),
@@ -56,12 +91,43 @@ class LoginScreen extends ConsumerWidget {
                     textAlign: TextAlign.center,
                   ),
                 ),
-              SiphoButton3D(
-                label: 'Sign in with Google',
-                onPressed: authNotifier.signInWithGoogle,
-                isLoading: authState.isLoading,
-                icon: const Icon(Icons.g_mobiledata, color: Colors.white, size: 24),
-              ),
+              if (isApplePlatform) ...[
+                SiphoButton3D(
+                  label: l10n.signInWithApple,
+                  onPressed: isBusy ? null : _handleAppleSignIn,
+                  isLoading: _isAppleLoading,
+                  color: Colors.black,
+                  textColor: Colors.white,
+                  icon: const Icon(Icons.apple, color: Colors.white, size: 24),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                SiphoButton3D(
+                  label: l10n.signInWithGoogle,
+                  onPressed: isBusy ? null : _handleGoogleSignIn,
+                  isLoading: _isGoogleLoading,
+                  color: AppColors.primary,
+                  textColor: Colors.white,
+                  icon: const Icon(Icons.g_mobiledata, color: Colors.white, size: 28),
+                ),
+              ] else ...[
+                SiphoButton3D(
+                  label: l10n.signInWithGoogle,
+                  onPressed: isBusy ? null : _handleGoogleSignIn,
+                  isLoading: _isGoogleLoading,
+                  color: AppColors.primary,
+                  textColor: Colors.white,
+                  icon: const Icon(Icons.g_mobiledata, color: Colors.white, size: 28),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                SiphoButton3D(
+                  label: l10n.signInWithApple,
+                  onPressed: isBusy ? null : _handleAppleSignIn,
+                  isLoading: _isAppleLoading,
+                  color: Colors.black,
+                  textColor: Colors.white,
+                  icon: const Icon(Icons.apple, color: Colors.white, size: 24),
+                ),
+              ],
               const SizedBox(height: AppSpacing.xl),
             ],
           ),

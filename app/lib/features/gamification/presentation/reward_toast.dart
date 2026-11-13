@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/app_text_styles.dart';
+import 'package:sipho/app/theme/app_colors.dart';
+import 'package:sipho/app/theme/app_text_styles.dart';
 
 class RewardToast {
   static void show(BuildContext context, {required String message, int xp = 5}) {

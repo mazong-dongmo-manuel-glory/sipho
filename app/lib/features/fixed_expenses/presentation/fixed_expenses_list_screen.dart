@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/app_radius.dart';
-import '../../../app/theme/app_spacing.dart';
-import '../../../app/theme/app_text_styles.dart';
+import 'package:sipho/app/theme/app_colors.dart';
+import 'package:sipho/app/theme/app_radius.dart';
+import 'package:sipho/app/theme/app_spacing.dart';
+import 'package:sipho/app/theme/app_text_styles.dart';
 
 class FixedExpensesListScreen extends ConsumerWidget {
   const FixedExpensesListScreen({super.key});
@@ -21,7 +21,7 @@ class FixedExpensesListScreen extends ConsumerWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(AppSpacing.cardPadding),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.primaryDark,
                 borderRadius: AppRadius.cardRadius,
               ),
@@ -50,7 +50,7 @@ class FixedExpensesListScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            Text('Dépenses récurrentes', style: AppTextStyles.h3),
+            const Text('Dépenses récurrentes', style: AppTextStyles.h3),
             const SizedBox(height: AppSpacing.sm),
             _buildItem('Loyer', '950 \$', 'Le 1er du mois', '🏠', true),
             _buildItem('Internet', '75 \$', 'Le 15 du mois', '📶', false),

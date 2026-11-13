@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../domain/country_pack.dart';
+import 'package:sipho/features/country_pack/domain/country_pack.dart';
 
 final countryPackRepositoryProvider = Provider<CountryPackRepository>((ref) {
   return CountryPackRepository(FirebaseFirestore.instance);

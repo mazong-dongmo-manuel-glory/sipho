@@ -1,10 +1,9 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sipho/features/auth/presentation/auth_provider.dart';
 import 'package:sipho/features/auth/presentation/login_screen.dart';
 import 'package:sipho/features/budget/presentation/budget_screen.dart';
 import 'package:sipho/features/budget/presentation/charts_screen.dart';
-import 'package:sipho/features/country_pack/domain/country_pack.dart';
 import 'package:sipho/features/economy/presentation/economy_detail_screen.dart';
 import 'package:sipho/features/expenses/presentation/add_expense_sheet.dart';
 import 'package:sipho/features/expenses/presentation/expenses_list_screen.dart';
@@ -25,7 +24,6 @@ import 'package:sipho/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:sipho/features/profile/presentation/profile_screen.dart';
 import 'package:sipho/features/profile/presentation/shop_screen.dart';
 import 'package:sipho/features/settings/presentation/settings_screen.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'router.g.dart';
 

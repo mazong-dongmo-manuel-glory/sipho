@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_radius.dart';
 import 'package:sipho/app/theme/app_text_styles.dart';
 
@@ -7,18 +6,21 @@ import 'package:sipho/app/theme/app_text_styles.dart';
 class AmountKeypad extends StatelessWidget {
   const AmountKeypad({
     super.key,
-    required this.valueText,
-    required this.onKeyTap,
-    required this.onDelete,
-    required this.onConfirm,
+    this.valueText,
+    void Function(String digit)? onKeyTap,
+    void Function(String digit)? onDigitPressed,
+    VoidCallback? onDelete,
+    VoidCallback? onDeletePressed,
+    this.onConfirm,
     this.confirmLabel = 'OK',
     this.confirmEnabled = true,
-  });
+  })  : onKeyTap = onKeyTap ?? onDigitPressed,
+        onDelete = onDelete ?? onDeletePressed;
 
-  final String valueText;
-  final void Function(String digit) onKeyTap;
-  final VoidCallback onDelete;
-  final VoidCallback onConfirm;
+  final String? valueText;
+  final void Function(String digit)? onKeyTap;
+  final VoidCallback? onDelete;
+  final VoidCallback? onConfirm;
   final String confirmLabel;
   final bool confirmEnabled;
 
@@ -33,15 +35,16 @@ class AmountKeypad extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Amount display
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Text(
-            valueText,
-            style: AppTextStyles.amountDisplay,
+        if (valueText != null) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Text(
+              valueText!,
+              style: AppTextStyles.amountDisplay,
+            ),
           ),
-        ),
-        const Divider(),
+          const Divider(),
+        ],
         // Keys
         for (final row in _keys)
           Row(
@@ -50,23 +53,27 @@ class AmountKeypad extends StatelessWidget {
               return Expanded(
                 child: _KeyButton(
                   label: key,
-                  onTap: isDelete ? onDelete : () => onKeyTap(key),
+                  onTap: isDelete
+                      ? (onDelete ?? () {})
+                      : () => onKeyTap?.call(key),
                 ),
               );
             }).toList(),
           ),
-        const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: FilledButton(
-              onPressed: confirmEnabled ? onConfirm : null,
-              child: Text(confirmLabel),
+        if (onConfirm != null) ...[
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: FilledButton(
+                onPressed: confirmEnabled ? onConfirm : null,
+                child: Text(confirmLabel),
+              ),
             ),
           ),
-        ),
+        ],
       ],
     );
   }

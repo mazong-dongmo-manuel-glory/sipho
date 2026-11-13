@@ -7,10 +7,11 @@ import 'package:sipho/app/theme/app_text_styles.dart';
 class SiphoBubble extends StatelessWidget {
   const SiphoBubble({
     super.key,
-    required this.message,
+    String? message,
+    String? text,
     this.avatarAsset = 'assets/images/sipho_avatar.png',
     this.animated = false,
-  });
+  }) : message = message ?? text ?? '';
 
   final String message;
   final String avatarAsset;
@@ -24,7 +25,7 @@ class SiphoBubble extends StatelessWidget {
         // Avatar
         CircleAvatar(
           radius: 28,
-          backgroundColor: AppColors.primary.withOpacity(0.1),
+          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
           child: Image.asset(
             avatarAsset,
             width: 40,
