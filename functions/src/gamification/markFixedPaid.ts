@@ -1,69 +1,111 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import { getFirestore, FieldValue, Firestore } from "firebase-admin/firestore";
 import { MarkFixedPaidInputSchema } from "../shared/validators";
 import { XP_CONFIG, xpToLevel } from "../shared/xpConfig";
-import { idempotencyKey, checkAndMarkIdempotencyKey } from "../shared/idempotency";
+import { idempotencyKey, encodeKey } from "../shared/idempotency";
+import {
+  SECURE_CALLABLE_OPTIONS,
+  enforceRateLimit,
+  parseInput,
+  requireAuthUid,
+} from "../shared/security";
+import { initialGameStatePayload, normalizeGameState } from "../shared/gameState";
 import { logger } from "../shared/logger";
 
-const db = () => getFirestore();
+const db = (): Firestore => getFirestore();
 
 /**
- * Callable: mark a fixed expense as paid for the month and award XP.
- *
- * Client sends: { fixedId, monthKey (YYYY-MM) }
- * Server returns: { xpGained, levelUp }
+ * Callable: mark a fixed expense from `users/{uid}/fixedExpenses/{fixedId}`
+ * as paid for `monthKey` and award server-side XP once per month.
  */
-export const markFixedPaid = onCall(
-  { region: "us-central1", enforceAppCheck: true },
-  async (request) => {
-    if (!request.auth) throw new HttpsError("unauthenticated", "Login required");
-    const uid = request.auth.uid;
+export const markFixedPaid = onCall(SECURE_CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const { fixedId, monthKey } = parseInput(MarkFixedPaidInputSchema, request.data);
 
-    const parsed = MarkFixedPaidInputSchema.safeParse(request.data);
-    if (!parsed.success) {
-      throw new HttpsError("invalid-argument", parsed.error.message);
+  await enforceRateLimit({
+    uid,
+    action: "markFixedPaid",
+    maxRequests: 30,
+    windowMs: 60 * 60 * 1000,
+  });
+
+  const fixedRef = db().doc(`users/${uid}/fixedExpenses/${fixedId}`);
+  const monthFixedRef = db().doc(`users/${uid}/months/${monthKey}/fixed/${fixedId}`);
+  const monthRef = db().doc(`users/${uid}/months/${monthKey}`);
+  const gameRef = db().doc(`users/${uid}/game/state`);
+  const idemKey = idempotencyKey("markFixedPaid", uid, fixedId, monthKey);
+  const idemRef = db().collection("_idempotency").doc(encodeKey(idemKey));
+
+  const outcome = await db().runTransaction(async (tx) => {
+    const [fixedSnap, idemSnap, gameSnap] = await Promise.all([
+      tx.get(fixedRef),
+      tx.get(idemRef),
+      tx.get(gameRef),
+    ]);
+
+    if (!fixedSnap.exists) {
+      throw new HttpsError("not-found", "Fixed expense not found.");
     }
-    const { fixedId, monthKey } = parsed.data;
 
-    // Idempotency: one XP grant per fixed expense per month
-    const ikey = idempotencyKey("markFixedPaid", uid, fixedId, monthKey);
-    if (await checkAndMarkIdempotencyKey(ikey)) {
-      logger.info("markFixedPaid: duplicate skipped", { uid, fixedId, monthKey });
+    if (idemSnap.exists) {
       return { xpGained: 0, levelUp: false, alreadyPaid: true };
     }
 
-    // Validate fixed expense belongs to user
-    const fixedRef = db().doc(`users/${uid}/fixed/${fixedId}`);
-    const fixedSnap = await fixedRef.get();
-    if (!fixedSnap.exists) throw new HttpsError("not-found", "Fixed expense not found");
+    const baseGame = gameSnap.exists
+      ? normalizeGameState(gameSnap.data())
+      : normalizeGameState(initialGameStatePayload());
 
-    const monthFixedRef = db().doc(`users/${uid}/months/${monthKey}/fixed/${fixedId}`);
-    const gameRef = db().doc(`users/${uid}/game/state`);
-
-    const batch = db().batch();
-    batch.set(monthFixedRef, { paidAt: FieldValue.serverTimestamp(), paid: true }, { merge: true });
-
-    // Award XP
     const xpGained = XP_CONFIG.fixedPaid;
-    batch.update(gameRef, {
-      xp: FieldValue.increment(xpGained),
-      updatedAt: FieldValue.serverTimestamp(),
+    const newXp = baseGame.xp + xpGained;
+    const newLevel = xpToLevel(newXp);
+    const levelUp = newLevel > baseGame.level;
+
+    tx.set(idemRef, {
+      key: idemKey,
+      processedAt: FieldValue.serverTimestamp(),
     });
 
-    await batch.commit();
+    tx.set(
+      monthFixedRef,
+      { paidAt: FieldValue.serverTimestamp(), paid: true },
+      { merge: true }
+    );
 
-    // Update level
-    const gameSnap = await gameRef.get();
-    const newXp = (gameSnap.data()?.xp ?? 0) as number;
-    const oldLevel = (gameSnap.data()?.level ?? 0) as number;
-    const newLevel = xpToLevel(newXp);
-    const levelUp = newLevel > oldLevel;
-    if (levelUp) {
-      await gameRef.update({ level: newLevel });
-    }
+    tx.set(
+      monthRef,
+      {
+        [`fixedPaid.${fixedId}.paid`]: true,
+        [`fixedPaid.${fixedId}.paidAt`]: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
 
-    logger.info("fixed expense marked paid", { uid, fixedId, monthKey, xpGained });
+    tx.set(
+      gameRef,
+      {
+        xp: newXp,
+        level: newLevel,
+        gems: baseGame.gems,
+        weeklyXp: baseGame.weeklyXp + xpGained,
+        streak: baseGame.streak,
+        leagueId: baseGame.leagueId,
+        badges: baseGame.badges,
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
 
     return { xpGained, levelUp, alreadyPaid: false };
-  }
-);
+  });
+
+  logger.info("fixed expense marked paid", {
+    uid,
+    fixedId,
+    monthKey,
+    xpGained: outcome.xpGained,
+    alreadyPaid: outcome.alreadyPaid,
+  });
+
+  return outcome;
+});

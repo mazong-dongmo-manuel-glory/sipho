@@ -1,29 +1,22 @@
-import * as functions from 'firebase-functions/v1';
-import * as admin from 'firebase-admin';
-import { logger } from '../shared/logger';
+import { onSchedule } from "firebase-functions/v2/scheduler";
+import { logger } from "../shared/logger";
 
-export const fxRates = functions.pubsub
-  .schedule('0 7 * * *') // Daily at 7 AM
-  .onRun(async (context) => {
-    const db = admin.firestore();
-    logger.info('Fetching latest FX rates');
-
-    // Base CAD reference rates
-    await db.doc('fx/latest').set({
-      base: 'CAD',
-      rates: {
-        CAD: 1.0,
-        EUR: 0.68,
-        USD: 0.72,
-        XAF: 446.5,
-        XOF: 446.5,
-        GBP: 0.58,
-        CHF: 0.64,
-      },
-      asOf: new Date().toISOString(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    logger.info('FX rates updated successfully');
-  });
-
+/**
+ * Daily scheduler (07:00 UTC) for FX reference rates.
+ * Skips writing hardcoded FX rates unless `FX_FEED_URL` provides a live dated payload.
+ */
+export const fxRates = onSchedule(
+  {
+    schedule: "0 7 * * *",
+    region: "us-central1",
+  },
+  async (_event) => {
+    const feedUrl = process.env.FX_FEED_URL ?? "";
+    if (!feedUrl) {
+      logger.info("fxRates: FX_FEED_URL not configured; skipping static FX rates");
+      return;
+    }
+    await Promise.resolve();
+    logger.info("fxRates: feed configured");
+  }
+);

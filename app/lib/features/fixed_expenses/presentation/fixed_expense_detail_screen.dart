@@ -13,7 +13,8 @@ class FixedExpenseDetailScreen extends StatefulWidget {
   const FixedExpenseDetailScreen({super.key, this.id, this.initialData});
 
   @override
-  State<FixedExpenseDetailScreen> createState() => _FixedExpenseDetailScreenState();
+  State<FixedExpenseDetailScreen> createState() =>
+      _FixedExpenseDetailScreenState();
 }
 
 class _FixedExpenseDetailScreenState extends State<FixedExpenseDetailScreen> {
@@ -61,7 +62,8 @@ class _FixedExpenseDetailScreenState extends State<FixedExpenseDetailScreen> {
               _autoPay
                   ? 'Prélevé automatiquement le $_dueDay du mois'
                   : 'À payer le $_dueDay du mois',
-              style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+              style:
+                  AppTextStyles.body.copyWith(color: AppColors.textSecondary),
             ),
             const Spacer(),
             AmountKeypad(

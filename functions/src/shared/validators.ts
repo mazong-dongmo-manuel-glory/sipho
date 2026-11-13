@@ -1,5 +1,24 @@
 import { z } from "zod";
 
+// ─── Allowed categories (aligned with Flutter ExpenseCategory) ───────────────
+
+export const ALLOWED_EXPENSE_CATEGORIES = [
+  "rent",
+  "internet",
+  "energy",
+  "phone",
+  "groceries",
+  "transport",
+  "restaurants",
+  "shopping",
+] as const;
+
+export const ALLOWED_LESSON_IDS = [
+  "emergency_fund",
+  "needs_wants",
+  "track_spending",
+] as const;
+
 // ─── Primitive validators ─────────────────────────────────────────────────────
 
 export const AmountCentsSchema = z
@@ -10,10 +29,12 @@ export const AmountCentsSchema = z
 
 export const CurrencyCodeSchema = z
   .string()
+  .trim()
   .length(3, "Currency must be a 3-letter ISO 4217 code")
-  .toUpperCase();
+  .transform((s) => s.toUpperCase())
+  .pipe(z.string().regex(/^[A-Z]{3}$/, "Currency must be A-Z"));
 
-export const CategorySchema = z.string().min(1).max(50);
+export const CategorySchema = z.enum(ALLOWED_EXPENSE_CATEGORIES);
 
 export const SourceSchema = z.enum(["manual", "receipt"]);
 
@@ -21,8 +42,18 @@ export const LocaleSchema = z.enum(["fr", "en"]).default("fr");
 
 export const CountryCodeSchema = z
   .string()
+  .trim()
   .length(2, "Country must be a 2-letter ISO 3166-1 alpha-2 code")
-  .toUpperCase();
+  .transform((s) => s.toUpperCase())
+  .pipe(z.string().regex(/^[A-Z]{2}$/, "Country must be A-Z"));
+
+export const IsoDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "date must be YYYY-MM-DD");
+
+export const IsoMonthSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}$/, "monthKey must be YYYY-MM");
 
 // ─── Transaction ──────────────────────────────────────────────────────────────
 
@@ -31,8 +62,9 @@ export const TransactionInputSchema = z.object({
   currency: CurrencyCodeSchema,
   category: CategorySchema,
   source: SourceSchema,
-  note: z.string().max(200).optional(),
-  date: z.string().datetime().optional(), // ISO 8601
+  merchant: z.string().trim().max(80).optional(),
+  note: z.string().trim().max(200).optional(),
+  date: IsoDateSchema,
 });
 
 export type TransactionInput = z.infer<typeof TransactionInputSchema>;
@@ -40,9 +72,21 @@ export type TransactionInput = z.infer<typeof TransactionInputSchema>;
 // ─── Lesson completion ────────────────────────────────────────────────────────
 
 export const CompleteLessonInputSchema = z.object({
-  lessonId: z.string().min(1).max(100),
+  lessonId: z
+    .string()
+    .trim()
+    .min(1)
+    .max(64)
+    .regex(/^[a-z0-9_-]+$/, "Invalid lessonId"),
   score: z.number().int().min(0).max(100),
-  durationSeconds: z.number().int().min(0),
+  durationSeconds: z.number().int().min(2, "Duration too short").max(3600),
+  attemptId: z
+    .string()
+    .trim()
+    .min(1)
+    .max(80)
+    .regex(/^[a-zA-Z0-9_-]+$/)
+    .optional(),
 });
 
 export type CompleteLessonInput = z.infer<typeof CompleteLessonInputSchema>;
@@ -50,8 +94,13 @@ export type CompleteLessonInput = z.infer<typeof CompleteLessonInputSchema>;
 // ─── Mark fixed paid ──────────────────────────────────────────────────────────
 
 export const MarkFixedPaidInputSchema = z.object({
-  fixedId: z.string().min(1).max(100),
-  monthKey: z.string().regex(/^\d{4}-\d{2}$/, "monthKey must be YYYY-MM"),
+  fixedId: z
+    .string()
+    .trim()
+    .min(1)
+    .max(100)
+    .regex(/^[a-zA-Z0-9_-]+$/, "Invalid fixedId"),
+  monthKey: IsoMonthSchema,
 });
 
 export type MarkFixedPaidInput = z.infer<typeof MarkFixedPaidInputSchema>;
@@ -67,7 +116,13 @@ export type DeleteAccountInput = z.infer<typeof DeleteAccountInputSchema>;
 // ─── Referral ─────────────────────────────────────────────────────────────────
 
 export const ReferralRedeemInputSchema = z.object({
-  code: z.string().min(4).max(20).toUpperCase(),
+  referralCode: z
+    .string()
+    .trim()
+    .min(4)
+    .max(20)
+    .transform((s) => s.toUpperCase())
+    .pipe(z.string().regex(/^[A-Z0-9_-]+$/, "Invalid referral code")),
 });
 
 export type ReferralRedeemInput = z.infer<typeof ReferralRedeemInputSchema>;
@@ -77,7 +132,14 @@ export type ReferralRedeemInput = z.infer<typeof ReferralRedeemInputSchema>;
 export const ParseReceiptInputSchema = z.object({
   storagePath: z
     .string()
-    .regex(/^receipts\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_.-]+$/, "Invalid storage path"),
+    .max(200)
+    .refine((p) => !p.includes(".."), "Path traversal is not allowed")
+    .pipe(
+      z.string().regex(
+        /^receipts\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png)$/i,
+        "Invalid storage path"
+      )
+    ),
 });
 
 export type ParseReceiptInput = z.infer<typeof ParseReceiptInputSchema>;

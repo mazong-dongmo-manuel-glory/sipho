@@ -12,7 +12,10 @@ class BudgetRepository {
   BudgetRepository(this._firestore);
 
   Stream<MonthBudget?> watchBudget(String uid, String yearMonth) {
-    return _firestore.doc('users/$uid/budgets/$yearMonth').snapshots().map((doc) {
+    return _firestore
+        .doc('users/$uid/budgets/$yearMonth')
+        .snapshots()
+        .map((doc) {
       if (!doc.exists || doc.data() == null) return null;
       final data = doc.data()!;
       final rawLimits = data['categories'] as Map<String, dynamic>? ?? {};
@@ -33,4 +36,3 @@ class BudgetRepository {
     }, SetOptions(merge: true));
   }
 }
-

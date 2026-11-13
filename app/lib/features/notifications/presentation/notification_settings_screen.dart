@@ -1,27 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_radius.dart';
 import 'package:sipho/app/theme/app_spacing.dart';
+import 'package:sipho/features/auth/presentation/auth_provider.dart';
+import 'package:sipho/features/notifications/data/notification_service.dart';
+import 'package:sipho/features/notifications/domain/notif_prefs.dart';
+import 'package:sipho/features/notifications/presentation/notification_binder.dart';
 
-class NotificationSettingsScreen extends StatefulWidget {
+class NotificationSettingsScreen extends ConsumerWidget {
   const NotificationSettingsScreen({super.key});
 
   @override
-  State<NotificationSettingsScreen> createState() => _NotificationSettingsScreenState();
-}
-
-class _NotificationSettingsScreenState extends State<NotificationSettingsScreen> {
-  bool _streak = true;
-  bool _budget = true;
-  bool _fixed = true;
-  bool _tips = true;
-  bool _economy = true;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final prefs =
+        ref.watch(notifPrefsProvider).valueOrNull ?? NotifPrefs.defaults;
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Notifications')),
+      appBar: AppBar(title: Text(l10n.notifSettingsTitle)),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.pagePadding),
@@ -35,39 +33,59 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
               ),
               child: Column(
                 children: [
-                  SwitchListTile(
-                    title: const Text('Rappels de série 🔥'),
-                    subtitle: const Text('Garde ta flamme active'),
-                    value: _streak,
-                    onChanged: (val) => setState(() => _streak = val),
+                  _Switch(
+                    title: l10n.notifStreakTitle,
+                    subtitle: l10n.notifStreakBody,
+                    value: prefs.streakReminder,
+                    onChanged: (value) => _save(
+                      context,
+                      ref,
+                      prefs.copyWith(streakReminder: value),
+                    ),
                   ),
                   const Divider(),
-                  SwitchListTile(
-                    title: const Text('Alertes budget ⚠️'),
-                    subtitle: const Text('Quand tu approches 80% d\'une catégorie'),
-                    value: _budget,
-                    onChanged: (val) => setState(() => _budget = val),
+                  _Switch(
+                    title: l10n.notifBudgetTitle,
+                    subtitle: l10n.notifBudgetBody,
+                    value: prefs.budgetAlert,
+                    onChanged: (value) => _save(
+                      context,
+                      ref,
+                      prefs.copyWith(budgetAlert: value),
+                    ),
                   ),
                   const Divider(),
-                  SwitchListTile(
-                    title: const Text('Échéances fixes 📅'),
-                    subtitle: const Text('Rappels pour tes factures à payer'),
-                    value: _fixed,
-                    onChanged: (val) => setState(() => _fixed = val),
+                  _Switch(
+                    title: l10n.notifFixedTitle,
+                    subtitle: l10n.notifFixedBody,
+                    value: prefs.fixedDue,
+                    onChanged: (value) => _save(
+                      context,
+                      ref,
+                      prefs.copyWith(fixedDue: value),
+                    ),
                   ),
                   const Divider(),
-                  SwitchListTile(
-                    title: const Text('Conseils hebdomadaires 💡'),
-                    subtitle: const Text('Recommandations Sipho personnalisées'),
-                    value: _tips,
-                    onChanged: (val) => setState(() => _tips = val),
+                  _Switch(
+                    title: l10n.notifTipsTitle,
+                    subtitle: l10n.notifTipsBody,
+                    value: prefs.tips,
+                    onChanged: (value) => _save(
+                      context,
+                      ref,
+                      prefs.copyWith(tips: value),
+                    ),
                   ),
                   const Divider(),
-                  SwitchListTile(
-                    title: const Text('Actualité économique 📈'),
-                    subtitle: const Text('Taux directeur et inflation locale'),
-                    value: _economy,
-                    onChanged: (val) => setState(() => _economy = val),
+                  _Switch(
+                    title: l10n.notifEconomyTitle,
+                    subtitle: l10n.notifEconomyBody,
+                    value: prefs.economy,
+                    onChanged: (value) => _save(
+                      context,
+                      ref,
+                      prefs.copyWith(economy: value),
+                    ),
                   ),
                 ],
               ),
@@ -77,5 +95,71 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       ),
     );
   }
+
+  Future<void> _save(
+    BuildContext context,
+    WidgetRef ref,
+    NotifPrefs next,
+  ) async {
+    final uid = ref.read(authStateProvider).valueOrNull?.uid;
+    if (uid == null) return;
+    final l10n = AppLocalizations.of(context);
+    final service = ref.read(notificationServiceProvider);
+    final wantsAny = next.streakReminder ||
+        next.budgetAlert ||
+        next.fixedDue ||
+        next.tips ||
+        next.economy;
+    try {
+      if (wantsAny) {
+        final granted = await service.enable(
+          uid: uid,
+          prefs: next,
+          dailyTitle: l10n.notifDailyTitle,
+          dailyBody: l10n.notifDailyBody,
+        );
+        if (!granted && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.notifDenied)),
+          );
+        }
+        return;
+      }
+      await service.savePrefs(
+        uid: uid,
+        prefs: next,
+        dailyTitle: l10n.notifDailyTitle,
+        dailyBody: l10n.notifDailyBody,
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.onboardingSaveError)),
+      );
+    }
+  }
 }
 
+class _Switch extends StatelessWidget {
+  const _Switch({
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String title;
+  final String subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SwitchListTile(
+      title: Text(title),
+      subtitle: Text(subtitle),
+      value: value,
+      onChanged: onChanged,
+    );
+  }
+}

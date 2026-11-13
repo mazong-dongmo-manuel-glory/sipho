@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 
 class SiphoBottomNav extends StatelessWidget {
@@ -7,49 +8,123 @@ class SiphoBottomNav extends StatelessWidget {
 
   final Widget child;
 
-  static const _tabs = [
-    _TabDef(label: 'Home', icon: Icons.home_outlined, path: '/home'),
-    _TabDef(label: 'Budget', icon: Icons.pie_chart_outline, path: '/budget'),
-    _TabDef(label: 'Learn', icon: Icons.school_outlined, path: '/learn'),
-    _TabDef(
-        label: 'Ranking',
-        icon: Icons.leaderboard_outlined,
-        path: '/leaderboard'),
-    _TabDef(label: 'Profile', icon: Icons.person_outline, path: '/profile'),
-  ];
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Scaffold(
+      backgroundColor: dark ? AppColors.backgroundDark : AppColors.background,
+      body: child,
+      bottomNavigationBar: const _NavBar(),
+    );
+  }
+}
+
+class _NavBar extends StatelessWidget {
+  const _NavBar();
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final dark = Theme.of(context).brightness == Brightness.dark;
     final location = GoRouterState.of(context).matchedLocation;
-    final currentIndex =
-        _tabs.indexWhere((t) => location.startsWith(t.path));
+    final tabs = [
+      _Tab(Icons.home_rounded, l10n.navHome, '/home'),
+      _Tab(Icons.receipt_long_rounded, l10n.navExpenses, '/expenses'),
+      _Tab(Icons.school_rounded, l10n.navLearn, '/learn'),
+      _Tab(Icons.emoji_events_rounded, l10n.navRanking, '/leaderboard'),
+      _Tab(Icons.person_rounded, l10n.navProfile, '/profile'),
+    ];
+    final index = tabs.indexWhere((tab) {
+      if (tab.path == '/expenses') {
+        return location.startsWith('/expenses') ||
+            location.startsWith('/charts');
+      }
+      if (tab.path == '/profile') {
+        return location.startsWith('/profile') || location.startsWith('/shop');
+      }
+      return location.startsWith(tab.path);
+    });
+    final current = index < 0 ? 0 : index;
 
-    return Scaffold(
-      body: child,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentIndex < 0 ? 0 : currentIndex,
-        onTap: (i) => context.go(_tabs[i].path),
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textSecondary,
-        type: BottomNavigationBarType.fixed,
-        items: _tabs
-            .map(
-              (t) => BottomNavigationBarItem(
-                icon: Icon(t.icon),
-                label: t.label,
+    return ColoredBox(
+      color: dark ? AppColors.nightNav : AppColors.surface,
+      child: SizedBox(
+        height: 80,
+        child: Row(
+          children: [
+            for (var i = 0; i < tabs.length; i++)
+              Expanded(
+                child: _NavItem(
+                  tab: tabs[i],
+                  selected: i == current,
+                  dark: dark,
+                  onTap: () => context.go(tabs[i].path),
+                ),
               ),
-            )
-            .toList(),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _TabDef {
-  const _TabDef(
-      {required this.label, required this.icon, required this.path});
-
-  final String label;
+class _Tab {
+  const _Tab(this.icon, this.label, this.path);
   final IconData icon;
+  final String label;
   final String path;
+}
+
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.tab,
+    required this.selected,
+    required this.dark,
+    required this.onTap,
+  });
+
+  final _Tab tab;
+  final bool selected;
+  final bool dark;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = dark
+        ? AppColors.nightNavIcon
+        : (selected ? AppColors.primary : AppColors.textSecondary);
+    final pill = dark ? AppColors.nightNavActive : AppColors.mint;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(4, 8, 4, 18),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: selected ? pill : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(tab.icon, color: color, size: 25),
+              const SizedBox(height: 2),
+              Text(
+                tab.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  height: 1.2,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

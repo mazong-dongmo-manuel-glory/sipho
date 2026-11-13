@@ -36,7 +36,8 @@ class NextFixedExpenseCard extends StatelessWidget {
               color: AppColors.primary.withAlpha(20),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Center(child: Text('📶', style: TextStyle(fontSize: 22))),
+            child:
+                const Center(child: Text('📶', style: TextStyle(fontSize: 22))),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
@@ -46,7 +47,8 @@ class NextFixedExpenseCard extends StatelessWidget {
                 Text(title, style: AppTextStyles.bodySemiBold),
                 Text(
                   '$amount · $dueLabel',
-                  style: AppTextStyles.labelSm.copyWith(color: AppColors.textSecondary),
+                  style: AppTextStyles.labelSm
+                      .copyWith(color: AppColors.textSecondary),
                 ),
               ],
             ),
@@ -65,4 +67,3 @@ class NextFixedExpenseCard extends StatelessWidget {
     );
   }
 }
-

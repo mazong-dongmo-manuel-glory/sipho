@@ -1,18 +1,27 @@
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
-import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import { getFirestore, FieldValue, Firestore, Timestamp } from "firebase-admin/firestore";
 import { logger } from "../shared/logger";
 import { XP_CONFIG, xpToLevel } from "../shared/xpConfig";
 import { idempotencyKey, checkAndMarkIdempotencyKey } from "../shared/idempotency";
+import { initialGameStatePayload, normalizeGameState } from "../shared/gameState";
 
-const db = () => getFirestore();
+const db = (): Firestore => getFirestore();
+
+interface StoredTransaction {
+  amountCents?: number;
+  amountMainCents?: number;
+  category?: string;
+  date?: string | Timestamp;
+  source?: string;
+}
 
 /**
- * Triggered on every transaction write (create/update/delete).
- * Responsibilities:
- *   1. Update monthly aggregates (income / expenses by category)
- *   2. Award XP (capped per day) for new transactions
- *   3. Update active quest progress
- *   4. Emit budget alert when spending > threshold
+ * Triggered on every transaction create/update/delete under `users/{uid}/transactions/{txId}`.
+ * Handles:
+ *   1. Accurate monthly aggregates (create, edit delta, and delete)
+ *   2. Daily-capped XP on creation (never re-awarded on edits)
+ *   3. Quest progress on creation
+ *   4. Budget/envelope alerts (80% warning, 100% exceeded) deduplicated per month & threshold
  */
 export const onTransactionWrite = onDocumentWritten(
   {
@@ -22,86 +31,162 @@ export const onTransactionWrite = onDocumentWritten(
   async (event) => {
     const uid = event.params.uid;
     const txId = event.params.txId;
+    const eventKey = idempotencyKey("onTransactionWrite", event.id);
+    if (await checkAndMarkIdempotencyKey(eventKey)) return;
 
-    const before = event.data?.before;
-    const after = event.data?.after;
+    const beforeData = event.data?.before.exists
+      ? (event.data.before.data() as StoredTransaction)
+      : undefined;
+    const afterData = event.data?.after.exists
+      ? (event.data.after.data() as StoredTransaction)
+      : undefined;
 
-    // Skip deletes
-    if (!after?.exists) return;
+    if (!beforeData && !afterData) return;
 
-    const tx = after.data() as {
-      amountCents: number;
-      category: string;
-      type: "income" | "expense";
-      date: FirebaseFirestore.Timestamp;
-      processed?: boolean;
-    };
-
-    const ikey = idempotencyKey("onTransactionWrite", uid, txId, after.updateTime?.toMillis().toString() ?? "0");
-    if (await checkAndMarkIdempotencyKey(ikey)) return;
-
-    const monthKey = toMonthKey(tx.date.toDate());
-    const isNew = !before?.exists;
-
+    const isCreate = !beforeData && Boolean(afterData);
     const batch = db().batch();
 
-    // ── 1. Monthly aggregates ──────────────────────────────────────────────────
-    const monthRef = db().doc(`users/${uid}/months/${monthKey}`);
-    const field = tx.type === "income"
-      ? `income.${tx.category}`
-      : `expenses.${tx.category}`;
+    // ── 1. Monthly aggregates (supports create, update across categories/months, delete) ─
+    const touchedCategoryMonths = new Set<string>();
 
-    batch.set(
-      monthRef,
-      { [field]: FieldValue.increment(tx.amountCents), updatedAt: FieldValue.serverTimestamp() },
-      { merge: true }
-    );
-
-    // ── 2. XP (new transaction only, capped per day) ───────────────────────────
-    if (isNew) {
-      const today = toDateKey(tx.date.toDate());
-      const dailyRef = db().doc(`users/${uid}/dailyXp/${today}`);
-      const dailySnap = await dailyRef.get();
-      const earnedToday = (dailySnap.data()?.fromTransactions ?? 0) as number;
-
-      if (earnedToday < XP_CONFIG.transactionMax) {
-        const xpGain = XP_CONFIG.transactionAdd;
-        const gameRef = db().doc(`users/${uid}/game/state`);
-        batch.set(gameRef, { xp: FieldValue.increment(xpGain) }, { merge: true });
+    if (beforeData) {
+      const prevCents = effectiveCents(beforeData);
+      const prevCat = safeCategory(beforeData.category);
+      const prevMonth = extractMonthKey(beforeData.date);
+      if (prevCents > 0 && prevMonth) {
+        const prevMonthRef = db().doc(`users/${uid}/months/${prevMonth}`);
         batch.set(
-          dailyRef,
-          { fromTransactions: FieldValue.increment(xpGain) },
+          prevMonthRef,
+          {
+            totalVariableCents: FieldValue.increment(-prevCents),
+            expenses: { [prevCat]: FieldValue.increment(-prevCents) },
+            updatedAt: FieldValue.serverTimestamp(),
+          },
           { merge: true }
         );
-        logger.info("xp awarded for transaction", { uid, xpGain, today });
       }
-
-      // ── 3. Quest progress ───────────────────────────────────────────────────
-      await updateQuestProgress(uid, "ADD_TRANSACTION", 1);
     }
 
-    // ── 4. Budget alert ───────────────────────────────────────────────────────
-    if (tx.type === "expense") {
-      await checkBudgetAlert(uid, monthKey, tx.category);
+    if (afterData) {
+      const nextCents = effectiveCents(afterData);
+      const nextCat = safeCategory(afterData.category);
+      const nextMonth = extractMonthKey(afterData.date);
+      if (nextCents > 0 && nextMonth) {
+        const nextMonthRef = db().doc(`users/${uid}/months/${nextMonth}`);
+        batch.set(
+          nextMonthRef,
+          {
+            totalVariableCents: FieldValue.increment(nextCents),
+            expenses: { [nextCat]: FieldValue.increment(nextCents) },
+            updatedAt: FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+        touchedCategoryMonths.add(`${nextMonth}::${nextCat}`);
+      }
     }
 
     await batch.commit();
 
-    // Update level after XP change
-    if (isNew) {
-      await recalculateLevel(uid);
+    // ── 2. XP + quest progress on new transaction only ───────────────────────
+    if (isCreate && afterData) {
+      const dayKey = extractDateKey(afterData.date);
+      await awardTransactionXp(uid, txId, dayKey);
+      await updateQuestProgress(uid, "ADD_TRANSACTION", 1);
+    }
+
+    // ── 3. Budget / envelope alert check ─────────────────────────────────────
+    for (const pair of touchedCategoryMonths) {
+      const [monthKey, category] = pair.split("::");
+      if (monthKey && category) {
+        await checkBudgetAlert(uid, monthKey, category);
+      }
     }
   }
 );
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function toMonthKey(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+function effectiveCents(tx: StoredTransaction): number {
+  const raw = typeof tx.amountMainCents === "number" ? tx.amountMainCents : tx.amountCents;
+  if (typeof raw !== "number" || !Number.isFinite(raw)) return 0;
+  const intVal = Math.trunc(raw);
+  return intVal > 0 && intVal < 100_000_000 ? intVal : 0;
 }
 
-function toDateKey(date: Date): string {
-  return date.toISOString().slice(0, 10);
+function safeCategory(category?: string): string {
+  if (!category || typeof category !== "string") return "other";
+  const cleaned = category.trim().replace(/[^a-zA-Z0-9_-]/g, "");
+  return cleaned.length > 0 ? cleaned.slice(0, 40) : "other";
+}
+
+function extractDateKey(date?: string | Timestamp): string {
+  if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}/.test(date)) {
+    return date.slice(0, 10);
+  }
+  if (date && typeof (date as Timestamp).toDate === "function") {
+    return (date as Timestamp).toDate().toISOString().slice(0, 10);
+  }
+  return new Date().toISOString().slice(0, 10);
+}
+
+function extractMonthKey(date?: string | Timestamp): string {
+  return extractDateKey(date).slice(0, 7);
+}
+
+async function awardTransactionXp(uid: string, txId: string, dayKey: string): Promise<void> {
+  const dailyRef = db().doc(`users/${uid}/dailyXp/${dayKey}`);
+  const gameRef = db().doc(`users/${uid}/game/state`);
+  const userRef = db().doc(`users/${uid}`);
+
+  await db().runTransaction(async (t) => {
+    const [dailySnap, gameSnap] = await Promise.all([t.get(dailyRef), t.get(gameRef)]);
+    const earnedToday =
+      typeof dailySnap.data()?.fromTransactions === "number"
+        ? (dailySnap.data()?.fromTransactions as number)
+        : 0;
+
+    if (earnedToday >= XP_CONFIG.transactionMax) return;
+
+    const xpGain = Math.min(
+      XP_CONFIG.transactionAdd,
+      XP_CONFIG.transactionMax - earnedToday
+    );
+    const baseGame = gameSnap.exists
+      ? normalizeGameState(gameSnap.data())
+      : normalizeGameState(initialGameStatePayload());
+    const newXp = baseGame.xp + xpGain;
+    const newLevel = xpToLevel(newXp);
+
+    t.set(
+      gameRef,
+      {
+        xp: newXp,
+        level: newLevel,
+        gems: baseGame.gems,
+        weeklyXp: baseGame.weeklyXp + xpGain,
+        streak: baseGame.streak,
+        leagueId: baseGame.leagueId,
+        badges: baseGame.badges,
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    t.set(
+      dailyRef,
+      { fromTransactions: earnedToday + xpGain, updatedAt: FieldValue.serverTimestamp() },
+      { merge: true }
+    );
+
+    t.set(
+      userRef,
+      { lastActiveDate: dayKey, lastActiveAt: FieldValue.serverTimestamp() },
+      { merge: true }
+    );
+
+    logger.info("xp awarded for transaction", { uid, txId, xpGain, dayKey });
+  });
 }
 
 async function updateQuestProgress(uid: string, type: string, increment: number): Promise<void> {
@@ -112,11 +197,14 @@ async function updateQuestProgress(uid: string, type: string, increment: number)
     .limit(5)
     .get();
 
+  if (questsSnap.empty) return;
+
   const batch = db().batch();
   for (const doc of questsSnap.docs) {
-    const quest = doc.data() as { target: number; progress: number };
-    const newProgress = Math.min(quest.target, (quest.progress ?? 0) + increment);
-    const done = newProgress >= quest.target;
+    const quest = doc.data() as { target?: number; progress?: number };
+    const target = Math.max(1, quest.target ?? 1);
+    const newProgress = Math.min(target, (quest.progress ?? 0) + increment);
+    const done = newProgress >= target;
     batch.update(doc.ref, {
       progress: newProgress,
       ...(done ? { status: "completed", completedAt: FieldValue.serverTimestamp() } : {}),
@@ -125,51 +213,72 @@ async function updateQuestProgress(uid: string, type: string, increment: number)
   await batch.commit();
 }
 
-async function checkBudgetAlert(uid: string, monthKey: string, category: string): Promise<void> {
-  const [monthSnap, budgetSnap] = await Promise.all([
-    db().doc(`users/${uid}/months/${monthKey}`).get(),
-    db().doc(`users/${uid}/budgets/${category}`).get(),
-  ]);
-
-  if (!budgetSnap.exists) return;
-
-  const spent = (monthSnap.data()?.expenses?.[category] ?? 0) as number;
-  const limit = budgetSnap.data()?.limitCents as number;
-
-  if (spent >= limit * 0.9 && spent < limit) {
-    await db().collection(`users/${uid}/alerts`).add({
-      type: "BUDGET_WARNING",
-      category,
-      spentCents: spent,
-      limitCents: limit,
-      pct: Math.round((spent / limit) * 100),
-      createdAt: FieldValue.serverTimestamp(),
-      read: false,
-    });
-    logger.info("budget warning alert created", { uid, category, pct: Math.round((spent / limit) * 100) });
-  } else if (spent >= limit) {
-    await db().collection(`users/${uid}/alerts`).add({
-      type: "BUDGET_EXCEEDED",
-      category,
-      spentCents: spent,
-      limitCents: limit,
-      pct: Math.round((spent / limit) * 100),
-      createdAt: FieldValue.serverTimestamp(),
-      read: false,
-    });
-    logger.info("budget exceeded alert created", { uid, category });
+async function resolveCategoryLimitCents(uid: string, category: string): Promise<number | null> {
+  const budgetSnap = await db().doc(`users/${uid}/budgets/${category}`).get();
+  const budgetData = budgetSnap.data() as { limitCents?: unknown } | undefined;
+  const explicitLimit = budgetData?.limitCents;
+  if (typeof explicitLimit === "number" && explicitLimit > 0) {
+    return Math.trunc(explicitLimit);
   }
+
+  // Fallback: active envelope in `fixedExpenses` for this category.
+  const envSnap = await db()
+    .collection(`users/${uid}/fixedExpenses`)
+    .where("active", "==", true)
+    .where("type", "==", "envelope")
+    .where("category", "==", category)
+    .limit(1)
+    .get();
+
+  const envData = envSnap.docs[0]?.data() as { amountCents?: unknown } | undefined;
+  const envAmount = envData?.amountCents;
+  if (typeof envAmount === "number" && envAmount > 0) {
+    return Math.trunc(envAmount);
+  }
+  return null;
 }
 
-async function recalculateLevel(uid: string): Promise<void> {
-  const gameRef = db().doc(`users/${uid}/game/state`);
-  const snap = await gameRef.get();
-  if (!snap.exists) return;
-  const xp = (snap.data()?.xp ?? 0) as number;
-  const newLevel = xpToLevel(xp);
-  const currentLevel = (snap.data()?.level ?? 0) as number;
-  if (newLevel !== currentLevel) {
-    await gameRef.update({ level: newLevel });
-    logger.info("level up", { uid, newLevel });
-  }
+async function checkBudgetAlert(uid: string, monthKey: string, category: string): Promise<void> {
+  const [monthSnap, userSnap, limitCents] = await Promise.all([
+    db().doc(`users/${uid}/months/${monthKey}`).get(),
+    db().doc(`users/${uid}`).get(),
+    resolveCategoryLimitCents(uid, category),
+  ]);
+
+  if (!limitCents || limitCents <= 0) return;
+
+  const expensesMap = monthSnap.data()?.expenses as Record<string, unknown> | undefined;
+  const rawSpent = expensesMap?.[category];
+  const spent = typeof rawSpent === "number" ? Math.max(0, Math.trunc(rawSpent)) : 0;
+  if (spent <= 0) return;
+
+  const pct = Math.round((spent / limitCents) * 100);
+  const locale = userSnap.data()?.locale === "en" ? "en" : "fr";
+
+  const alertType =
+    spent >= limitCents
+      ? "BUDGET_EXCEEDED"
+      : spent >= limitCents * 0.8
+        ? "BUDGET_WARNING"
+        : null;
+  if (!alertType) return;
+
+  // Deterministic ID prevents spamming the user on every subsequent purchase in the same month.
+  const alertId = `${monthKey}_${category}_${alertType}`;
+  const alertRef = db().doc(`users/${uid}/alerts/${alertId}`);
+  const existing = await alertRef.get();
+  if (existing.exists) return;
+
+  await alertRef.set({
+    type: alertType,
+    category,
+    monthKey,
+    pct,
+    locale,
+    pushed: false,
+    read: false,
+    createdAt: FieldValue.serverTimestamp(),
+  });
+
+  logger.info("budget alert created", { uid, category, alertType, pct });
 }

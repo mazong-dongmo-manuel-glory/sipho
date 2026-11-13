@@ -1,0 +1,96 @@
+import { CallableRequest, HttpsError } from "firebase-functions/v2/https";
+import { getFirestore, Firestore, Timestamp } from "firebase-admin/firestore";
+import { ZodSchema } from "zod";
+import { encodeKey } from "./idempotency";
+import { logger } from "./logger";
+
+const db = (): Firestore => getFirestore();
+
+/**
+ * Default options for authenticated, App-Check-protected v2 callables.
+ * In the local Functions emulator, App Check enforcement is relaxed automatically
+ * only when FUNCTIONS_EMULATOR === "true".
+ */
+export const SECURE_CALLABLE_OPTIONS = {
+  region: "us-central1",
+  enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
+  cors: false,
+} as const;
+
+/**
+ * Extracts the authenticated UID or throws `unauthenticated`.
+ */
+export function requireAuthUid(request: CallableRequest<unknown>): string {
+  const uid = request.auth?.uid;
+  if (!uid || typeof uid !== "string") {
+    throw new HttpsError("unauthenticated", "Authentication is required.");
+  }
+  return uid;
+}
+
+/**
+ * Validates `data` against `schema` or throws `invalid-argument` with a safe message.
+ */
+export function parseInput<T>(schema: ZodSchema<T>, data: unknown): T {
+  const parsed = schema.safeParse(data);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const field = issue?.path.join(".") || "input";
+    throw new HttpsError("invalid-argument", `${field}: ${issue?.message ?? "Invalid input"}`);
+  }
+  return parsed.data;
+}
+
+/**
+ * Per-user sliding-window rate limiter backed by Firestore transactions.
+ * Prevents quota abuse on AI, gamification, and account callables.
+ */
+export async function enforceRateLimit(params: {
+  uid: string;
+  action: string;
+  maxRequests: number;
+  windowMs: number;
+}): Promise<void> {
+  const { uid, action, maxRequests, windowMs } = params;
+  const bucketKey = encodeKey(`rl::${action}::${uid}`);
+  const ref = db().collection("_rateLimits").doc(bucketKey);
+  const nowMs = Date.now();
+
+  const allowed = await db().runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const data = snap.data() as { count?: number; resetAt?: Timestamp } | undefined;
+    const resetAtMs = data?.resetAt?.toMillis() ?? 0;
+
+    if (!snap.exists || resetAtMs <= nowMs) {
+      tx.set(ref, {
+        uid,
+        action,
+        count: 1,
+        resetAt: Timestamp.fromMillis(nowMs + windowMs),
+      });
+      return true;
+    }
+
+    const current = data?.count ?? 0;
+    if (current >= maxRequests) {
+      return false;
+    }
+
+    tx.update(ref, { count: current + 1 });
+    return true;
+  });
+
+  if (!allowed) {
+    logger.warn("rate limit exceeded", { uid, action, maxRequests });
+    throw new HttpsError("resource-exhausted", "Too many requests. Please try again later.");
+  }
+}
+
+/**
+ * Computes a user's local YYYY-MM-DD date string using their stored integer hour offset.
+ */
+export function userLocalDateKey(now: Date, timezoneOffsetHours = 0): string {
+  const clamped = Math.max(-12, Math.min(14, Math.trunc(timezoneOffsetHours)));
+  const shifted = new Date(now.getTime() + clamped * 3_600_000);
+  return shifted.toISOString().slice(0, 10);
+}

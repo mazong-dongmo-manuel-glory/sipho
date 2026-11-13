@@ -1,112 +1,908 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_spacing.dart';
-import 'package:sipho/app/theme/app_text_styles.dart';
+import 'package:sipho/core/ai/sipho_ai_client.dart';
+import 'package:sipho/core/animations/lottie_widget.dart';
 import 'package:sipho/core/money/money.dart';
-import 'package:sipho/core/widgets/game_bar.dart';
-import 'package:sipho/features/home/presentation/economy_card.dart';
-import 'package:sipho/features/home/presentation/next_fixed_expense_card.dart';
-import 'package:sipho/features/home/presentation/quest_card.dart';
-import 'package:sipho/features/home/presentation/remaining_budget_card.dart';
+import 'package:sipho/core/money/money_formatter.dart';
+import 'package:sipho/core/widgets/sipho_art.dart';
+import 'package:sipho/features/expenses/domain/transaction.dart';
+import 'package:sipho/features/expenses/presentation/expense_category_label.dart';
+import 'package:sipho/features/finance/domain/month_summary.dart';
+import 'package:sipho/features/finance/presentation/finance_providers.dart';
+import 'package:sipho/features/finance/presentation/income_sheet.dart';
+import 'package:sipho/features/fixed_expenses/domain/fixed_expense_schedule.dart';
+import 'package:sipho/features/insights/data/insight_service.dart';
+import 'package:sipho/features/insights/domain/insight_text.dart';
+import 'package:sipho/features/insights/presentation/spend_snapshot_builder.dart';
+import 'package:sipho/features/notifications/data/notification_service.dart';
+
+final homeRewardProvider =
+    StateProvider<({String amount, String category})?>((ref) => null);
+
+Future<void> _askInsight(
+  BuildContext context,
+  WidgetRef ref,
+  AppLocalizations l10n,
+) async {
+  final snapshot = buildCurrentSpendSnapshot(ref: ref, context: context);
+  if (!snapshot.hasAnyFinancialData) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.homeInsightEmpty)),
+    );
+    return;
+  }
+  try {
+    await ref.read(insightControllerProvider.notifier).ask(snapshot);
+  } catch (error) {
+    debugPrint('[SiphoAI] Home insight failed: $error');
+    if (!context.mounted) return;
+    await showSiphoAiErrorSnackBar(
+      context,
+      error,
+      l10n,
+      fallback: l10n.homeInsightError,
+    );
+  }
+}
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final palette = _HomePalette(dark);
+    final reward = ref.watch(homeRewardProvider);
+    ref.watch(ensureUserProfileProvider);
+    final monthKey = currentMonthKey();
+    final summary = ref.watch(monthSummaryProvider(monthKey));
+    final transactions =
+        ref.watch(transactionsForMonthProvider(monthKey)).valueOrNull ??
+            const <SiphoTransaction>[];
+    final finance = ref.watch(userFinanceProvider).valueOrNull;
+    final currency = finance?.currency ?? 'CAD';
+    final insightState = ref.watch(insightControllerProvider);
+    final activeAdvice = ref.watch(activeCoachAdviceProvider);
+    ref.listen(pendingNotificationRouteProvider, (previous, next) {
+      if (next == null) return;
+      ref.read(pendingNotificationRouteProvider.notifier).state = null;
+      context.push(next);
+    });
+    final firstName = finance?.firstName ?? '';
+    final greeting = firstName.isEmpty ? l10n.homeGuestName : firstName;
+    final latest = transactions.isEmpty ? null : transactions.first;
+    final nextFixed = nextBill(
+      ref.watch(activeFixedExpensesProvider).valueOrNull ?? const [],
+      DateTime.now().day,
+    );
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const GameBar(
-          streakDays: 12,
-          gems: 340,
-          level: 7,
-        ),
-      ),
+      backgroundColor: palette.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.pagePadding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Bonjour Amina !', style: AppTextStyles.h2),
-                      Text(
-                        'Prête à tresser ton nid ?',
-                        style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+        bottom: false,
+        child: Stack(
+          children: [
+            ListView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.pagePadding,
+                8,
+                AppSpacing.pagePadding,
+                24,
+              ),
+              children: [
+                Row(
+                  children: [
+                    const _Pill(
+                      background: AppColors.flamePill,
+                      foreground: AppColors.flameText,
+                      label: '🔥  12',
+                    ),
+                    const SizedBox(width: 16),
+                    const _Pill(
+                      background: AppColors.seedPill,
+                      foreground: AppColors.seedText,
+                      label: '🌾  340',
+                    ),
+                    const SizedBox(width: 16),
+                    _Pill(
+                      background: AppColors.mint,
+                      foreground: AppColors.primaryDark,
+                      label: l10n.homeLevelPill(7),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.homeHello(greeting),
+                            style: TextStyle(
+                              fontFamily: 'Nunito',
+                              fontSize: 26,
+                              fontWeight: FontWeight.w900,
+                              height: 1.2,
+                              color: palette.title,
+                            ),
+                          ),
+                          Text(
+                            l10n.homeFutureLine,
+                            style: TextStyle(
+                              fontFamily: 'Nunito',
+                              fontSize: 14,
+                              height: 1.2,
+                              color: palette.muted,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
+                    if (reward != null)
+                      const LottieWidget(
+                        assetPath: 'assets/animations/xp_coins.json',
+                        width: 56,
+                        height: 48,
+                      ),
+                    reward == null
+                        ? const SiphoArt.happy(frame: 81)
+                        : const SiphoArt.proud(frame: 81),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _RemainingCard(
+                  l10n: l10n,
+                  palette: palette,
+                  summary: summary,
+                  currency: currency,
+                  onSetIncome: () => showMonthlyIncomeSheet(context, ref),
+                ),
+                const SizedBox(height: 12),
+                if (reward == null)
+                  _NextExpense(
+                    palette: palette,
+                    title: nextFixed != null
+                        ? '${expenseCategoryLabel(l10n, nextFixed.category)} · ${_formatCents(context, nextFixed.amountCents, currency)}'
+                        : latest == null
+                            ? l10n.homeNoExpenseYet
+                            : '${expenseCategoryLabel(l10n, latest.category)} · ${_formatCents(context, latest.amountMainCents ?? latest.amountCents, latest.currency)}',
+                    subtitle: nextFixed != null
+                        ? l10n.homeNextFixed(nextFixed.dueDay)
+                        : latest == null
+                            ? l10n.homeAddFirstExpense
+                            : l10n.homeLatestExpense,
+                    icon: nextFixed != null
+                        ? expenseCategoryIcon(nextFixed.category)
+                        : latest == null
+                            ? Icons.add_rounded
+                            : expenseCategoryIcon(latest.category),
+                  )
+                else
+                  _RewardCard(l10n: l10n, reward: reward),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.homeQuests,
+                  style: TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 19,
+                    fontWeight: FontWeight.w900,
+                    height: 1.2,
+                    color: palette.title,
                   ),
-                  const Text('🐤', style: TextStyle(fontSize: 40)),
-                ],
+                ),
+                const SizedBox(height: 8),
+                _QuestCard(
+                  l10n: l10n,
+                  palette: palette,
+                  loggedCount: transactions.length,
+                  lessonDone: finance?.completedLessonIds.isNotEmpty ?? false,
+                ),
+                const SizedBox(height: 12),
+                if (reward == null)
+                  _EconomyCard(
+                    l10n: l10n,
+                    palette: palette,
+                    insight: activeAdvice,
+                    loading: insightState.loading,
+                    onAsk: () => _askInsight(context, ref, l10n),
+                    onOpenDetail: () => context.push('/economy'),
+                  )
+                else
+                  const _RewardToast(),
+              ],
+            ),
+            if (reward == null)
+              Positioned(
+                right: 20,
+                bottom: 16,
+                child: _AddButton(
+                  onTap: () async {
+                    final added =
+                        await context.push<({String amount, String category})>(
+                      '/expenses/add',
+                    );
+                    if (added != null) {
+                      ref.read(homeRewardProvider.notifier).state = added;
+                    }
+                  },
+                ),
               ),
-              const SizedBox(height: AppSpacing.lg),
-              const RemainingBudgetCard(
-                remaining: Money(cents: 64200, currency: 'CAD'),
-                income: Money(cents: 280000, currency: 'CAD'),
-                fixed: Money(cents: 169000, currency: 'CAD'),
-                spent: Money(cents: 46800, currency: 'CAD'),
-                progressPercent: 0.68,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              NextFixedExpenseCard(
-                title: 'Internet',
-                amount: '75 \$',
-                dueLabel: 'demain',
-                onPay: () {},
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              const Text('Quêtes du jour', style: AppTextStyles.h3),
-              const SizedBox(height: AppSpacing.sm),
-              const QuestCard(
-                title: 'Note 3 dépenses',
-                progress: 2,
-                target: 3,
-                rewardXp: 20,
-                isCompleted: false,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              const QuestCard(
-                title: 'Fais une leçon',
-                progress: 0,
-                target: 1,
-                rewardXp: 20,
-                isCompleted: false,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              const QuestCard(
-                title: 'Reste sous ton budget restos',
-                progress: 1,
-                target: 1,
-                rewardXp: 30,
-                isCompleted: true,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              EconomyCard(
-                headline: 'Inflation alimentaire : 3,4%',
-                impactText: '≈ +11 \$/mois sur ton panier d\'épicerie',
-                onTap: () => context.push('/economy/detail'),
-              ),
-              const SizedBox(height: 80), // Space for FAB & BottomNav
-            ],
-          ),
+          ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/expenses/add'),
-        backgroundColor: AppColors.primary,
-        elevation: 4,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, size: 32, color: Colors.white),
       ),
     );
   }
 }
 
+class _Pill extends StatelessWidget {
+  const _Pill({
+    required this.background,
+    required this.foreground,
+    required this.label,
+  });
+
+  final Color background;
+  final Color foreground;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        height: 36,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Nunito',
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            height: 1.2,
+            color: foreground,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HomePalette {
+  const _HomePalette(this.dark);
+
+  final bool dark;
+
+  Color get background =>
+      dark ? AppColors.backgroundDark : AppColors.background;
+  Color get card => dark ? AppColors.surfaceDark : AppColors.surface;
+  Color get title => dark ? AppColors.textPrimaryDark : AppColors.primaryDark;
+  Color get muted =>
+      dark ? AppColors.textSecondaryDark : AppColors.textSecondary;
+  Color get kicker => dark ? AppColors.nightKicker : AppColors.primary;
+  Color get paidBackground => dark ? AppColors.nightPaid : AppColors.mint;
+  Color get paidForeground => dark ? AppColors.nightMint : AppColors.primary;
+  Color get economyBackground =>
+      dark ? AppColors.nightEconomy : AppColors.economyCard;
+  Color get read => dark ? AppColors.nightMint : AppColors.primary;
+}
+
+String _formatCents(BuildContext context, int cents, String currency) {
+  return MoneyFormatter.format(
+    Money(cents: cents, currency: currency),
+    locale: Localizations.localeOf(context).toString(),
+  );
+}
+
+String _monthName(BuildContext context, DateTime month) {
+  final raw =
+      DateFormat.MMMM(Localizations.localeOf(context).toString()).format(month);
+  if (raw.isEmpty) return raw;
+  return raw[0].toUpperCase() + raw.substring(1);
+}
+
+class _RemainingCard extends StatelessWidget {
+  const _RemainingCard({
+    required this.l10n,
+    required this.palette,
+    required this.summary,
+    required this.currency,
+    required this.onSetIncome,
+  });
+
+  final AppLocalizations l10n;
+  final _HomePalette palette;
+  final AsyncValue<MonthSummary> summary;
+  final String currency;
+  final VoidCallback onSetIncome;
+
+  @override
+  Widget build(BuildContext context) {
+    final data = summary.valueOrNull;
+    final loading = summary.isLoading && data == null;
+    final hasIncome = data?.hasIncome ?? false;
+    final amount = loading
+        ? '…'
+        : data == null
+            ? l10n.expensesLoadError
+            : hasIncome
+                ? _formatCents(context, data.remainingCents, currency)
+                : '—';
+    final caption = data != null && hasIncome
+        ? l10n.homeRemainingCaptionMonth(_monthName(context, DateTime.now()))
+        : l10n.homeSetIncome;
+    final breakdown = data == null
+        ? ''
+        : l10n.homeRemainingBreakdownValues(
+            _formatCents(context, data.incomeCents, currency),
+            _formatCents(context, data.fixedCents, currency),
+            _formatCents(context, data.spentCents, currency),
+          );
+    final amountColor = data != null && hasIncome && data.remainingCents < 0
+        ? AppColors.terracotta
+        : palette.title;
+
+    return GestureDetector(
+      onTap: onSetIncome,
+      child: Container(
+        height: 226,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: palette.card,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              top: 13,
+              left: 16,
+              right: 16,
+              child: Text(
+                l10n.homeRemainingKicker,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  height: 1.2,
+                  color: palette.kicker,
+                ),
+              ),
+            ),
+            Positioned(
+              top: 30,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: SizedBox(
+                  width: 170,
+                  height: 170,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Positioned(
+                        left: 4.64,
+                        top: 4.64,
+                        child: SvgPicture.asset(
+                          'assets/images/gauge_ring.svg',
+                          width: 160.727,
+                          height: 160.727,
+                        ),
+                      ),
+                      Positioned(
+                        left: 13.4,
+                        top: 4.64,
+                        child: SvgPicture.asset(
+                          'assets/images/gauge_available.svg',
+                          width: 151.968,
+                          height: 160.727,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 78,
+              left: 16,
+              right: 16,
+              child: Text(
+                amount,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: amount.length > 10 ? 28 : 43,
+                  fontWeight: FontWeight.w900,
+                  height: 1.2,
+                  color: amountColor,
+                ),
+              ),
+            ),
+            Positioned(
+              top: 128,
+              left: 16,
+              right: 16,
+              child: Text(
+                caption,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 10,
+                  height: 1.2,
+                  color: palette.muted,
+                ),
+              ),
+            ),
+            Positioned(
+              top: 204,
+              left: 8,
+              right: 8,
+              child: Text(
+                breakdown,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
+                  color: palette.muted,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NextExpense extends StatelessWidget {
+  const _NextExpense({
+    required this.palette,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+  });
+
+  final _HomePalette palette;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 63,
+      padding: const EdgeInsets.symmetric(horizontal: 13),
+      decoration: BoxDecoration(
+        color: palette.card,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.primary, size: 25),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                    color: palette.title,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 12,
+                    height: 1.2,
+                    color: palette.muted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuestCard extends StatelessWidget {
+  const _QuestCard({
+    required this.l10n,
+    required this.palette,
+    required this.loggedCount,
+    required this.lessonDone,
+  });
+
+  final AppLocalizations l10n;
+  final _HomePalette palette;
+  final int loggedCount;
+  final bool lessonDone;
+
+  @override
+  Widget build(BuildContext context) {
+    final logged = loggedCount.clamp(0, 3);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+      decoration: BoxDecoration(
+        color: palette.card,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        children: [
+          _QuestRow(
+            icon: Icons.edit_note_rounded,
+            color: AppColors.primary,
+            titleColor: palette.title,
+            muted: palette.muted,
+            title: l10n.homeQuestExpenses,
+            progress: logged / 3,
+            trailing: logged >= 3 ? '✓' : '$logged/3',
+          ),
+          _QuestRow(
+            icon: Icons.school_rounded,
+            color: AppColors.terracotta,
+            titleColor: palette.title,
+            muted: palette.muted,
+            title: l10n.homeQuestLesson,
+            progress: lessonDone ? 1 : 0,
+            trailing: lessonDone ? '✓' : '0/1',
+          ),
+          _QuestRow(
+            icon: Icons.restaurant_rounded,
+            color: AppColors.primary,
+            titleColor: palette.title,
+            muted: palette.muted,
+            title: l10n.homeQuestRestaurants,
+            progress: 1,
+            trailing: '✓',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuestRow extends StatelessWidget {
+  const _QuestRow({
+    required this.icon,
+    required this.color,
+    required this.titleColor,
+    required this.muted,
+    required this.title,
+    required this.progress,
+    required this.trailing,
+  });
+
+  final IconData icon;
+  final Color color;
+  final Color titleColor;
+  final Color muted;
+  final String title;
+  final double progress;
+  final String trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 21),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                    color: titleColor,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(9),
+                  child: SizedBox(
+                    height: 7,
+                    child: Stack(
+                      children: [
+                        const ColoredBox(color: AppColors.border),
+                        FractionallySizedBox(
+                          widthFactor: progress,
+                          child: const ColoredBox(color: AppColors.primary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            trailing,
+            style: TextStyle(
+              fontFamily: 'Nunito',
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: muted,
+            ),
+          ),
+          const Icon(Icons.card_giftcard, size: 16, color: AppColors.gift),
+        ],
+      ),
+    );
+  }
+}
+
+class _EconomyCard extends StatelessWidget {
+  const _EconomyCard({
+    required this.l10n,
+    required this.palette,
+    required this.onAsk,
+    required this.onOpenDetail,
+    required this.loading,
+    this.insight,
+  });
+
+  final AppLocalizations l10n;
+  final _HomePalette palette;
+  final VoidCallback onAsk;
+  final VoidCallback onOpenDetail;
+  final bool loading;
+  final InsightText? insight;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onOpenDetail,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 10, 72, 12),
+        decoration: BoxDecoration(
+          color: palette.economyBackground,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.accent),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              insight == null || insight!.title.isEmpty
+                  ? '💡  ${l10n.coachTitle}'
+                  : '💡  ${insight!.title}',
+              style: TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                height: 1.2,
+                color: palette.title,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              insight?.body ?? l10n.coachSubtitle,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 12,
+                height: 1.2,
+                color: palette.muted,
+              ),
+            ),
+            if (insight != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                l10n.adviceDisclaimer,
+                style: TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 11,
+                  height: 1.2,
+                  color: palette.muted,
+                ),
+              ),
+            ],
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                GestureDetector(
+                  onTap:
+                      loading ? null : (insight == null ? onAsk : onOpenDetail),
+                  child: Text(
+                    loading
+                        ? l10n.homeInsightWorking
+                        : (insight == null
+                            ? l10n.homeInsightAsk
+                            : l10n.coachOpenCard),
+                    style: TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      height: 1.2,
+                      color: palette.read,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RewardCard extends StatelessWidget {
+  const _RewardCard({required this.l10n, required this.reward});
+
+  final AppLocalizations l10n;
+  final ({String amount, String category}) reward;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 63,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: AppColors.mint,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.rewardAdded(reward.amount, reward.category),
+                  style: const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                    color: AppColors.primaryDark,
+                  ),
+                ),
+                Text(
+                  l10n.rewardHabit,
+                  style: const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 12,
+                    height: 1.2,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            l10n.rewardXp,
+            style: const TextStyle(
+              fontFamily: 'Nunito',
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              height: 1.2,
+              color: AppColors.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RewardToast extends StatelessWidget {
+  const _RewardToast();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 56,
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: AppColors.primaryDark,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text(
+        AppLocalizations.of(context).rewardToast,
+        style: const TextStyle(
+          fontFamily: 'Nunito',
+          fontSize: 14,
+          fontWeight: FontWeight.w800,
+          height: 1.2,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+}
+
+class _AddButton extends StatelessWidget {
+  const _AddButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: AppLocalizations.of(context).addExpenseCta,
+      child: GestureDetector(
+        onTap: onTap,
+        child: SizedBox(
+          width: 56,
+          height: 59.5,
+          child: Stack(
+            children: [
+              Positioned(
+                top: 3.5,
+                child: Container(
+                  width: 56,
+                  height: 56,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primaryDark,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+              Container(
+                width: 56,
+                height: 56,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: const Text(
+                  '+',
+                  style: TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 30,
+                    fontWeight: FontWeight.w900,
+                    height: 1,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

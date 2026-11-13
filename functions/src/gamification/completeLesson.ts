@@ -1,81 +1,137 @@
-import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import { onCall } from "firebase-functions/v2/https";
+import { getFirestore, FieldValue, Firestore } from "firebase-admin/firestore";
 import { CompleteLessonInputSchema } from "../shared/validators";
 import { XP_CONFIG, xpToLevel } from "../shared/xpConfig";
-import { idempotencyKey, checkAndMarkIdempotencyKey } from "../shared/idempotency";
+import { idempotencyKey, encodeKey } from "../shared/idempotency";
+import {
+  SECURE_CALLABLE_OPTIONS,
+  enforceRateLimit,
+  parseInput,
+  requireAuthUid,
+  userLocalDateKey,
+} from "../shared/security";
+import {
+  computeNextStreak,
+  initialGameStatePayload,
+  normalizeGameState,
+} from "../shared/gameState";
 import { logger } from "../shared/logger";
 
-const db = () => getFirestore();
+const db = (): Firestore => getFirestore();
 
 /**
- * Callable: validate lesson completion, award XP and seeds, update streak.
- *
- * Client sends: { lessonId, score (0-100), durationSeconds }
- * Server returns: { xpGained, seedsGained, newStreak, levelUp }
+ * Callable: validate lesson completion, award XP and gems/seeds, update streak,
+ * and sync public profile without ever exposing money amounts.
  */
-export const completeLesson = onCall(
-  { region: "us-central1", enforceAppCheck: true },
-  async (request) => {
-    if (!request.auth) throw new HttpsError("unauthenticated", "Login required");
-    const uid = request.auth.uid;
+export const completeLesson = onCall(SECURE_CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const { lessonId, score, durationSeconds, attemptId } = parseInput(
+    CompleteLessonInputSchema,
+    request.data
+  );
 
-    // Validate input
-    const parsed = CompleteLessonInputSchema.safeParse(request.data);
-    if (!parsed.success) {
-      throw new HttpsError("invalid-argument", parsed.error.message);
+  await enforceRateLimit({
+    uid,
+    action: "completeLesson",
+    maxRequests: 25,
+    windowMs: 60 * 60 * 1000,
+  });
+
+  const userRef = db().doc(`users/${uid}`);
+  const gameRef = db().doc(`users/${uid}/game/state`);
+  const lessonProgressRef = db().doc(`users/${uid}/lessonProgress/${lessonId}`);
+  const lessonHistoryRef = db().doc(`users/${uid}/lessonHistory/${lessonId}`);
+  const publicRef = db().doc(`publicProfiles/${uid}`);
+
+  const result = await db().runTransaction(async (tx) => {
+    const [userSnap, gameSnap, existingProgressSnap] = await Promise.all([
+      tx.get(userRef),
+      tx.get(gameRef),
+      tx.get(lessonProgressRef),
+    ]);
+
+    const tzOffset =
+      typeof userSnap.data()?.timezoneOffset === "number"
+        ? (userSnap.data()?.timezoneOffset as number)
+        : 0;
+    const today = userLocalDateKey(new Date(), tzOffset);
+
+    const idemKey = idempotencyKey("completeLesson", uid, lessonId, attemptId ?? today);
+    const idemRef = db().collection("_idempotency").doc(encodeKey(idemKey));
+    const idemSnap = await tx.get(idemRef);
+    if (idemSnap.exists) {
+      const currentGame = normalizeGameState(gameSnap.data());
+      return {
+        xpGained: 0,
+        seedsGained: 0,
+        newStreak: currentGame.streak.current,
+        levelUp: false,
+        newLevel: currentGame.level,
+        alreadyCompleted: true,
+      };
     }
-    const { lessonId, score, durationSeconds } = parsed.data;
 
-    // Idempotency: use attempt token from client if present, else uid+lesson+day
-    const attemptId = (request.data as { attemptId?: string }).attemptId ??
-      new Date().toISOString().slice(0, 10);
-    const ikey = idempotencyKey("completeLesson", uid, lessonId, attemptId);
-    if (await checkAndMarkIdempotencyKey(ikey)) {
-      logger.info("completeLesson: duplicate attempt skipped", { uid, lessonId });
-      throw new HttpsError("already-exists", "Lesson already completed with this attempt ID");
-    }
+    const baseGame = gameSnap.exists
+      ? normalizeGameState(gameSnap.data())
+      : normalizeGameState(initialGameStatePayload());
 
-    // Load game state
-    const gameRef = db().doc(`users/${uid}/game/state`);
-    const gameSnap = await gameRef.get();
-    if (!gameSnap.exists) throw new HttpsError("not-found", "Game state not found");
-    const game = gameSnap.data() as {
-      xp: number;
-      seeds: number;
-      level: number;
-      streak: number;
-      lastLessonDate?: string;
-    };
-
-    // ── XP calculation ────────────────────────────────────────────────────────
+    // Replay of an already-mastered lesson gives capped practice XP (prevents XP farming).
+    const alreadyCompletedBefore = existingProgressSnap.exists;
     const isPerfect = score === 100;
-    let xpGained = isPerfect ? XP_CONFIG.lessonPerfect : XP_CONFIG.lessonComplete;
+    let xpGained = alreadyCompletedBefore
+      ? 2
+      : isPerfect
+        ? XP_CONFIG.lessonPerfect
+        : XP_CONFIG.lessonComplete;
 
-    // Streak bonus
-    const today = new Date().toISOString().slice(0, 10);
-    const { newStreak, streakBonus } = calculateStreak(game.streak, game.lastLessonDate, today);
-    if (streakBonus) xpGained += XP_CONFIG.lessonBonusStreak;
+    const { nextStreak, streakBonus } = computeNextStreak(baseGame.streak, today);
+    if (streakBonus && !alreadyCompletedBefore) {
+      xpGained += XP_CONFIG.lessonBonusStreak;
+    }
 
-    // ── Seeds (virtual currency for power-ups) ────────────────────────────────
-    const seedsGained = isPerfect ? 5 : score >= 70 ? 3 : 1;
-
-    // ── Persist ───────────────────────────────────────────────────────────────
-    const oldLevel = game.level;
-    const newXp = game.xp + xpGained;
+    const seedsGained = alreadyCompletedBefore ? 0 : isPerfect ? 5 : score >= 70 ? 3 : 1;
+    const newXp = baseGame.xp + xpGained;
     const newLevel = xpToLevel(newXp);
+    const levelUp = newLevel > baseGame.level;
 
-    const batch = db().batch();
-    batch.update(gameRef, {
-      xp: FieldValue.increment(xpGained),
-      seeds: FieldValue.increment(seedsGained),
-      streak: newStreak,
-      lastLessonDate: today,
-      level: newLevel,
-      updatedAt: FieldValue.serverTimestamp(),
+    tx.set(idemRef, {
+      key: idemKey,
+      processedAt: FieldValue.serverTimestamp(),
     });
 
-    // Record lesson history
-    batch.set(db().doc(`users/${uid}/lessonHistory/${lessonId}`), {
+    tx.set(
+      gameRef,
+      {
+        xp: newXp,
+        level: newLevel,
+        gems: baseGame.gems + seedsGained,
+        weeklyXp: baseGame.weeklyXp + xpGained,
+        streak: nextStreak,
+        badges: baseGame.badges,
+        leagueId: baseGame.leagueId,
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    tx.set(
+      lessonProgressRef,
+      {
+        lessonId,
+        bestScore: Math.max(
+          score,
+          typeof existingProgressSnap.data()?.bestScore === "number"
+            ? (existingProgressSnap.data()?.bestScore as number)
+            : 0
+        ),
+        attempts: FieldValue.increment(1),
+        lastDurationSeconds: durationSeconds,
+        completedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    tx.set(lessonHistoryRef, {
       lessonId,
       score,
       durationSeconds,
@@ -84,49 +140,71 @@ export const completeLesson = onCall(
       seedsGained,
     });
 
-    // Update quest progress
-    batch.set(db().collection(`users/${uid}/questProgress`).doc(), {
-      type: "COMPLETE_LESSON",
-      lessonId,
-      timestamp: FieldValue.serverTimestamp(),
-    });
+    if (userSnap.exists) {
+      tx.update(userRef, {
+        completedLessonIds: FieldValue.arrayUnion(lessonId),
+        lastActiveDate: today,
+        lastActiveAt: FieldValue.serverTimestamp(),
+      });
+    }
 
-    await batch.commit();
-
-    logger.info("lesson completed", { uid, lessonId, score, xpGained, newStreak });
+    tx.set(
+      publicRef,
+      {
+        level: newLevel,
+        streak: nextStreak.current,
+        league: baseGame.leagueId,
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
 
     return {
       xpGained,
       seedsGained,
-      newStreak,
-      levelUp: newLevel > oldLevel,
+      newStreak: nextStreak.current,
+      levelUp,
       newLevel,
+      alreadyCompleted: false,
     };
+  });
+
+  if (!result.alreadyCompleted) {
+    await advanceLessonQuests(uid);
   }
-);
 
-// ─── Helper ───────────────────────────────────────────────────────────────────
+  logger.info("lesson completed", {
+    uid,
+    lessonId,
+    score,
+    xpGained: result.xpGained,
+    newStreak: result.newStreak,
+  });
 
-function calculateStreak(
-  currentStreak: number,
-  lastLessonDate: string | undefined,
-  today: string
-): { newStreak: number; streakBonus: boolean } {
-  if (!lastLessonDate) return { newStreak: 1, streakBonus: false };
+  return result;
+});
 
-  const last = new Date(lastLessonDate);
-  const now = new Date(today);
-  const diffDays = Math.floor((now.getTime() - last.getTime()) / 86_400_000);
+async function advanceLessonQuests(uid: string): Promise<void> {
+  const snap = await db()
+    .collection(`users/${uid}/quests`)
+    .where("type", "in", ["COMPLETE_LESSON", "daily_lesson"])
+    .where("status", "==", "active")
+    .limit(5)
+    .get();
 
-  if (diffDays === 0) {
-    // Already completed today — maintain streak, no bonus
-    return { newStreak: currentStreak, streakBonus: false };
-  } else if (diffDays === 1) {
-    // Consecutive day
-    const newStreak = currentStreak + 1;
-    return { newStreak, streakBonus: newStreak >= 7 };
-  } else {
-    // Streak broken
-    return { newStreak: 1, streakBonus: false };
+  if (snap.empty) return;
+
+  const batch = db().batch();
+  for (const doc of snap.docs) {
+    const data = doc.data() as { target?: number; progress?: number };
+    const target = Math.max(1, data.target ?? 1);
+    const next = Math.min(target, (data.progress ?? 0) + 1);
+    batch.update(doc.ref, {
+      progress: next,
+      ...(next >= target
+        ? { status: "completed", completedAt: FieldValue.serverTimestamp() }
+        : {}),
+    });
   }
+  await batch.commit();
 }

@@ -40,16 +40,17 @@ class EconomyCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     impactText,
-                    style: AppTextStyles.label.copyWith(color: AppColors.terracotta),
+                    style: AppTextStyles.label
+                        .copyWith(color: AppColors.terracotta),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textSecondary),
+            const Icon(Icons.arrow_forward_ios,
+                size: 14, color: AppColors.textSecondary),
           ],
         ),
       ),
     );
   }
 }
-

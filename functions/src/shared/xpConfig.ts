@@ -1,53 +1,50 @@
 /**
- * XP Configuration — simulates Remote Config values.
- * All XP is awarded server-side only.
+ * XP Configuration — server-only constants (mirrors Remote Config defaults).
+ * All XP, levels, gems/seeds, and streaks are computed exclusively on the server.
  */
 export const XP_CONFIG = {
-  // Lesson completion
-  lessonPerfect: 20,       // 100% score
-  lessonComplete: 10,      // < 100% score
-  lessonBonusStreak: 5,    // streak >= 7 days
+  lessonPerfect: 20,
+  lessonComplete: 10,
+  lessonBonusStreak: 5,
 
-  // Transactions
-  transactionAdd: 2,       // adding a transaction
-  transactionMax: 10,      // max XP per day from transactions
+  transactionAdd: 2,
+  transactionMax: 10,
 
-  // Fixed expenses
-  fixedPaid: 5,            // marking a fixed expense as paid
+  fixedPaid: 5,
 
-  // Referrals
-  referralInviter: 50,     // when a referral completes onboarding
-  referralInvitee: 25,     // when invitee completes onboarding
+  referralInviter: 50,
+  referralInvitee: 25,
 
-  // Quests
   questDailyComplete: 15,
   questWeeklyComplete: 50,
 
-  // Level thresholds (cumulative XP needed)
+  // Level 1 starts at 0 XP (matches Flutter GameState default level = 1).
   levelThresholds: [0, 100, 250, 500, 900, 1400, 2100, 3000, 4200, 5700],
 } as const;
 
 export type XpEvent = keyof Omit<typeof XP_CONFIG, "levelThresholds">;
 
 /**
- * Calculate level from cumulative XP.
+ * Calculates 1-based level from cumulative XP (0 XP => level 1).
  */
 export function xpToLevel(cumulativeXp: number): number {
+  const safeXp = Math.max(0, Math.trunc(cumulativeXp));
   const { levelThresholds } = XP_CONFIG;
-  let level = 0;
+  let index = 0;
   for (let i = 0; i < levelThresholds.length; i++) {
-    if (cumulativeXp >= levelThresholds[i]) level = i;
+    if (safeXp >= levelThresholds[i]) index = i;
     else break;
   }
-  return level;
+  return index + 1;
 }
 
 /**
- * XP needed for next level.
+ * XP needed to reach the next level (0 when at max threshold).
  */
 export function xpToNextLevel(cumulativeXp: number): number {
+  const safeXp = Math.max(0, Math.trunc(cumulativeXp));
   const { levelThresholds } = XP_CONFIG;
-  const level = xpToLevel(cumulativeXp);
-  if (level >= levelThresholds.length - 1) return 0;
-  return levelThresholds[level + 1] - cumulativeXp;
+  const index = xpToLevel(safeXp) - 1;
+  if (index >= levelThresholds.length - 1) return 0;
+  return levelThresholds[index + 1] - safeXp;
 }

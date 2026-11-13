@@ -17,7 +17,8 @@ class LessonRepository {
         .where('unit', isEqualTo: unit)
         .orderBy('order')
         .snapshots()
-        .map((snap) => snap.docs.map((d) => Lesson.fromJson(d.data())).toList());
+        .map(
+            (snap) => snap.docs.map((d) => Lesson.fromJson(d.data())).toList());
   }
 
   Future<Lesson?> getLesson(String id) async {
@@ -26,4 +27,3 @@ class LessonRepository {
     return Lesson.fromJson(doc.data()!);
   }
 }
-

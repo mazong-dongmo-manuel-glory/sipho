@@ -19,8 +19,7 @@ class AnalyticsService {
   Future<void> logSignUp(String method) =>
       _analytics.logSignUp(signUpMethod: method);
 
-  Future<void> logOnboardingComplete() =>
-      _analytics.logTutorialComplete();
+  Future<void> logOnboardingComplete() => _analytics.logTutorialComplete();
 
   Future<void> logExpenseAdded({
     required String category,
@@ -38,11 +37,21 @@ class AnalyticsService {
         },
       );
 
-  Future<void> logBudgetViewed() =>
-      _analytics.logEvent(name: 'budget_viewed');
-
-  Future<void> logLessonStarted(String lessonId) =>
+  Future<void> logFixedExpenseAdded({
+    required String category,
+    required int amountCents,
+  }) =>
       _analytics.logEvent(
+        name: 'fixed_expense_added',
+        parameters: {
+          'category': category,
+          'amount_cents': amountCents,
+        },
+      );
+
+  Future<void> logBudgetViewed() => _analytics.logEvent(name: 'budget_viewed');
+
+  Future<void> logLessonStarted(String lessonId) => _analytics.logEvent(
         name: 'lesson_started',
         parameters: {'lesson_id': lessonId},
       );
@@ -61,23 +70,19 @@ class AnalyticsService {
         },
       );
 
-  Future<void> logStreakUpdated(int streakDays) =>
-      _analytics.logEvent(
+  Future<void> logStreakUpdated(int streakDays) => _analytics.logEvent(
         name: 'streak_updated',
         parameters: {'streak_days': streakDays},
       );
 
-  Future<void> logStreakLost() =>
-      _analytics.logEvent(name: 'streak_lost');
+  Future<void> logStreakLost() => _analytics.logEvent(name: 'streak_lost');
 
-  Future<void> logQuestCompleted(String questId) =>
-      _analytics.logEvent(
+  Future<void> logQuestCompleted(String questId) => _analytics.logEvent(
         name: 'quest_completed',
         parameters: {'quest_id': questId},
       );
 
-  Future<void> logChestOpened(String tier) =>
-      _analytics.logEvent(
+  Future<void> logChestOpened(String tier) => _analytics.logEvent(
         name: 'chest_opened',
         parameters: {'tier': tier},
       );
@@ -85,11 +90,10 @@ class AnalyticsService {
   Future<void> logReceiptScanned({required bool success}) =>
       _analytics.logEvent(
         name: 'receipt_scanned',
-        parameters: {'success': success},
+        parameters: {'success': success ? 'true' : 'false'},
       );
 
-  Future<void> logFixedExpensePaid(String id) =>
-      _analytics.logEvent(
+  Future<void> logFixedExpensePaid(String id) => _analytics.logEvent(
         name: 'fixed_expense_paid',
         parameters: {'id': id},
       );

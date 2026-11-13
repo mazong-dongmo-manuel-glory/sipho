@@ -1,9 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sipho/core/firebase/firebase_providers.dart';
 import 'package:sipho/features/expenses/domain/transaction.dart';
 
 final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
-  return TransactionRepository(FirebaseFirestore.instance);
+  return TransactionRepository(ref.watch(firestoreProvider));
 });
 
 class TransactionRepository {
@@ -11,7 +12,8 @@ class TransactionRepository {
 
   TransactionRepository(this._firestore);
 
-  Stream<List<SiphoTransaction>> watchMonthTransactions(String uid, String yearMonth) {
+  Stream<List<SiphoTransaction>> watchMonthTransactions(
+      String uid, String yearMonth) {
     return _firestore
         .collection('users/$uid/transactions')
         .where('date', isGreaterThanOrEqualTo: '$yearMonth-01')
@@ -22,35 +24,60 @@ class TransactionRepository {
               final data = d.data();
               return SiphoTransaction(
                 id: d.id,
-                amountCents: data['amountCents'] ?? 0,
-                currency: data['currency'] ?? 'CAD',
-                amountMainCents: data['amountMainCents'],
+                amountCents: (data['amountCents'] as num?)?.toInt() ?? 0,
+                currency: data['currency'] as String? ?? 'CAD',
+                amountMainCents: (data['amountMainCents'] as num?)?.toInt(),
                 fxRate: (data['fxRate'] as num?)?.toDouble(),
-                category: data['category'] ?? 'other',
-                merchant: data['merchant'],
-                note: data['note'],
-                date: data['date'] ?? '',
-                source: data['source'] ?? 'manual',
-                receiptPath: data['receiptPath'],
-                fixedExpenseId: data['fixedExpenseId'],
-                createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+                category: data['category'] as String? ?? 'other',
+                merchant: data['merchant'] as String?,
+                note: data['note'] as String?,
+                date: data['date'] as String? ?? '',
+                source: data['source'] as String? ?? 'manual',
+                receiptPath: data['receiptPath'] as String?,
+                fixedExpenseId: data['fixedExpenseId'] as String?,
+                createdAt: (data['createdAt'] as Timestamp?)?.toDate() ??
+                    DateTime.now(),
               );
             }).toList());
   }
 
   Future<void> addTransaction(String uid, SiphoTransaction tx) async {
-    await _firestore.collection('users/$uid/transactions').add({
+    final data = <String, dynamic>{
       'amountCents': tx.amountCents,
       'currency': tx.currency,
       'amountMainCents': tx.amountMainCents ?? tx.amountCents,
       'category': tx.category,
-      'merchant': tx.merchant,
-      'note': tx.note,
       'date': tx.date,
       'source': tx.source,
-      'receiptPath': tx.receiptPath,
       'createdAt': FieldValue.serverTimestamp(),
-    });
+    };
+    if (tx.merchant != null) data['merchant'] = tx.merchant;
+    if (tx.note != null) data['note'] = tx.note;
+    if (tx.receiptPath != null) data['receiptPath'] = tx.receiptPath;
+    if (tx.fixedExpenseId != null) data['fixedExpenseId'] = tx.fixedExpenseId;
+    await _firestore.collection('users/$uid/transactions').add(data);
+  }
+
+  Future<void> deleteTransaction(String uid, String id) async {
+    await _firestore.collection('users/$uid/transactions').doc(id).delete();
+  }
+
+  Future<void> updateTransaction(String uid, SiphoTransaction tx) async {
+    final merchant = tx.merchant?.trim() ?? '';
+    final note = tx.note?.trim() ?? '';
+    final data = <String, dynamic>{
+      'amountCents': tx.amountCents,
+      'currency': tx.currency,
+      'amountMainCents': tx.amountMainCents ?? tx.amountCents,
+      'category': tx.category,
+      'date': tx.date,
+      'source': tx.source == 'receipt' ? 'receipt' : 'manual',
+      'merchant': merchant.isEmpty ? FieldValue.delete() : merchant,
+      'note': note.isEmpty ? FieldValue.delete() : note,
+    };
+    await _firestore
+        .collection('users/$uid/transactions')
+        .doc(tx.id)
+        .update(data);
   }
 }
-

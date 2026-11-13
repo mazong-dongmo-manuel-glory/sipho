@@ -13,7 +13,7 @@ class FixedExpense with _$FixedExpense {
     required int amountCents,
     required int dueDay,
     @Default('auto') String payMode, // auto | manual
-    @Default('bill') String type,    // bill | envelope
+    @Default('bill') String type, // bill | envelope
     @Default(true) bool active,
     required DateTime createdAt,
   }) = _FixedExpense;
@@ -21,4 +21,3 @@ class FixedExpense with _$FixedExpense {
   factory FixedExpense.fromJson(Map<String, dynamic> json) =>
       _$FixedExpenseFromJson(json);
 }
-

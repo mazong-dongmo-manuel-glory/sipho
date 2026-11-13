@@ -1,50 +1,53 @@
-import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import { getFirestore, FieldValue, Firestore, Timestamp } from "firebase-admin/firestore";
 import { logger } from "./logger";
 
-const db = () => getFirestore();
+const db = (): Firestore => getFirestore();
 
 /**
- * Idempotency key store backed by Firestore.
- *
- * Usage:
- *   const key = idempotencyKey("completeLesson", uid, lessonId, attemptId);
- *   if (await checkAndMarkIdempotencyKey(key)) return; // already processed
+ * Idempotency key store backed by Firestore transactions so concurrent retries
+ * cannot both pass the check.
  */
-
 export function idempotencyKey(...parts: string[]): string {
   return parts.join("::");
 }
 
 /**
- * Returns `true` if the key was already processed (caller should short-circuit).
- * Atomically marks the key as processed if it wasn't.
+ * Atomically checks and records `key`.
+ * Returns `true` if `key` was already processed (and not yet expired).
  */
 export async function checkAndMarkIdempotencyKey(
   key: string,
-  ttlMs = 7 * 24 * 60 * 60 * 1000 // 7 days
+  ttlMs = 7 * 24 * 60 * 60 * 1000
 ): Promise<boolean> {
   const ref = db().collection("_idempotency").doc(encodeKey(key));
-  const snap = await ref.get();
-  if (snap.exists) {
-    logger.info("idempotency: already processed", { key });
-    return true;
-  }
-  await ref.set({
-    key,
-    processedAt: FieldValue.serverTimestamp(),
-    expiresAt: new Date(Date.now() + ttlMs),
+  const nowMs = Date.now();
+
+  const alreadyProcessed = await db().runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (snap.exists) {
+      const expiresAt = snap.data()?.expiresAt as Timestamp | undefined;
+      if (!expiresAt || expiresAt.toMillis() > nowMs) {
+        return true;
+      }
+    }
+    tx.set(ref, {
+      key,
+      processedAt: FieldValue.serverTimestamp(),
+      expiresAt: Timestamp.fromMillis(nowMs + ttlMs),
+    });
+    return false;
   });
-  return false;
+
+  if (alreadyProcessed) {
+    logger.info("idempotency: already processed", { key });
+  }
+  return alreadyProcessed;
 }
 
-/**
- * Delete a key (e.g. on rollback).
- */
 export async function clearIdempotencyKey(key: string): Promise<void> {
   await db().collection("_idempotency").doc(encodeKey(key)).delete();
 }
 
-function encodeKey(key: string): string {
-  // Firestore doc IDs can't contain forward-slashes
-  return Buffer.from(key).toString("base64url");
+export function encodeKey(key: string): string {
+  return Buffer.from(key).toString("base64url").slice(0, 500);
 }

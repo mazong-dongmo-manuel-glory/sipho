@@ -63,75 +63,88 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.pagePadding,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: _wordmarkTopGap),
-              Text(
-                l10n.welcomeWordmark,
-                style: AppTextStyles.welcomeWordmark,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: _wordmarkToMascot),
-              const Align(child: _WavingSipho()),
-              const SizedBox(height: _mascotToTitle),
-              Text(
-                l10n.welcomeTitle,
-                style: AppTextStyles.welcomeTitle,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: _titleToSubtitle),
-              Text(
-                l10n.welcomeSubtitle,
-                style: AppTextStyles.welcomeSubtitle,
-                textAlign: TextAlign.center,
-              ),
-              const Spacer(),
-              if (authState.hasError)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                  child: Text(
-                    authState.error.toString(),
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.danger,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.pagePadding,
                     ),
-                    textAlign: TextAlign.center,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: _wordmarkTopGap),
+                        Text(
+                          l10n.welcomeWordmark,
+                          style: AppTextStyles.welcomeWordmark,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: _wordmarkToMascot),
+                        const Align(child: _WavingSipho()),
+                        const SizedBox(height: _mascotToTitle),
+                        Text(
+                          l10n.welcomeTitle,
+                          style: AppTextStyles.welcomeTitle,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: _titleToSubtitle),
+                        Text(
+                          l10n.welcomeSubtitle,
+                          style: AppTextStyles.welcomeSubtitle,
+                          textAlign: TextAlign.center,
+                        ),
+                        const Spacer(),
+                        if (authState.hasError)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: AppSpacing.md,
+                            ),
+                            child: Text(
+                              authState.error.toString(),
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.danger,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        SiphoButton3D(
+                          label: l10n.signInWithApple,
+                          onPressed: isBusy ? null : _handleAppleSignIn,
+                          isLoading: _isAppleLoading,
+                          color: AppColors.ink,
+                          shadowColor: AppColors.primaryDark,
+                          textColor: Colors.white,
+                          height: 52,
+                          borderRadius: buttonRadius,
+                        ),
+                        const SizedBox(height: _buttonGap),
+                        SiphoButton3D(
+                          label: l10n.signInWithGoogle,
+                          onPressed: isBusy ? null : _handleGoogleSignIn,
+                          isLoading: _isGoogleLoading,
+                          color: AppColors.surface,
+                          shadowColor: AppColors.border,
+                          textColor: AppColors.primaryDark,
+                          height: 52,
+                          borderRadius: buttonRadius,
+                        ),
+                        const SizedBox(height: _buttonsToLegal),
+                        Text(
+                          l10n.welcomeLegal,
+                          style: AppTextStyles.welcomeLegal,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: _legalBottomGap),
+                      ],
+                    ),
                   ),
                 ),
-              SiphoButton3D(
-                label: l10n.signInWithApple,
-                onPressed: isBusy ? null : _handleAppleSignIn,
-                isLoading: _isAppleLoading,
-                color: AppColors.ink,
-                shadowColor: AppColors.primaryDark,
-                textColor: Colors.white,
-                height: 52,
-                borderRadius: buttonRadius,
               ),
-              const SizedBox(height: _buttonGap),
-              SiphoButton3D(
-                label: l10n.signInWithGoogle,
-                onPressed: isBusy ? null : _handleGoogleSignIn,
-                isLoading: _isGoogleLoading,
-                color: AppColors.surface,
-                shadowColor: AppColors.border,
-                textColor: AppColors.primaryDark,
-                height: 52,
-                borderRadius: buttonRadius,
-              ),
-              const SizedBox(height: _buttonsToLegal),
-              Text(
-                l10n.welcomeLegal,
-                style: AppTextStyles.welcomeLegal,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: _legalBottomGap),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

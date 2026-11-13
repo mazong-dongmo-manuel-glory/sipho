@@ -19,4 +19,3 @@ class Quest with _$Quest {
 
   factory Quest.fromJson(Map<String, dynamic> json) => _$QuestFromJson(json);
 }
-

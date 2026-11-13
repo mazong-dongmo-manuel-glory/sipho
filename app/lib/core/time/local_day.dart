@@ -9,14 +9,12 @@ class LocalDay {
   factory LocalDay.fromUtc(DateTime utc) => LocalDay._(utc.toLocal());
 
   /// ISO-8601 date string in local timezone: "2024-05-01"
-  String get isoDate =>
-      '${_dt.year.toString().padLeft(4, '0')}'
+  String get isoDate => '${_dt.year.toString().padLeft(4, '0')}'
       '-${_dt.month.toString().padLeft(2, '0')}'
       '-${_dt.day.toString().padLeft(2, '0')}';
 
   /// "YYYY-MM" string for monthly aggregation
-  String get isoMonth =>
-      '${_dt.year.toString().padLeft(4, '0')}'
+  String get isoMonth => '${_dt.year.toString().padLeft(4, '0')}'
       '-${_dt.month.toString().padLeft(2, '0')}';
 
   int get year => _dt.year;
@@ -24,8 +22,7 @@ class LocalDay {
   int get day => _dt.day;
   int get weekday => _dt.weekday; // 1=Mon … 7=Sun
 
-  DateTime get startOfDay =>
-      DateTime(_dt.year, _dt.month, _dt.day);
+  DateTime get startOfDay => DateTime(_dt.year, _dt.month, _dt.day);
 
   DateTime get endOfDay =>
       DateTime(_dt.year, _dt.month, _dt.day, 23, 59, 59, 999);

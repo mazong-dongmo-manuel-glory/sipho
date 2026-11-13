@@ -23,13 +23,14 @@ class LottieWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final reduce = MediaQuery.disableAnimationsOf(context);
     return Lottie.asset(
       assetPath,
       width: width,
       height: height,
       fit: fit,
-      repeat: repeat,
-      animate: animate,
+      repeat: repeat && !reduce,
+      animate: animate && !reduce,
       onLoaded: onLoaded,
     );
   }

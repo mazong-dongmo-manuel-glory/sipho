@@ -1,52 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_radius.dart';
 import 'package:sipho/app/theme/app_spacing.dart';
 import 'package:sipho/app/theme/app_text_styles.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
+import 'package:sipho/features/expenses/presentation/expense_category_label.dart';
+import 'package:sipho/features/fixed_expenses/domain/fixed_expense_draft.dart';
 
 class FixedExpenseSwipeScreen extends StatefulWidget {
   const FixedExpenseSwipeScreen({super.key});
 
   @override
-  State<FixedExpenseSwipeScreen> createState() => _FixedExpenseSwipeScreenState();
+  State<FixedExpenseSwipeScreen> createState() =>
+      _FixedExpenseSwipeScreenState();
 }
 
 class _FixedExpenseSwipeScreenState extends State<FixedExpenseSwipeScreen> {
-  final List<Map<String, String>> _defaultExpenses = [
-    {'title': 'Loyer / Hypothèque', 'emoji': '🏠', 'cat': 'rent'},
-    {'title': 'Internet', 'emoji': '📶', 'cat': 'internet'},
-    {'title': 'Électricité & Énergie', 'emoji': '💡', 'cat': 'electricity'},
-    {'title': 'Forfait Mobile', 'emoji': '📱', 'cat': 'phone'},
-    {'title': 'Épicerie (enveloppe)', 'emoji': '🛒', 'cat': 'groceries'},
-    {'title': 'Transport (pass/essence)', 'emoji': '🚌', 'cat': 'transport'},
-  ];
-
   int _currentIndex = 0;
 
-  void _onAnswer(bool isYes) {
+  Future<void> _onAnswer(bool isYes) async {
     if (isYes) {
-      context.push('/fixed-expenses/detail', extra: _defaultExpenses[_currentIndex]);
+      final saved = await context.push<bool>(
+        '/fixed-expenses/amount',
+        extra: kSocleTemplates[_currentIndex],
+      );
+      if (saved != true || !mounted) return;
     }
-    setState(() {
-      if (_currentIndex < _defaultExpenses.length - 1) {
-        _currentIndex++;
-      } else {
-        context.go('/onboarding/celebration');
-      }
-    });
+    if (_currentIndex < kSocleTemplates.length - 1) {
+      setState(() => _currentIndex++);
+      return;
+    }
+    if (mounted) context.go('/onboarding/ready');
   }
 
   @override
   Widget build(BuildContext context) {
-    final item = _defaultExpenses[_currentIndex];
+    final l10n = AppLocalizations.of(context);
+    final item = kSocleTemplates[_currentIndex];
+    final name = expenseCategoryLabel(l10n, item.categoryId);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          '${_currentIndex + 1}/${_defaultExpenses.length} brins du nid',
+          l10n.socleProgress(_currentIndex + 1, kSocleTemplates.length),
           style: AppTextStyles.h3,
         ),
       ),
@@ -73,10 +72,10 @@ class _FixedExpenseSwipeScreenState extends State<FixedExpenseSwipeScreen> {
                 ),
                 child: Column(
                   children: [
-                    Text(item['emoji']!, style: const TextStyle(fontSize: 64)),
+                    Text(item.emoji, style: const TextStyle(fontSize: 64)),
                     const SizedBox(height: AppSpacing.md),
                     Text(
-                      'Tu paies un(e) ${item['title']} ?',
+                      l10n.socleAsk(name),
                       textAlign: TextAlign.center,
                       style: AppTextStyles.h2,
                     ),
@@ -95,13 +94,13 @@ class _FixedExpenseSwipeScreenState extends State<FixedExpenseSwipeScreen> {
                           borderRadius: AppRadius.buttonRadius,
                         ),
                       ),
-                      child: const Text('NON ✕'),
+                      child: Text(l10n.socleNo),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: SiphoButton3D(
-                      text: 'OUI ✓',
+                      text: l10n.socleYes,
                       onPressed: () => _onAnswer(true),
                     ),
                   ),
@@ -114,4 +113,3 @@ class _FixedExpenseSwipeScreenState extends State<FixedExpenseSwipeScreen> {
     );
   }
 }
-

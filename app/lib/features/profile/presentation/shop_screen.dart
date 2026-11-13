@@ -1,68 +1,205 @@
 import 'package:flutter/material.dart';
+import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
-import 'package:sipho/app/theme/app_radius.dart';
 import 'package:sipho/app/theme/app_spacing.dart';
-import 'package:sipho/app/theme/app_text_styles.dart';
 
 class ShopScreen extends StatelessWidget {
   const ShopScreen({super.key});
 
-  static const _items = [
-    {'title': 'Gel de série 🧊', 'desc': 'Protège ta flamme si tu oublies un jour', 'price': '150'},
-    {'title': 'Chapeau d\'explorateur 🤠', 'desc': 'Pour Sipho le tisserin', 'price': '200'},
-    {'title': 'Écharpe Wax Soleil 🧣', 'desc': 'Motif kente jaune et vert', 'price': '300'},
-    {'title': 'Nid Doré Majestueux 🪺', 'desc': 'Décoration spéciale pour ton nid', 'price': '500'},
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final items = [
+      _Item('🎩', l10n.shopHat, '120'),
+      _Item('🕶️', l10n.shopGlasses, '80'),
+      _Item('🧣', l10n.shopScarfGreen, '150', stripe: AppColors.primary),
+      _Item('🧣', l10n.shopScarfClay, '150', stripe: AppColors.terracotta),
+      _Item('🌿', l10n.shopNest, '200'),
+      _Item('❄️', l10n.shopFreeze, '60'),
+    ];
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Boutique de Sipho 🌾'),
-      ),
       body: SafeArea(
-        child: ListView.separated(
-          padding: const EdgeInsets.all(AppSpacing.pagePadding),
-          itemCount: _items.length,
-          separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
-          itemBuilder: (context, i) {
-            final item = _items[i];
-            return Container(
-              padding: const EdgeInsets.all(AppSpacing.cardPadding),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: AppRadius.cardRadius,
-                border: Border.all(color: AppColors.border),
+        bottom: false,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.pagePadding,
+            8,
+            AppSpacing.pagePadding,
+            16,
+          ),
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                    child: _Pill(
+                        AppColors.flamePill, AppColors.flameText, '🔥  12')),
+                const SizedBox(width: 16),
+                const Expanded(
+                    child: _Pill(
+                        AppColors.seedPill, AppColors.seedText, '🌾  340')),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _Pill(AppColors.mint, AppColors.primaryDark,
+                      l10n.homeLevelPill(7)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              l10n.shopTitle,
+              style: const TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+                height: 1.2,
+                color: AppColors.primaryDark,
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(item['title']!, style: AppTextStyles.bodySemiBold),
-                        const SizedBox(height: 2),
-                        Text(item['desc']!, style: AppTextStyles.labelSm),
-                      ],
-                    ),
-                  ),
-                  OutlinedButton(
-                    onPressed: () {},
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      side: const BorderSide(color: AppColors.primary),
-                      shape: const StadiumBorder(),
-                    ),
-                    child: Text('${item['price']} 🌾'),
-                  ),
-                ],
+            ),
+            Text(
+              l10n.shopSubtitle,
+              style: const TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 15,
+                color: AppColors.textSecondary,
               ),
-            );
-          },
+            ),
+            const SizedBox(height: 16),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: items.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisExtent: 165,
+                crossAxisSpacing: 9,
+                mainAxisSpacing: 13,
+              ),
+              itemBuilder: (context, index) =>
+                  _Card(item: items[index], buy: l10n.shopBuy),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              l10n.shopNote,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 11,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
+class _Item {
+  const _Item(this.emoji, this.title, this.price, {this.stripe});
+
+  final String emoji;
+  final String title;
+  final String price;
+  final Color? stripe;
+}
+
+class _Card extends StatelessWidget {
+  const _Card({required this.item, required this.buy});
+
+  final _Item item;
+  final String buy;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          Text(item.emoji, style: const TextStyle(fontSize: 40)),
+          if (item.stripe != null)
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: item.stripe,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          const Spacer(),
+          Text(
+            item.title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontFamily: 'Nunito',
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: AppColors.primaryDark,
+            ),
+          ),
+          Text(
+            '🌾  ${item.price}',
+            style: const TextStyle(
+              fontFamily: 'Nunito',
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: AppColors.warnBrown,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            height: 28,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.mint,
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Text(
+              buy,
+              style: const TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Pill extends StatelessWidget {
+  const _Pill(this.background, this.foreground, this.label);
+
+  final Color background;
+  final Color foreground;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 36,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'Nunito',
+          fontSize: 14,
+          fontWeight: FontWeight.w800,
+          color: foreground,
+        ),
+      ),
+    );
+  }
+}

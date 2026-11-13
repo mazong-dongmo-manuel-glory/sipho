@@ -22,4 +22,3 @@ class CountryPack with _$CountryPack {
   factory CountryPack.fromJson(Map<String, dynamic> json) =>
       _$CountryPackFromJson(json);
 }
-

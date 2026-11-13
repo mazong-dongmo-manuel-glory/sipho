@@ -24,4 +24,3 @@ class SiphoTransaction with _$SiphoTransaction {
   factory SiphoTransaction.fromJson(Map<String, dynamic> json) =>
       _$SiphoTransactionFromJson(json);
 }
-

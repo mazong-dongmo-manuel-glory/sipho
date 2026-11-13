@@ -3,7 +3,8 @@ import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_text_styles.dart';
 
 class RewardToast {
-  static void show(BuildContext context, {required String message, int xp = 5}) {
+  static void show(BuildContext context,
+      {required String message, int xp = 5}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         backgroundColor: AppColors.primaryDark,
@@ -13,7 +14,9 @@ class RewardToast {
           children: [
             const Text('⭐', style: TextStyle(fontSize: 20)),
             const SizedBox(width: 8),
-            Text('+$xp XP', style: AppTextStyles.bodySemiBold.copyWith(color: AppColors.accent)),
+            Text('+$xp XP',
+                style: AppTextStyles.bodySemiBold
+                    .copyWith(color: AppColors.accent)),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -27,4 +30,3 @@ class RewardToast {
     );
   }
 }
-

@@ -15,21 +15,106 @@ service cloud.firestore {
       return isSignedIn() && request.auth.token.admin == true;
     }
 
+    function isCurrency(code) {
+      return code is string && code.size() == 3;
+    }
+
+    function isCountryCode(code) {
+      return code is string && code.size() == 2;
+    }
+
+    function isIsoDate(value) {
+      return value is string && value.matches('^\\d{4}-\\d{2}-\\d{2}$');
+    }
+
+    // Fields on users/{uid} that only Cloud Functions / Admin SDK may write.
+    function touchesServerOnlyUserFields() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasAny([
+        'plan',
+        'xp',
+        'level',
+        'gems',
+        'seeds',
+        'streak',
+        'league',
+        'leagueId',
+        'weeklyXp',
+        'badges',
+        'admin',
+        'role'
+      ]);
+    }
+
+    function validUserIncomeField(data) {
+      return !('monthlyIncomeCents' in data)
+        || (data.monthlyIncomeCents is int
+            && data.monthlyIncomeCents >= 0
+            && data.monthlyIncomeCents < 1000000000);
+    }
+
+    // ─── Internal Functions collections (Admin SDK only) ────────────────────
+    match /_idempotency/{key} {
+      allow read, write: if false;
+    }
+
+    match /_rateLimits/{key} {
+      allow read, write: if false;
+    }
+
     // ─── Users ──────────────────────────────────────────────────────────────
     match /users/{uid} {
       allow read: if isOwner(uid);
       allow create: if isOwner(uid)
-        && request.resource.data.keys().hasAll(['displayName', 'countryCode', 'currency', 'locale', 'timezone', 'onboardingDone'])
+        && request.resource.data.keys().hasAll([
+          'displayName',
+          'countryCode',
+          'currency',
+          'locale',
+          'timezone',
+          'onboardingDone'
+        ])
+        && !request.resource.data.keys().hasAny([
+          'plan',
+          'xp',
+          'level',
+          'gems',
+          'seeds',
+          'streak',
+          'league',
+          'leagueId',
+          'weeklyXp',
+          'badges',
+          'admin',
+          'role'
+        ])
         && request.resource.data.displayName is string
-        && request.resource.data.countryCode is string;
+        && request.resource.data.displayName.size() <= 80
+        && isCountryCode(request.resource.data.countryCode)
+        && isCurrency(request.resource.data.currency)
+        && request.resource.data.locale in ['fr', 'en']
+        && request.resource.data.timezone is string
+        && request.resource.data.onboardingDone is bool
+        && validUserIncomeField(request.resource.data);
+
       allow update: if isOwner(uid)
-        // Client cannot write plan field
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan']);
+        && !touchesServerOnlyUserFields()
+        && (!('displayName' in request.resource.data)
+            || (request.resource.data.displayName is string
+                && request.resource.data.displayName.size() <= 80))
+        && (!('countryCode' in request.resource.data)
+            || isCountryCode(request.resource.data.countryCode))
+        && (!('currency' in request.resource.data)
+            || isCurrency(request.resource.data.currency))
+        && (!('locale' in request.resource.data)
+            || request.resource.data.locale in ['fr', 'en'])
+        && validUserIncomeField(request.resource.data);
+
+      allow delete: if false; // Use deleteAccount callable
 
       // ── Game state: CLIENT READ ONLY, Functions write ──────────────────
       match /game/state {
         allow read: if isOwner(uid);
-        allow write: if false; // Functions only
+        allow write: if false;
       }
 
       // ── Fixed expenses ──────────────────────────────────────────────────
@@ -41,13 +126,23 @@ service cloud.firestore {
           && request.resource.data.amountCents < 100000000
           && request.resource.data.dueDay is int
           && request.resource.data.dueDay >= 1
-          && request.resource.data.dueDay <= 31;
+          && request.resource.data.dueDay <= 31
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 80
+          && request.resource.data.category is string
+          && request.resource.data.category.size() <= 40;
       }
 
       // ── Monthly aggregates: Functions write ──────────────────────────────
       match /months/{monthId} {
         allow read: if isOwner(uid);
-        allow write: if false; // Functions only
+        allow write: if false;
+
+        match /fixed/{fixedId} {
+          allow read: if isOwner(uid);
+          allow write: if false;
+        }
       }
 
       // ── Transactions ─────────────────────────────────────────────────────
@@ -58,96 +153,147 @@ service cloud.firestore {
           && request.resource.data.amountCents > 0
           && request.resource.data.amountCents < 10000000
           && request.resource.data.source in ['manual', 'receipt']
-          && request.resource.data.currency is string
-          && request.resource.data.date is string;
-      }
-
-      // ── Receipts ─────────────────────────────────────────────────────────
-      match /receipts/{receiptId} {
-        allow read, delete: if isOwner(uid);
-        allow create: if isOwner(uid)
-          && request.resource.data.storagePath is string
-          && request.resource.data.storagePath.matches('receipts/' + uid + '/.*')
-          && request.resource.data.status in ['pending', 'processing', 'done', 'error'];
-        allow update: if isOwner(uid)
-          && request.resource.data.status in ['pending', 'processing', 'done', 'error'];
+          && isCurrency(request.resource.data.currency)
+          && isIsoDate(request.resource.data.date)
+          && request.resource.data.category is string
+          && request.resource.data.category.size() > 0
+          && request.resource.data.category.size() <= 40
+          && (!('amountMainCents' in request.resource.data)
+              || (request.resource.data.amountMainCents is int
+                  && request.resource.data.amountMainCents > 0
+                  && request.resource.data.amountMainCents < 100000000))
+          && (!('merchant' in request.resource.data)
+              || (request.resource.data.merchant is string
+                  && request.resource.data.merchant.size() <= 80))
+          && (!('note' in request.resource.data)
+              || (request.resource.data.note is string
+                  && request.resource.data.note.size() <= 200));
       }
 
       // ── Budgets ──────────────────────────────────────────────────────────
-      match /budgets/{monthId} {
-        allow read, write: if isOwner(uid);
+      match /budgets/{category} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.limitCents is int
+          && request.resource.data.limitCents > 0
+          && request.resource.data.limitCents < 100000000;
+      }
+
+      // ── Receipts: client can create upload metadata, Functions write parsed ─
+      match /receipts/{receiptId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && request.resource.data.storagePath is string
+          && request.resource.data.storagePath.matches('^receipts/' + uid + '/[A-Za-z0-9_.-]+$');
+        allow update, delete: if false;
       }
 
       // ── Goals ────────────────────────────────────────────────────────────
       match /goals/{goalId} {
-        allow read, write: if isOwner(uid);
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && (!('targetCents' in request.resource.data)
+              || (request.resource.data.targetCents is int
+                  && request.resource.data.targetCents > 0
+                  && request.resource.data.targetCents < 1000000000));
       }
 
       // ── Quests: Functions write ──────────────────────────────────────────
       match /quests/{questId} {
         allow read: if isOwner(uid);
-        allow write: if false; // Functions only
+        allow write: if false;
       }
 
-      // ── Lesson progress: Functions write ────────────────────────────────
+      // ── Lesson progress / history: Functions write ──────────────────────
       match /lessonProgress/{lessonId} {
         allow read: if isOwner(uid);
-        allow write: if false; // Functions only
+        allow write: if false;
       }
 
-      // ── Insights: Functions write ────────────────────────────────────────
+      match /lessonHistory/{lessonId} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
+      // ── Insights: Functions write, client can only dismiss ──────────────
       match /insights/{insightId} {
         allow read: if isOwner(uid);
-        // Allow dismiss (client writes dismissed: true only)
         allow update: if isOwner(uid)
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['dismissed']);
-        allow create, delete: if false; // Functions only
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['dismissed'])
+          && request.resource.data.dismissed is bool;
+        allow create, delete: if false;
       }
 
-      // ── Devices ──────────────────────────────────────────────────────────
+      // ── Alerts: Functions write, client can mark read ───────────────────
+      match /alerts/{alertId} {
+        allow read: if isOwner(uid);
+        allow update: if isOwner(uid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
+          && request.resource.data.read is bool;
+        allow create, delete: if false;
+      }
+
+      // ── Devices (FCM tokens) ─────────────────────────────────────────────
       match /devices/{deviceId} {
-        allow read, write: if isOwner(uid);
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && deviceId.size() <= 80
+          && request.resource.data.fcmToken is string
+          && request.resource.data.fcmToken.size() > 10
+          && request.resource.data.fcmToken.size() <= 4096
+          && request.resource.data.active is bool
+          && request.resource.data.platform is string
+          && request.resource.data.platform.size() <= 32;
       }
 
       // ── Notification state ───────────────────────────────────────────────
       match /notifState/state {
         allow read: if isOwner(uid);
-        // Client can only update prefs and preferredHour
         allow update: if isOwner(uid)
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['prefs', 'preferredHour']);
-        allow create: if false; // Functions (onUserCreate)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['prefs', 'preferredHour'])
+          && (!('preferredHour' in request.resource.data)
+              || (request.resource.data.preferredHour is int
+                  && request.resource.data.preferredHour >= 0
+                  && request.resource.data.preferredHour <= 23));
+        allow create, delete: if false;
       }
 
-      // ── Generic subcollections: read-only for owner ──────────────────────
+      match /notifState/{bucket} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
+      // ── Generic subcollections: read-only for owner, no client writes ───
       match /{sub=**} {
         allow read: if isOwner(uid);
+        allow write: if false;
       }
     }
 
     // ─── Public Profiles ────────────────────────────────────────────────────
-    // No amounts, only XP / level / streak / league / badges
+    // No money amounts; written exclusively by Cloud Functions.
     match /publicProfiles/{uid} {
       allow read: if isSignedIn();
-      allow write: if false; // Functions only
+      allow write: if false;
     }
 
     // ─── Friendships ────────────────────────────────────────────────────────
     match /friendships/{pairId} {
       allow read: if isSignedIn()
         && resource.data.users.hasAny([request.auth.uid]);
-      allow write: if false; // Functions only
+      allow write: if false;
     }
 
     // ─── Leagues ────────────────────────────────────────────────────────────
     match /leagues/{leagueId} {
       allow read: if isSignedIn();
-      allow write: if false; // Functions only
+      allow write: if false;
     }
 
     // ─── Referrals ──────────────────────────────────────────────────────────
     match /referrals/{code} {
       allow read: if isSignedIn();
-      allow write: if false; // Functions only
+      allow write: if false;
     }
 
     // ─── Country packs ──────────────────────────────────────────────────────
@@ -159,13 +305,13 @@ service cloud.firestore {
     // ─── Economy data ────────────────────────────────────────────────────────
     match /economy/{code} {
       allow read: if isSignedIn();
-      allow write: if false; // Functions only
+      allow write: if false;
     }
 
     // ─── FX rates ────────────────────────────────────────────────────────────
     match /fx/{doc} {
       allow read: if isSignedIn();
-      allow write: if false; // Functions only
+      allow write: if false;
     }
 
     // ─── Lessons ────────────────────────────────────────────────────────────
@@ -187,4 +333,3 @@ service cloud.firestore {
     }
   }
 }
-

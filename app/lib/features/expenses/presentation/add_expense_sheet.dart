@@ -1,102 +1,305 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_spacing.dart';
-import 'package:sipho/app/theme/app_text_styles.dart';
-import 'package:sipho/core/widgets/amount_keypad.dart';
+import 'package:sipho/core/analytics/analytics_service.dart';
+import 'package:sipho/core/money/amount_input.dart';
+import 'package:sipho/core/money/money.dart';
+import 'package:sipho/core/money/money_formatter.dart';
+import 'package:sipho/core/time/local_day.dart';
+import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
+import 'package:sipho/features/auth/presentation/auth_provider.dart';
+import 'package:sipho/features/expenses/data/transaction_repository.dart';
+import 'package:sipho/features/expenses/domain/expense_category.dart';
+import 'package:sipho/features/expenses/domain/transaction.dart';
+import 'package:sipho/features/expenses/presentation/expense_category_label.dart';
+import 'package:sipho/features/finance/presentation/finance_providers.dart';
 
-class AddExpenseSheet extends StatefulWidget {
+class AddExpenseSheet extends ConsumerStatefulWidget {
   const AddExpenseSheet({super.key});
 
   @override
-  State<AddExpenseSheet> createState() => _AddExpenseSheetState();
+  ConsumerState<AddExpenseSheet> createState() => _AddExpenseSheetState();
 }
 
-class _AddExpenseSheetState extends State<AddExpenseSheet> {
-  String _amountStr = '0';
-  String _selectedCategory = 'restaurants';
+class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
+  String _digits = '';
+  int _selected = 6;
+  bool _saving = false;
 
-  final List<Map<String, String>> _categories = [
-    {'id': 'restaurants', 'name': 'Restos', 'emoji': '🍔'},
-    {'id': 'groceries', 'name': 'Épicerie', 'emoji': '🛒'},
-    {'id': 'transport', 'name': 'Transport', 'emoji': '🚌'},
-    {'id': 'shopping', 'name': 'Shopping', 'emoji': '🛍️'},
-    {'id': 'leisure', 'name': 'Loisirs', 'emoji': '🎮'},
-    {'id': 'health', 'name': 'Santé', 'emoji': '💊'},
-    {'id': 'home', 'name': 'Maison', 'emoji': '🏡'},
-    {'id': 'other', 'name': 'Autre', 'emoji': '✨'},
-  ];
-
-  void _onDigit(String d) {
+  void _tap(String key) {
     setState(() {
-      if (_amountStr == '0') {
-        _amountStr = d;
-      } else if (_amountStr.length < 8) {
-        _amountStr += d;
+      if (key == '⌫') {
+        if (_digits.isNotEmpty) {
+          _digits = _digits.substring(0, _digits.length - 1);
+        }
+        return;
       }
+      if (!AmountInput.canAppend(_digits, key)) return;
+      _digits += key;
     });
   }
 
-  void _onDelete() {
-    setState(() {
-      if (_amountStr.length > 1) {
-        _amountStr = _amountStr.substring(0, _amountStr.length - 1);
-      } else {
-        _amountStr = '0';
+  String _greetingName(WidgetRef ref, AppLocalizations l10n) {
+    final name = ref.watch(userFinanceProvider).valueOrNull?.firstName ?? '';
+    return name.isEmpty ? l10n.homeGuestName : name;
+  }
+
+  Future<void> _save(AppLocalizations l10n) async {
+    final cents = AmountInput.parseCents(_digits);
+    final uid = ref.read(authStateProvider).valueOrNull?.uid;
+    if (cents <= 0 || uid == null || _saving) return;
+
+    final currency =
+        ref.read(userFinanceProvider).valueOrNull?.currency ?? 'CAD';
+    final category = kQuickExpenseCategories[_selected];
+    setState(() => _saving = true);
+    try {
+      await ref.read(transactionRepositoryProvider).addTransaction(
+            uid,
+            SiphoTransaction(
+              id: '',
+              amountCents: cents,
+              currency: currency,
+              amountMainCents: cents,
+              category: category.id,
+              date: LocalDay.now().isoDate,
+              source: 'manual',
+              createdAt: DateTime.now(),
+            ),
+          );
+      try {
+        await ref.read(analyticsServiceProvider).logExpenseAdded(
+              category: category.id,
+              amountCents: cents,
+              currency: currency,
+              source: 'manual',
+            );
+      } catch (error) {
+        debugPrint('Analytics expense_added skipped: $error');
       }
-    });
+      if (!mounted) return;
+      final formatted = MoneyFormatter.format(
+        Money(cents: cents, currency: currency),
+        locale: Localizations.localeOf(context).toString(),
+      );
+      context.pop((
+        amount: formatted,
+        category: expenseCategoryLabel(l10n, category.id),
+      ));
+    } catch (error) {
+      debugPrint('Add expense failed: $error');
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.expenseSaveError)),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    const categories = kQuickExpenseCategories;
+    final currency =
+        ref.watch(userFinanceProvider).valueOrNull?.currency ?? 'CAD';
+    final shown = _digits.isEmpty ? '0' : _digits;
+    final symbol = MoneyFormatter.currencySymbol(currency);
+    final cents = AmountInput.parseCents(_digits);
+
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Ajouter une dépense'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.camera_alt, color: AppColors.primary),
-            onPressed: () => context.push('/expenses/scan'),
-          ),
-        ],
-      ),
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            const Spacer(),
-            Text('$_amountStr \$', style: AppTextStyles.displayXl),
-            const SizedBox(height: AppSpacing.md),
-            SizedBox(
-              height: 48,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.pagePadding),
-                itemCount: _categories.length,
-                separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
-                itemBuilder: (context, i) {
-                  final cat = _categories[i];
-                  final isSelected = cat['id'] == _selectedCategory;
-                  return ChoiceChip(
-                    label: Text('${cat['emoji']} ${cat['name']}'),
-                    selected: isSelected,
-                    onSelected: (val) {
-                      if (val) setState(() => _selectedCategory = cat['id']!);
-                    },
-                  );
-                },
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.pagePadding,
+                8,
+                AppSpacing.pagePadding,
+                0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const _MiniPill(
+                          AppColors.flamePill, AppColors.flameText, '🔥  12'),
+                      const SizedBox(width: 16),
+                      const _MiniPill(
+                          AppColors.seedPill, AppColors.seedText, '🌾  340'),
+                      const SizedBox(width: 16),
+                      _MiniPill(AppColors.mint, AppColors.primaryDark,
+                          l10n.homeLevelPill(7)),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.homeHello(_greetingName(ref, l10n)),
+                    style: const TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                      height: 1.2,
+                      color: AppColors.primaryDark,
+                    ),
+                  ),
+                  const Center(child: SiphoArt.happy(frame: 120)),
+                ],
               ),
             ),
-            const Spacer(),
-            AmountKeypad(
-              onDigitPressed: _onDigit,
-              onDeletePressed: _onDelete,
+            const Positioned.fill(
+              child: ColoredBox(color: Color(0x2614342B)),
             ),
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.pagePadding),
-              child: SiphoButton3D(
-                text: 'AJOUTER (+5 XP)',
-                onPressed: () => context.pop(),
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 168,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                decoration: const BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 49,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD9D6CB),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            l10n.addExpenseTitle,
+                            style: const TextStyle(
+                              fontFamily: 'Nunito',
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                              height: 1.2,
+                              color: AppColors.primaryDark,
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => context.pop(),
+                          child: const Icon(Icons.close,
+                              color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '$shown $symbol',
+                      style: const TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 48,
+                        fontWeight: FontWeight.w900,
+                        height: 1.2,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: GridView.builder(
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 4,
+                          mainAxisExtent: 72,
+                        ),
+                        itemCount: categories.length,
+                        itemBuilder: (context, index) {
+                          final selected = index == _selected;
+                          return GestureDetector(
+                            onTap: () => setState(() => _selected = index),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 44,
+                                  height: 44,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: selected
+                                        ? AppColors.mint
+                                        : AppColors.seedPill,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    categories[index].emoji,
+                                    style: const TextStyle(fontSize: 22),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  expenseCategoryLabel(
+                                      l10n, categories[index].id),
+                                  style: const TextStyle(
+                                    fontFamily: 'Nunito',
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    _Keypad(onTap: _tap),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SiphoButton3D(
+                            label: l10n.addExpenseCta,
+                            height: 39,
+                            shadowOffset: 3,
+                            borderRadius: BorderRadius.circular(12),
+                            color: AppColors.primary,
+                            shadowColor: AppColors.primaryDark,
+                            isLoading: _saving,
+                            enabled: cents > 0 && !_saving,
+                            onPressed: () => _save(l10n),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        GestureDetector(
+                          onTap: () => context.push('/expenses/scan'),
+                          child: Column(
+                            children: [
+                              const Icon(
+                                Icons.photo_camera_outlined,
+                                color: AppColors.primary,
+                                size: 24,
+                              ),
+                              Text(
+                                l10n.addExpenseScan,
+                                style: const TextStyle(
+                                  fontFamily: 'Nunito',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -106,3 +309,94 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
   }
 }
 
+class _MiniPill extends StatelessWidget {
+  const _MiniPill(this.background, this.foreground, this.label);
+
+  final Color background;
+  final Color foreground;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        height: 36,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Nunito',
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            color: foreground,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Keypad extends StatelessWidget {
+  const _Keypad({required this.onTap});
+
+  final ValueChanged<String> onTap;
+
+  static const _keys = [
+    ['1', '2', '3'],
+    ['4', '5', '6'],
+    ['7', '8', '9'],
+    [',', '0', '⌫'],
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (final row in _keys)
+          Row(
+            children: [
+              for (var i = 0; i < row.length; i++) ...[
+                if (i > 0) const SizedBox(width: 7),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Material(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      child: InkWell(
+                        onTap: () => onTap(row[i]),
+                        borderRadius: BorderRadius.circular(14),
+                        child: SizedBox(
+                          height: 47,
+                          child: Center(
+                            child: row[i] == '⌫'
+                                ? const Icon(
+                                    Icons.backspace_outlined,
+                                    color: AppColors.primaryDark,
+                                  )
+                                : Text(
+                                    row[i],
+                                    style: const TextStyle(
+                                      fontFamily: 'Nunito',
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.primaryDark,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+      ],
+    );
+  }
+}

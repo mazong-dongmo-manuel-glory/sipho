@@ -84,4 +84,3 @@ class QuestCard extends StatelessWidget {
     );
   }
 }
-

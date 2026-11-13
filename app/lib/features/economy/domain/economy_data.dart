@@ -28,4 +28,3 @@ class EconomyData with _$EconomyData {
   factory EconomyData.fromJson(Map<String, dynamic> json) =>
       _$EconomyDataFromJson(json);
 }
-

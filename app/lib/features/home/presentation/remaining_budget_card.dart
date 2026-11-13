@@ -39,7 +39,8 @@ class RemainingBudgetCard extends StatelessWidget {
             children: [
               Text(
                 'Reste à vivre',
-                style: AppTextStyles.label.copyWith(color: AppColors.textSecondary),
+                style: AppTextStyles.label
+                    .copyWith(color: AppColors.textSecondary),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -49,7 +50,8 @@ class RemainingBudgetCard extends StatelessWidget {
                 ),
                 child: Text(
                   'Novembre',
-                  style: AppTextStyles.labelSm.copyWith(color: AppColors.primaryDark),
+                  style: AppTextStyles.labelSm
+                      .copyWith(color: AppColors.primaryDark),
                 ),
               ),
             ],
@@ -77,7 +79,8 @@ class RemainingBudgetCard extends StatelessWidget {
                       ),
                       Text(
                         'disponible',
-                        style: AppTextStyles.labelSm.copyWith(color: AppColors.textSecondary),
+                        style: AppTextStyles.labelSm
+                            .copyWith(color: AppColors.textSecondary),
                       ),
                     ],
                   ),
@@ -111,4 +114,3 @@ class RemainingBudgetCard extends StatelessWidget {
     );
   }
 }
-

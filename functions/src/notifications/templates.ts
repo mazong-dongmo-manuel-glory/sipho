@@ -123,6 +123,6 @@ export function pickTemplate(
   const pool = TEMPLATES[locale][type];
   const tpl = pool[Math.floor(Math.random() * pool.length)];
   const interpolate = (s: string): string =>
-    s.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
+    s.replace(/\{(\w+)\}/g, (_match: string, k: string) => vars[k] ?? `{${k}}`);
   return { title: interpolate(tpl.title), body: interpolate(tpl.body) };
 }

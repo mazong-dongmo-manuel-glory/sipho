@@ -104,14 +104,12 @@ class AppTheme {
           borderSide: BorderSide(color: AppColors.primary, width: 2),
         ),
         labelStyle: AppTextStyles.label,
-        hintStyle:
-            AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+        hintStyle: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
       ),
 
       // ── Bottom Navigation ──────────────────────────────────────────────────
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor:
-            isDark ? AppColors.surfaceDark : AppColors.surface,
+        backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textSecondary,
         type: BottomNavigationBarType.fixed,

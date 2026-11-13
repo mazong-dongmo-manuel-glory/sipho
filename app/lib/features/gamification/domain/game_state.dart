@@ -31,4 +31,3 @@ class GameState with _$GameState {
   factory GameState.fromJson(Map<String, dynamic> json) =>
       _$GameStateFromJson(json);
 }
-

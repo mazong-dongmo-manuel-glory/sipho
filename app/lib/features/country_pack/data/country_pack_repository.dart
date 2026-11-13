@@ -22,4 +22,3 @@ class CountryPackRepository {
     return CountryPack.fromJson(doc.data()!);
   }
 }
-

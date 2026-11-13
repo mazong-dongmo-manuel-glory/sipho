@@ -33,11 +33,13 @@ class OnboardingCelebrationScreen extends StatelessWidget {
               Text(
                 'Tu as débloqué le badge Bâtisseur et +50 XP !',
                 textAlign: TextAlign.center,
-                style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+                style:
+                    AppTextStyles.body.copyWith(color: AppColors.textSecondary),
               ),
               const SizedBox(height: AppSpacing.lg),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(
                   color: AppColors.accent.withAlpha(50),
                   borderRadius: BorderRadius.circular(999),
@@ -64,4 +66,3 @@ class OnboardingCelebrationScreen extends StatelessWidget {
     );
   }
 }
-

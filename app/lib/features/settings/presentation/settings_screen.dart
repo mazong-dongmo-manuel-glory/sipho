@@ -1,83 +1,188 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
-import 'package:sipho/app/theme/app_radius.dart';
 import 'package:sipho/app/theme/app_spacing.dart';
-import 'package:sipho/app/theme/app_text_styles.dart';
+import 'package:sipho/core/widgets/sipho_art.dart';
+import 'package:sipho/core/widgets/sipho_button_3d.dart';
+import 'package:sipho/features/auth/data/auth_repository.dart';
+import 'package:sipho/features/profile/presentation/profile_edit_sheet.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
   @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  static const _prefsKey = 'settings_toggles';
+  final _on = <bool>[true, true, false, true, false, true, true, true, false];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadToggles();
+  }
+
+  Future<void> _loadToggles() async {
+    final prefs = await SharedPreferences.getInstance();
+    final stored = prefs.getStringList(_prefsKey);
+    if (stored == null || !mounted) return;
+    setState(() {
+      for (var i = 0; i < _on.length && i < stored.length; i++) {
+        _on[i] = stored[i] == '1';
+      }
+    });
+  }
+
+  Future<void> _setToggle(int index, bool value) async {
+    setState(() => _on[index] = value);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(
+      _prefsKey,
+      _on.map((on) => on ? '1' : '0').toList(),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final rows = <({String label, VoidCallback? onLabel})>[
+      (label: l10n.settingsStreak, onLabel: null),
+      (label: l10n.settingsBudget, onLabel: null),
+      (label: l10n.settingsFriends, onLabel: null),
+      (label: l10n.settingsTips, onLabel: null),
+      (label: l10n.settingsEconomy, onLabel: null),
+      (label: l10n.settingsRecap, onLabel: () => context.push('/recap')),
+      (label: l10n.settingsSounds, onLabel: null),
+      (label: l10n.settingsHaptics, onLabel: null),
+      (label: l10n.settingsVoice, onLabel: null),
+    ];
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Réglages')),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.pagePadding),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.pagePadding,
+            12,
+            AppSpacing.pagePadding,
+            16,
+          ),
           children: [
-            Container(
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: AppRadius.cardRadius,
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.notifications_outlined),
-                    title: const Text('Notifications', style: AppTextStyles.bodySemiBold),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () => context.push('/settings/notifications'),
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: () => context.pop(),
+                  child: const Icon(Icons.arrow_back,
+                      color: AppColors.primaryDark, size: 24),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  l10n.settingsTitle,
+                  style: const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 26,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.primaryDark,
                   ),
-                  const Divider(),
-                  ListTile(
-                    leading: const Icon(Icons.language),
-                    title: const Text('Langue & Devise', style: AppTextStyles.bodySemiBold),
-                    subtitle: const Text('Français · CAD (\$)'),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () {},
-                  ),
-                  const Divider(),
-                  ListTile(
-                    leading: const Icon(Icons.volume_up_outlined),
-                    title: const Text('Sons et vibrations', style: AppTextStyles.bodySemiBold),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () {},
-                  ),
-                ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              l10n.settingsSubtitle,
+              style: const TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 16,
+                color: AppColors.textSecondary,
               ),
             ),
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: 16),
             Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: AppRadius.cardRadius,
-                border: Border.all(color: AppColors.border),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Column(
                 children: [
-                  ListTile(
-                    leading: const Icon(Icons.privacy_tip_outlined),
-                    title: const Text('Politique de confidentialité', style: AppTextStyles.bodySemiBold),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () {},
-                  ),
-                  const Divider(),
-                  ListTile(
-                    leading: const Icon(Icons.delete_outline, color: AppColors.danger),
-                    title: Text(
-                      'Supprimer mon compte (RGPD / Loi 25)',
-                      style: AppTextStyles.bodySemiBold.copyWith(color: AppColors.danger),
+                  for (var i = 0; i < rows.length; i++) ...[
+                    _PrefRow(
+                      label: rows[i].label,
+                      on: _on[i],
+                      onChanged: (value) => _setToggle(i, value),
+                      onLabel: rows[i].onLabel,
                     ),
-                    onTap: () {
-                      // Call deleteAccount callable
-                    },
-                  ),
+                    if (i != rows.length - 1)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 15),
+                        child: Divider(
+                            height: 1, thickness: 1, color: AppColors.hairline),
+                      ),
+                  ],
                 ],
               ),
             ),
+            const SizedBox(height: 16),
+            const _EditProfileSettingsCard(),
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: () => context.push('/notification-settings'),
+              child: Container(
+                height: 73,
+                padding: const EdgeInsets.symmetric(horizontal: 15),
+                decoration: BoxDecoration(
+                  color: AppColors.seedPill,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.settingsReminder,
+                        style: const TextStyle(
+                          fontFamily: 'Nunito',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.seedText,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      l10n.settingsReminderTime,
+                      style: const TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 23,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                const SiphoArt.sleeping(frame: 61),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.settingsSleep,
+                    style: const TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            const _SignOutButton(),
           ],
         ),
       ),
@@ -85,3 +190,146 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
+class _EditProfileSettingsCard extends ConsumerWidget {
+  const _EditProfileSettingsCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: () => showProfileEditSheet(context, ref),
+        borderRadius: BorderRadius.circular(18),
+        child: SizedBox(
+          height: 58,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.person_outline,
+                  color: AppColors.primaryDark,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    l10n.editProfileTitle,
+                    style: const TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primaryDark,
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right,
+                  color: AppColors.textSecondary,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SignOutButton extends ConsumerWidget {
+  const _SignOutButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    return SiphoButton3D(
+      label: l10n.profileSignOut,
+      height: 48,
+      color: AppColors.primaryDark,
+      shadowColor: AppColors.ink,
+      onPressed: () async {
+        await ref.read(authRepositoryProvider).signOut();
+        if (context.mounted) context.go('/login');
+      },
+    );
+  }
+}
+
+class _PrefRow extends StatelessWidget {
+  const _PrefRow({
+    required this.label,
+    required this.on,
+    required this.onChanged,
+    this.onLabel,
+  });
+
+  final String label;
+  final bool on;
+  final ValueChanged<bool> onChanged;
+  final VoidCallback? onLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 52,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 15),
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: onLabel,
+                behavior: HitTestBehavior.opaque,
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primaryDark,
+                  ),
+                ),
+              ),
+            ),
+            _Switch(on: on, onChanged: onChanged),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Switch extends StatelessWidget {
+  const _Switch({required this.on, required this.onChanged});
+
+  final bool on;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onChanged(!on),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        width: 54,
+        height: 32,
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          color: on ? AppColors.primary : AppColors.switchOff,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: AnimatedAlign(
+          duration: const Duration(milliseconds: 160),
+          alignment: on ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            width: 26,
+            height: 26,
+            decoration: const BoxDecoration(
+                color: Colors.white, shape: BoxShape.circle),
+          ),
+        ),
+      ),
+    );
+  }
+}

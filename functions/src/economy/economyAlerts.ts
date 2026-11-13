@@ -1,19 +1,47 @@
-import * as functions from 'firebase-functions/v1';
-import { logger } from '../shared/logger';
+import { onDocumentUpdated } from "firebase-functions/v2/firestore";
+import { logger } from "../shared/logger";
 
-export const economyAlerts = functions.firestore
-  .document('economy/{countryCode}')
-  .onUpdate(async (change, context) => {
-    const countryCode = context.params.countryCode;
-    const before = change.before.data();
-    const after = change.after.data();
+interface EconomyIndicator {
+  value?: number;
+  date?: string;
+  source?: string;
+}
 
-    const beforeRate = before.indicators?.keyRate?.value;
-    const afterRate = after.indicators?.keyRate?.value;
+interface EconomyDoc {
+  indicators?: {
+    keyRate?: EconomyIndicator;
+  };
+}
 
-    if (beforeRate !== undefined && afterRate !== undefined && beforeRate !== afterRate) {
-      logger.info('Detected central bank rate change', { countryCode, beforeRate, afterRate });
-      // Notify users in that country via FCM in batches
+export const economyAlerts = onDocumentUpdated(
+  {
+    document: "economy/{countryCode}",
+    region: "us-central1",
+  },
+  (event) => {
+    const countryCode = event.params.countryCode;
+    const before = event.data?.before.data() as EconomyDoc | undefined;
+    const after = event.data?.after.data() as EconomyDoc | undefined;
+
+    const beforeRate = before?.indicators?.keyRate?.value;
+    const afterRate = after?.indicators?.keyRate?.value;
+    const source = after?.indicators?.keyRate?.source;
+    const date = after?.indicators?.keyRate?.date;
+
+    if (
+      typeof beforeRate === "number" &&
+      typeof afterRate === "number" &&
+      beforeRate !== afterRate &&
+      typeof source === "string" &&
+      typeof date === "string"
+    ) {
+      logger.info("detected dated central bank rate change", {
+        countryCode,
+        beforeRate,
+        afterRate,
+        source,
+        date,
+      });
     }
-  });
-
+  }
+);

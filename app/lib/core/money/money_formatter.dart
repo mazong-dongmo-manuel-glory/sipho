@@ -6,11 +6,14 @@ class MoneyFormatter {
 
   final String locale;
 
-  static String format(Money money, {String locale = 'fr_CA', bool compact = false}) {
+  static String format(Money money,
+      {String locale = 'fr_CA', bool compact = false}) {
     final amount = money.amount;
     final formatter = compact
-        ? NumberFormat.compactCurrency(locale: locale, symbol: _symbol(money.currency))
-        : NumberFormat.currency(locale: locale, symbol: _symbol(money.currency));
+        ? NumberFormat.compactCurrency(
+            locale: locale, symbol: _symbol(money.currency))
+        : NumberFormat.currency(
+            locale: locale, symbol: _symbol(money.currency));
     return formatter.format(amount);
   }
 
@@ -24,6 +27,8 @@ class MoneyFormatter {
     final sign = money.isNegative ? '-' : '+';
     return '$sign${format(money.abs(), locale: locale)}';
   }
+
+  static String currencySymbol(String currency) => _symbol(currency);
 
   static String _symbol(String currency) {
     const symbols = {

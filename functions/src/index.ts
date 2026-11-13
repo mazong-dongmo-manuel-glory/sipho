@@ -6,6 +6,7 @@ admin.initializeApp();
 export { onTransactionWrite } from './gamification/onTransactionWrite';
 export { completeLesson } from './gamification/completeLesson';
 export { markFixedPaid } from './gamification/markFixedPaid';
+export { claimQuest } from './gamification/claimQuest';
 export { dailyRollover } from './gamification/dailyRollover';
 
 // Stats & Users
@@ -18,6 +19,7 @@ export { notifyScheduler } from './notifications/notifyScheduler';
 // AI
 export { parseReceipt } from './ai/parseReceipt';
 export { weeklyInsights } from './ai/weeklyInsights';
+export { generateInsight } from './ai/generateInsight';
 export { economySummaries } from './ai/economySummaries';
 
 // Economy

@@ -43,7 +43,7 @@ class AuthRepository {
       );
       final result = await _auth.signInWithCredential(credential);
       if (result.user != null) {
-        await _upsertUser(result.user!);
+        await ensureProfile(result.user!);
       }
       return result;
     } catch (e) {
@@ -63,7 +63,7 @@ class AuthRepository {
         appleProvider.addScope('name');
         final result = await _auth.signInWithProvider(appleProvider);
         if (result.user != null) {
-          await _upsertUser(result.user!);
+          await ensureProfile(result.user!);
         }
         return result;
       } else {
@@ -75,7 +75,8 @@ class AuthRepository {
           ],
         );
 
-        final OAuthCredential credential = OAuthProvider('apple.com').credential(
+        final OAuthCredential credential =
+            OAuthProvider('apple.com').credential(
           idToken: appleCredential.identityToken,
           accessToken: appleCredential.authorizationCode,
         );
@@ -87,7 +88,7 @@ class AuthRepository {
         ].whereType<String>().where((s) => s.isNotEmpty).join(' ');
 
         if (result.user != null) {
-          await _upsertUser(result.user!, displayName: fullName);
+          await ensureProfile(result.user!, displayName: fullName);
         }
         return result;
       }
@@ -126,30 +127,140 @@ class AuthRepository {
     return SiphoUser.fromJson({...doc.data()!, 'uid': uid});
   }
 
-  Future<void> _upsertUser(User user, {String? displayName}) async {
+  /// Writes the profile fields required by Firestore rules.
+  Future<void> ensureProfile(User user, {String? displayName}) async {
     final doc = _firestore.collection('users').doc(user.uid);
     final existing = await doc.get();
     final name = (displayName != null && displayName.isNotEmpty)
         ? displayName
         : (user.displayName ?? '');
+    final deviceLocale = PlatformDispatcher.instance.locale;
+    final language =
+        deviceLocale.languageCode.toLowerCase().startsWith('fr') ? 'fr' : 'en';
+    final region = deviceLocale.countryCode?.toUpperCase();
+    final country = (region != null && region.length == 2) ? region : 'CA';
 
     if (!existing.exists) {
       await doc.set({
         'email': user.email ?? '',
         'displayName': name,
         'photoUrl': user.photoURL ?? '',
+        'countryCode': country,
+        'currency': 'CAD',
+        'locale': language,
+        'timezone': DateTime.now().timeZoneName,
+        'timezoneOffset': DateTime.now().timeZoneOffset.inHours,
+        'onboardingDone': false,
+        'monthlyIncomeCents': 0,
         'createdAt': FieldValue.serverTimestamp(),
         'lastActiveAt': FieldValue.serverTimestamp(),
       });
-    } else {
-      final updates = <String, dynamic>{
-        'lastActiveAt': FieldValue.serverTimestamp(),
-      };
-      if (name.isNotEmpty &&
-          (existing.data()?['displayName'] as String? ?? '').isEmpty) {
-        updates['displayName'] = name;
-      }
-      await doc.update(updates);
+      return;
     }
+
+    final updates = <String, dynamic>{
+      'lastActiveAt': FieldValue.serverTimestamp(),
+    };
+    if (name.isNotEmpty &&
+        (existing.data()?['displayName'] as String? ?? '').isEmpty) {
+      updates['displayName'] = name;
+    }
+    final data = existing.data() ?? {};
+    if (data['countryCode'] == null) updates['countryCode'] = country;
+    if (data['currency'] == null) updates['currency'] = 'CAD';
+    if (data['locale'] == null) updates['locale'] = language;
+    if (data['timezone'] == null) {
+      updates['timezone'] = DateTime.now().timeZoneName;
+    }
+    updates['timezoneOffset'] = DateTime.now().timeZoneOffset.inHours;
+    if (data['onboardingDone'] == null) updates['onboardingDone'] = false;
+    await doc.update(updates);
+  }
+
+  Future<void> updateMonthlyIncome(int cents) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw StateError('Not signed in');
+    }
+    await ensureProfile(user);
+    await _firestore.collection('users').doc(user.uid).update({
+      'monthlyIncomeCents': cents,
+    });
+  }
+
+  Future<void> completeLesson(String lessonId) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw StateError('Not signed in');
+    }
+    await ensureProfile(user);
+    await _firestore.collection('users').doc(user.uid).update({
+      'completedLessonIds': FieldValue.arrayUnion([lessonId]),
+    });
+  }
+
+  /// Saves the answers from the three onboarding questions.
+  /// Completion is a separate write, so the nest screens stay reachable.
+  Future<void> saveOnboardingProfile({
+    required String displayName,
+    required String countryCode,
+    required String currency,
+    required String region,
+    required String goal,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw StateError('Not signed in');
+    }
+    await ensureProfile(user, displayName: displayName);
+    final deviceLocale = PlatformDispatcher.instance.locale;
+    final language =
+        deviceLocale.languageCode.toLowerCase().startsWith('fr') ? 'fr' : 'en';
+    await _firestore.collection('users').doc(user.uid).update({
+      'displayName': displayName,
+      'countryCode': countryCode,
+      'currency': currency,
+      'region': region,
+      'goal': goal,
+      'locale': language,
+    });
+  }
+
+  Future<void> finishOnboarding() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw StateError('Not signed in');
+    }
+    await ensureProfile(user);
+    await _firestore.collection('users').doc(user.uid).update({
+      'onboardingDone': true,
+    });
+  }
+
+  /// Updates editable profile fields on `users/{uid}`.
+  Future<void> updateProfile({
+    required String displayName,
+    required String countryCode,
+    required String currency,
+    required String region,
+    required String goal,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw StateError('Not signed in');
+    }
+    final cleanName = displayName.trim();
+    if (cleanName.isEmpty) {
+      throw ArgumentError('displayName cannot be empty');
+    }
+    await ensureProfile(user, displayName: cleanName);
+    await _firestore.collection('users').doc(user.uid).update({
+      'displayName': cleanName,
+      'countryCode': countryCode.trim().toUpperCase(),
+      'currency': currency.trim().toUpperCase(),
+      'region': region.trim(),
+      'goal': goal.trim(),
+      'lastActiveAt': FieldValue.serverTimestamp(),
+    });
   }
 }

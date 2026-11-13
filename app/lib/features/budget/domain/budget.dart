@@ -14,4 +14,3 @@ class MonthBudget with _$MonthBudget {
   factory MonthBudget.fromJson(Map<String, dynamic> json) =>
       _$MonthBudgetFromJson(json);
 }
-
