@@ -26,7 +26,23 @@ export const DAILY_QUEST_TEMPLATES: readonly DailyQuestTemplate[] = [
       en: "Keep track of your money, one expense at a time",
     },
   },
+  {
+    templateId: "daily_lesson",
+    type: "COMPLETE_LESSON",
+    target: 1,
+    // README 5.2: a lesson is worth 20 XP.
+    rewardXp: 20,
+    rewardGems: 5,
+    name: { fr: "Fais une micro-leçon", en: "Do a micro-lesson" },
+    description: {
+      fr: "2 minutes pour comprendre un peu mieux ton argent",
+      en: "Two minutes to understand your money a little better",
+    },
+  },
 ];
+
+/** README 5.2: at most three daily quests may pay out each day. */
+export const MAX_DAILY_QUESTS = 3;
 
 /** Legacy one-shot quest created by the previous `onUserCreate` (never expired). */
 export const LEGACY_DAILY_QUEST_ID = "daily_expenses";

@@ -10,6 +10,7 @@ import {
   requireAuthUid,
 } from "../shared/security";
 import { logger } from "../shared/logger";
+import { classifyClaim, questRewardGems, questRewardXp } from "../shared/questClaim";
 
 const db = (): Firestore => getFirestore();
 
@@ -59,25 +60,19 @@ export const claimQuest = onCall(SECURE_CALLABLE_OPTIONS, async (request) => {
       rewardGems?: unknown;
     };
 
-    if (qData.status === "claimed") {
+    const decision = classifyClaim(qData);
+    if (decision === "already-claimed") {
       return { xpGained: 0, gemsGained: 0, levelUp: false, alreadyClaimed: true };
     }
-
-    const progress = typeof qData.progress === "number" ? Math.trunc(qData.progress) : 0;
-    const target = typeof qData.target === "number" ? Math.max(1, Math.trunc(qData.target)) : 1;
-
-    if (progress < target && qData.status !== "completed") {
+    if (decision === "expired") {
+      throw new HttpsError("failed-precondition", "Quest has expired.");
+    }
+    if (decision === "not-completed") {
       throw new HttpsError("failed-precondition", "Quest is not completed yet.");
     }
 
-    const rewardXp =
-      typeof qData.rewardXp === "number"
-        ? Math.min(100, Math.max(5, Math.trunc(qData.rewardXp)))
-        : 15;
-    const rewardGems =
-      typeof qData.rewardGems === "number"
-        ? Math.min(25, Math.max(1, Math.trunc(qData.rewardGems)))
-        : 5;
+    const rewardXp = questRewardXp(qData.rewardXp);
+    const rewardGems = questRewardGems(qData.rewardGems);
 
     const baseGame = gameSnap.exists
       ? normalizeGameState(gameSnap.data())

@@ -160,7 +160,7 @@ class InsightService {
     }
 
     final fn = _functions;
-    if (fn != null) {
+    if (fn != null && !_serverCoachUnavailable) {
       try {
         final result = await fn
             .httpsCallable('generateInsight')
@@ -175,6 +175,11 @@ class InsightService {
         final parsed = parseInsightMap(Map<String, dynamic>.from(data));
         if (parsed != null) return parsed;
       } catch (error) {
+        if (isServerCoachNotConfigured(error)) {
+          // The server has no Gemini key (the app relies on Firebase AI Logic): do not ask
+          // again for the rest of the session, it only adds a round trip to every request.
+          _serverCoachUnavailable = true;
+        }
         debugPrint(
           '[SiphoAI] generateInsight callable unavailable, using client '
           'Firebase AI Logic fallback: $error',
@@ -184,6 +189,16 @@ class InsightService {
 
     return write(snapshot);
   }
+
+  bool _serverCoachUnavailable = false;
+
+  /// Whether [error] is the server saying it has no AI key configured (as opposed to a
+  /// transient failure, which deserves another try next time).
+  @visibleForTesting
+  static bool isServerCoachNotConfigured(Object error) =>
+      error is FirebaseFunctionsException &&
+      error.code == 'failed-precondition' &&
+      (error.message ?? '').toLowerCase().contains('not configured');
 
   Future<InsightText> write(SpendSnapshot snapshot) async {
     if (!snapshot.hasAnyFinancialData) {

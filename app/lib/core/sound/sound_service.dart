@@ -1,69 +1,168 @@
+import 'dart:io' show Platform;
+
+import 'package:audio_session/audio_session.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'sound_service.g.dart';
-
+/// Every sound the app can play. Files live in `assets/sounds/<fileName>.ogg`.
+///
+/// The first ten are the MVP sound effects from the README (section 7.3); the
+/// `sipho*` entries are slots for Sipho's voice (onomatopoeia) and are only
+/// played when the user enabled "Voice" in the settings.
 enum SiphoSound {
-  coinDrop,
-  levelUp,
-  questComplete,
-  streakExtend,
-  error,
-  chestOpen,
-  xpGain,
-  buttonTap,
+  ding('ding'),
+  softError('soft_error'),
+  coins('coins'),
+  flame('flame'),
+  scanDone('scan_done'),
+  giftOpen('gift_open'),
+  levelUp('level_up'),
+  leagueUp('league_up'),
+  lessonDone('lesson_done'),
+
+  /// Reserved for budget alerts: no client-side trigger exists yet.
+  uhOh('uh_oh'),
+  siphoHappy('sipho_happy', isVoice: true),
+  siphoProud('sipho_proud', isVoice: true),
+  siphoWorried('sipho_worried', isVoice: true);
+
+  const SiphoSound(this.fileName, {this.isVoice = false});
+
+  final String fileName;
+  final bool isVoice;
+
+  String get assetPath => 'assets/sounds/$fileName.ogg';
 }
 
-extension SiphSoundPath on SiphoSound {
-  String get path {
-    const paths = {
-      SiphoSound.coinDrop: 'assets/sounds/coin_drop.mp3',
-      SiphoSound.levelUp: 'assets/sounds/level_up.mp3',
-      SiphoSound.questComplete: 'assets/sounds/quest_complete.mp3',
-      SiphoSound.streakExtend: 'assets/sounds/streak_extend.mp3',
-      SiphoSound.error: 'assets/sounds/error.mp3',
-      SiphoSound.chestOpen: 'assets/sounds/chest_open.mp3',
-      SiphoSound.xpGain: 'assets/sounds/xp_gain.mp3',
-      SiphoSound.buttonTap: 'assets/sounds/button_tap.mp3',
-    };
-    return paths[this]!;
-  }
+/// Low-level player. Kept behind an interface so the service can be tested
+/// without the native audio engine.
+abstract class SoundBackend {
+  /// Prepares the engine. May throw when audio is unavailable on this device.
+  Future<void> init();
+
+  /// Loads [assetPath] (if needed) and plays it. Throws when the asset is
+  /// missing or cannot be decoded.
+  Future<void> play(String assetPath);
+
+  /// Loads [assetPath] into memory without playing it.
+  Future<void> preload(String assetPath);
+
+  Future<void> dispose();
 }
 
-@riverpod
-SoundService soundService(SoundServiceRef ref) {
-  final service = SoundService();
-  ref.onDispose(service.dispose);
-  return service;
-}
-
+/// Plays sound effects. Never throws: a device without audio, or a sound whose
+/// file has not been added yet, is silently skipped (and logged once).
 class SoundService {
-  final _soloud = SoLoud.instance;
-  final Map<SiphoSound, AudioSource> _cache = {};
-  bool _muted = false;
+  SoundService(this._backend);
 
-  Future<void> init() async {
-    await _soloud.init();
+  final SoundBackend _backend;
+
+  Future<bool>? _init;
+  final Set<SiphoSound> _unavailable = {};
+
+  Future<bool> _ensureInit() =>
+      _init ??= _backend.init().then((_) => true).catchError(
+        (Object error) {
+          debugPrint('[Sound] audio engine unavailable: $error');
+          return false;
+        },
+      );
+
+  /// Loads every sound ahead of time so the first play has no latency.
+  Future<void> preload() async {
+    if (!await _ensureInit()) return;
+    for (final sound in SiphoSound.values) {
+      try {
+        await _backend.preload(sound.assetPath);
+      } catch (error) {
+        _markUnavailable(sound, error);
+      }
+    }
   }
-
-  void setMuted(bool muted) => _muted = muted;
 
   Future<void> play(SiphoSound sound) async {
-    if (_muted) return;
-    final source = _cache[sound] ?? await _loadSource(sound);
-    await _soloud.play(source);
+    if (_unavailable.contains(sound)) return;
+    if (!await _ensureInit()) return;
+    try {
+      await _backend.play(sound.assetPath);
+    } catch (error) {
+      _markUnavailable(sound, error);
+    }
   }
 
-  Future<AudioSource> _loadSource(SiphoSound sound) async {
-    final source = await _soloud.loadAsset(sound.path);
-    _cache[sound] = source;
+  void _markUnavailable(SiphoSound sound, Object error) {
+    if (_unavailable.add(sound)) {
+      debugPrint('[Sound] "${sound.fileName}" skipped: $error');
+    }
+  }
+
+  Future<void> dispose() => _backend.dispose();
+}
+
+/// SoLoud-backed implementation.
+///
+/// `flutter_soloud` deliberately leaves the iOS audio session alone, so it is
+/// configured here: the *ambient* category follows the silent switch and mixes
+/// with the user's music instead of stopping it. On Android no audio focus is
+/// requested, so background music is never paused or ducked by our short effects.
+class SoLoudSoundBackend implements SoundBackend {
+  final Map<String, AudioSource> _cache = {};
+
+  @override
+  Future<void> init() async {
+    final session = await AudioSession.instance;
+    await session.configure(
+      const AudioSessionConfiguration(
+        avAudioSessionCategory: AVAudioSessionCategory.ambient,
+        avAudioSessionCategoryOptions:
+            AVAudioSessionCategoryOptions.mixWithOthers,
+        avAudioSessionMode: AVAudioSessionMode.defaultMode,
+        androidAudioAttributes: AndroidAudioAttributes(
+          contentType: AndroidAudioContentType.sonification,
+          usage: AndroidAudioUsage.game,
+        ),
+      ),
+    );
+    if (Platform.isIOS) await session.setActive(true);
+    if (!SoLoud.instance.isInitialized) await SoLoud.instance.init();
+  }
+
+  Future<AudioSource> _load(String assetPath) async {
+    final cached = _cache[assetPath];
+    if (cached != null) return cached;
+    final source = await SoLoud.instance.loadAsset(assetPath);
+    _cache[assetPath] = source;
     return source;
   }
 
-  void dispose() {
-    for (final source in _cache.values) {
-      _soloud.disposeSource(source);
+  @override
+  Future<void> preload(String assetPath) => _load(assetPath);
+
+  @override
+  Future<void> play(String assetPath) async {
+    final source = await _load(assetPath);
+    await SoLoud.instance.play(source);
+  }
+
+  @override
+  Future<void> dispose() async {
+    // Cleanup must never crash the app, e.g. when the native engine never loaded.
+    try {
+      if (!SoLoud.instance.isInitialized) return;
+      for (final source in _cache.values) {
+        await SoLoud.instance.disposeSource(source);
+      }
+      _cache.clear();
+      SoLoud.instance.deinit();
+    } catch (error) {
+      debugPrint('[Sound] dispose skipped: $error');
     }
-    _soloud.deinit();
   }
 }
+
+final soundServiceProvider = Provider<SoundService>((ref) {
+  final service = SoundService(SoLoudSoundBackend());
+  ref.onDispose(service.dispose);
+  return service;
+});

@@ -8,7 +8,8 @@ void main() {
   setUpAll(tzdata.initializeTimeZones);
 
   group('readDeviceTimezone', () {
-    test('keeps the IANA id and the offset in MINUTES (half-hour zones)', () async {
+    test('keeps the IANA id and the offset in MINUTES (half-hour zones)',
+        () async {
       // India is UTC+5:30: storing whole hours would turn that into 5.
       final india = await readDeviceTimezone(
         idProvider: () async => 'Asia/Kolkata',
@@ -34,7 +35,9 @@ void main() {
       expect(tzInfo.utcOffsetMinutes, -210);
     });
 
-    test('an unusable id never overwrites a stored one, and creation gets a sentinel', () async {
+    test(
+        'an unusable id never overwrites a stored one, and creation gets a sentinel',
+        () async {
       final abbreviation = await readDeviceTimezone(
         idProvider: () async => 'EST',
         now: _FixedOffsetDate(const Duration(hours: -5)),
@@ -81,7 +84,8 @@ void main() {
       expect(after.toUtc().hour, 23);
     });
 
-    test('rolls to tomorrow once 19:00 has passed, and handles half-hour zones', () {
+    test('rolls to tomorrow once 19:00 has passed, and handles half-hour zones',
+        () {
       final kolkata = tz.getLocation('Asia/Kolkata');
       final next = nextLocalHour(
         kolkata,

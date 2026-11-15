@@ -270,13 +270,257 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeQuests => 'Today\'s quests';
 
   @override
-  String get homeQuestExpenses => 'Log 3 expenses';
+  String get homeQuestsEmpty =>
+      'Your quests for today are on their way. Check back in a moment!';
 
   @override
-  String get homeQuestLesson => 'Do a lesson';
+  String get homeBudgetDayTitle => 'Day under budget!';
 
   @override
-  String get homeQuestRestaurants => 'Stay under your restaurant budget';
+  String homeBudgetDayBody(int xp) {
+    return 'You stayed within your budget yesterday. +$xp XP for your consistency.';
+  }
+
+  @override
+  String get homeNoSpendCta => 'No spending today';
+
+  @override
+  String get homeNoSpendDone => 'Noted: your streak goes on.';
+
+  @override
+  String get homeNoSpendError =>
+      'Couldn\'t confirm right now. Please try again later.';
+
+  @override
+  String get friendsMyCode => 'Your friend code';
+
+  @override
+  String get friendsCopy => 'Copy';
+
+  @override
+  String get friendsCodeCopied => 'Code copied';
+
+  @override
+  String get friendsShare => 'Invite a friend';
+
+  @override
+  String friendsShareMessage(String code) {
+    return 'Join me on Sipho and make tracking your money fun! My friend code: $code';
+  }
+
+  @override
+  String get friendsCodeError => 'Couldn\'t load your code right now.';
+
+  @override
+  String get friendsAddTitle => 'Add a friend';
+
+  @override
+  String get friendsAddHint => 'Your friend\'s code';
+
+  @override
+  String get friendsAddCta => 'Send request';
+
+  @override
+  String get friendsRequestSent => 'Request sent.';
+
+  @override
+  String get friendsNowFriends => 'You are now friends!';
+
+  @override
+  String get friendsRequestsTitle => 'Requests received';
+
+  @override
+  String get friendsPendingTitle => 'Requests sent';
+
+  @override
+  String get friendsListTitle => 'My friends';
+
+  @override
+  String get friendsAccept => 'Accept';
+
+  @override
+  String get friendsDecline => 'Decline';
+
+  @override
+  String get friendsRemove => 'Remove';
+
+  @override
+  String friendsRemoveConfirm(String name) {
+    return 'Remove $name from your friends?';
+  }
+
+  @override
+  String get friendsEmpty =>
+      'Invite a friend to cheer each other on and follow your streaks together.';
+
+  @override
+  String get friendsPrivacy =>
+      'Friends see your nickname, level, streak and league. Never your amounts.';
+
+  @override
+  String friendsStats(int level, int streak) {
+    return 'Level $level · 🔥 $streak';
+  }
+
+  @override
+  String get friendsUnknownName => 'Sipho friend';
+
+  @override
+  String get friendsRedeemTitle => 'I have a referral code';
+
+  @override
+  String get friendsRedeemCta => 'Redeem code';
+
+  @override
+  String friendsRedeemDone(int xp) {
+    return 'Welcome! +$xp XP, and you are now friends.';
+  }
+
+  @override
+  String get friendsCodeInvalid => 'Enter a valid code (letters and digits).';
+
+  @override
+  String get friendsErrCodeNotFound =>
+      'This code doesn\'t exist. Check it with your friend.';
+
+  @override
+  String get friendsErrOwnCode =>
+      'That\'s your own code: share it with a friend.';
+
+  @override
+  String get friendsErrAlreadyDone =>
+      'Already done: request pending, already friends, or code already used.';
+
+  @override
+  String get friendsErrLimit => 'Limit reached. Please try again later.';
+
+  @override
+  String get friendsErrNetwork =>
+      'No connection. Please try again in a moment.';
+
+  @override
+  String get friendsErrNotAllowed => 'This action is no longer possible.';
+
+  @override
+  String get friendsErrGeneric => 'Something went wrong. Please try again.';
+
+  @override
+  String get contactsTitle => 'Find your friends in your contacts';
+
+  @override
+  String get contactsIntro =>
+      'See which of your contacts are already on Sipho, and invite the others in one tap.';
+
+  @override
+  String get contactsFind => 'Find my contacts';
+
+  @override
+  String get contactsConsentTitle => 'Use your contacts?';
+
+  @override
+  String get contactsConsentBody =>
+      'Sipho compares your contacts\' e-mails and phone numbers with existing accounts as encrypted fingerprints: they are neither read nor kept by Sipho.\n\nIn return, people who have your verified e-mail or phone number in their contacts will be able to find you. You can opt out at any time.';
+
+  @override
+  String get contactsConsentAccept => 'Agree and continue';
+
+  @override
+  String get contactsRefresh => 'Refresh';
+
+  @override
+  String get contactsSuggestionsTitle => 'Already on Sipho';
+
+  @override
+  String get contactsAdd => 'Add';
+
+  @override
+  String get contactsMore => 'Show more';
+
+  @override
+  String get contactsNoneOnSipho =>
+      'None of your contacts is on Sipho yet. Invite them!';
+
+  @override
+  String get contactsInviteTitle => 'Invite your people';
+
+  @override
+  String get contactsInviteSms => 'SMS';
+
+  @override
+  String get contactsInviteEmail => 'E-mail';
+
+  @override
+  String get contactsInviteSubject => 'Join me on Sipho';
+
+  @override
+  String get contactsInviteFailed => 'Couldn\'t open the messaging app.';
+
+  @override
+  String get contactsDenied => 'Sipho can\'t access your contacts.';
+
+  @override
+  String get contactsDeniedSettings => 'Allow access in settings to continue.';
+
+  @override
+  String get contactsOpenSettings => 'Open settings';
+
+  @override
+  String get contactsStop => 'Stop being findable by my contacts';
+
+  @override
+  String get contactsStopped => 'You can no longer be found by your contacts.';
+
+  @override
+  String get contactsErrEmail =>
+      'A verified e-mail or phone number on your account is required to use contacts.';
+
+  @override
+  String get contactsAddPhone => 'Add my number';
+
+  @override
+  String get contactsAddPhoneHint =>
+      'So people who have your number can find you too (verified by SMS).';
+
+  @override
+  String get contactsPhoneTitle => 'Your phone number';
+
+  @override
+  String get contactsPhoneLabel => 'Number';
+
+  @override
+  String get contactsSendCode => 'Send code';
+
+  @override
+  String get contactsCodeTitle => 'Code sent by SMS';
+
+  @override
+  String get contactsCodeLabel => '6-digit code';
+
+  @override
+  String get contactsVerify => 'Verify';
+
+  @override
+  String get contactsPhoneAdded => 'Number verified and added.';
+
+  @override
+  String contactsPhoneLinked(String phone) {
+    return 'Verified number: $phone';
+  }
+
+  @override
+  String get contactsErrPhoneInvalid =>
+      'This number isn\'t valid. Add the country code (e.g. +225).';
+
+  @override
+  String get contactsErrPhoneCode => 'Wrong or expired code.';
+
+  @override
+  String get contactsErrPhoneUsed =>
+      'This number is already used by another account.';
+
+  @override
+  String get contactsErrPhoneTooMany =>
+      'Too many attempts. Please try again later.';
 
   @override
   String get homeEconomyTitle => 'Official figures are on the way';
@@ -409,7 +653,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rewardXp => '+5 XP';
 
   @override
-  String get rewardToast => '✓  Nice work! 2/3 on your quest.';
+  String get rewardToast => '✓  Nice work! Your quest is moving forward.';
 
   @override
   String get scanTitle => 'Scan a receipt';
@@ -672,16 +916,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get learnTitle => 'Learn';
 
   @override
-  String get learnUnit => 'UNIT 1';
-
-  @override
-  String get learnUnitTitle => 'Budget basics';
-
-  @override
   String get learnYourTurn => 'YOUR TURN';
 
   @override
   String get learnUnit3 => 'Unit 3: The TFSA 🇨🇦';
+
+  @override
+  String learnUnitLabel(int number) {
+    return 'UNIT $number';
+  }
+
+  @override
+  String learnUnitProgress(int done, int total) {
+    return '$done/$total lessons';
+  }
+
+  @override
+  String learnUnitBonus(int xp, int seeds) {
+    return 'Finish it: +$xp XP · +$seeds seeds';
+  }
+
+  @override
+  String get learnUnitDone => 'Unit complete ✓';
+
+  @override
+  String get learnUnitLocked => 'Finish the previous unit';
+
+  @override
+  String lessonUnitCompleted(int xp, int seeds) {
+    return 'Unit complete! Bonus: +$xp XP · +$seeds seeds';
+  }
 
   @override
   String get quizKicker => 'THE EMERGENCY FUND';
@@ -802,10 +1066,91 @@ class AppLocalizationsEn extends AppLocalizations {
   String get leagueCountry => 'My country';
 
   @override
-  String get leagueTitle => 'Gold League';
+  String get leagueTierBronze => 'Bronze';
 
   @override
-  String get leagueEnds => 'Ends in 2 d 5 h';
+  String get leagueTierSilver => 'Silver';
+
+  @override
+  String get leagueTierGold => 'Gold';
+
+  @override
+  String get leagueTierSapphire => 'Sapphire';
+
+  @override
+  String get leagueTierRuby => 'Ruby';
+
+  @override
+  String get leagueTierEmerald => 'Emerald';
+
+  @override
+  String get leagueTierAmethyst => 'Amethyst';
+
+  @override
+  String get leagueTierPearl => 'Pearl';
+
+  @override
+  String get leagueTierObsidian => 'Obsidian';
+
+  @override
+  String get leagueTierDiamond => 'Diamond';
+
+  @override
+  String leagueTitleNamed(String tier) {
+    return '$tier League';
+  }
+
+  @override
+  String leagueEndsIn(String duration) {
+    return 'Ends in $duration';
+  }
+
+  @override
+  String get leagueEnded => 'Week over · results coming up';
+
+  @override
+  String leagueDurationDaysHours(int days, int hours) {
+    return '$days d $hours h';
+  }
+
+  @override
+  String leagueDurationHoursMinutes(int hours, int minutes) {
+    return '$hours h $minutes min';
+  }
+
+  @override
+  String leagueXpValue(int xp) {
+    return '$xp XP';
+  }
+
+  @override
+  String get leagueYouSuffix => 'You';
+
+  @override
+  String get leagueAlone =>
+      'You\'re the only one in your group so far. Other players join as the week goes on.';
+
+  @override
+  String get leagueError =>
+      'Couldn\'t load the league. Check your connection and try again.';
+
+  @override
+  String get leagueSoon => 'Coming soon';
+
+  @override
+  String leagueResultPromoted(int rank, String tier) {
+    return 'Last week: #$rank, promoted to $tier League!';
+  }
+
+  @override
+  String leagueResultRelegated(int rank, String tier) {
+    return 'Last week: #$rank, moved down to $tier League.';
+  }
+
+  @override
+  String leagueResultStayed(int rank, String tier) {
+    return 'Last week: #$rank, you stay in $tier League.';
+  }
 
   @override
   String get leaguePromotion => '↑  PROMOTION ZONE · TOP 7';
@@ -847,6 +1192,60 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileBadges => 'My badges';
 
   @override
+  String get badgeFirstLesson => 'First lesson';
+
+  @override
+  String get badgeFirstLessonHint => 'Finish your first lesson.';
+
+  @override
+  String get badgeUnit1 => 'Budget basics';
+
+  @override
+  String get badgeUnit1Hint => 'Finish unit 1.';
+
+  @override
+  String get badgeUnit2 => 'Saver';
+
+  @override
+  String get badgeUnit2Hint => 'Finish unit 2.';
+
+  @override
+  String get badgeStreak7 => '7-day streak';
+
+  @override
+  String get badgeStreak7Hint => 'Reach a 7-day streak.';
+
+  @override
+  String get badgeStreak30 => '30-day streak';
+
+  @override
+  String get badgeStreak30Hint => 'Reach a 30-day streak.';
+
+  @override
+  String get badgeLevel5 => 'Level 5';
+
+  @override
+  String get badgeLevel5Hint => 'Reach level 5.';
+
+  @override
+  String get badgeLevel10 => 'Level 10';
+
+  @override
+  String get badgeLevel10Hint => 'Reach level 10.';
+
+  @override
+  String get badgeLeagueSilver => 'Silver league';
+
+  @override
+  String get badgeLeagueSilverHint => 'Move up to the Silver league.';
+
+  @override
+  String get badgeEarnedLabel => 'Earned';
+
+  @override
+  String get badgeLockedLabel => 'To earn';
+
+  @override
   String get profileGoals => 'My goals';
 
   @override
@@ -884,6 +1283,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shopNote => 'Seeds are earned, never bought with money.';
+
+  @override
+  String get shopOwned => 'Owned';
+
+  @override
+  String get shopStockFull => 'Stock full';
+
+  @override
+  String get shopNotEnough => 'Not enough seeds';
+
+  @override
+  String shopBought(String item) {
+    return '$item is yours!';
+  }
+
+  @override
+  String shopFreezeStock(int count, int max) {
+    return '$count/$max in stock';
+  }
+
+  @override
+  String get shopRefusedOwned => 'You already own this one.';
+
+  @override
+  String get shopRefusedStock => 'Your freeze stock is full.';
+
+  @override
+  String get shopRefusedSeeds => 'You need more seeds for this.';
+
+  @override
+  String get shopError => 'The purchase did not go through. Try again.';
 
   @override
   String get adviceKicker => 'AN IDEA FOR YOU';
@@ -1315,11 +1745,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiErrorAppCheck =>
-      'App Check blocked this dev device: register its debug token in Firebase Console > App Check (or unenforce AI Logic).';
+      'The server refused this device (App Check). Debug builds use the dev debug token registered in Firebase Console > App Check; release builds need Play Integrity / App Attest configured.';
 
   @override
   String get aiErrorQuota =>
       'AI quota temporarily reached. Please try again in a few minutes.';
+
+  @override
+  String get aiErrorCredits =>
+      'The AI has no credit left on this Firebase project. Top up in AI Studio (ai.studio/projects), then try again.';
 
   @override
   String get aiErrorNetwork =>

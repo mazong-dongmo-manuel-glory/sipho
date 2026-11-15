@@ -7,13 +7,12 @@ import { logger } from "./logger";
 const db = (): Firestore => getFirestore();
 
 /**
- * Default options for authenticated, App-Check-protected v2 callables.
- * In the local Functions emulator, App Check enforcement is relaxed automatically
- * only when FUNCTIONS_EMULATOR === "true".
+ * Default options for authenticated v2 callables. App Check is NOT enforced (removed on
+ * 2026-11-15, see DECISIONS.md ADR-005): protection comes from Firebase Auth, `requireAuthUid`,
+ * per-user rate limits (`enforceRateLimit`) and Firestore rules.
  */
 export const SECURE_CALLABLE_OPTIONS = {
   region: "us-central1",
-  enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
   cors: false,
 } as const;
 

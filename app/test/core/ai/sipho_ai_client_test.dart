@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sipho/core/ai/sipho_ai_client.dart';
 import 'package:sipho/features/expenses/data/receipt_parser.dart';
@@ -260,5 +261,80 @@ void main() {
         ),
       ),
     );
+  });
+
+  group('429 responses', () {
+    Future<Object?> failureFor(String message) async {
+      final client = SiphoAiClient(
+        projectId: 'sipho-f5a01',
+        apiKey: 'test-key',
+        candidateModels: const ['gemini-3.5-flash-lite'],
+        transport: (uri, headers, body) async => (
+          statusCode: 429,
+          body: jsonEncode({
+            'error': {
+              'code': 429,
+              'message': message,
+              'status': 'RESOURCE_EXHAUSTED',
+            },
+          }),
+        ),
+      );
+      try {
+        await client.generateJson(prompt: 'ping');
+      } on SiphoAiException catch (error) {
+        return error.code;
+      }
+      return null;
+    }
+
+    test('depleted prepayment credits are not a "try again later" quota',
+        () async {
+      expect(
+        await failureFor(
+          'Your prepayment credits are depleted. Please go to AI Studio at '
+          'https://ai.studio/projects to manage your project and billing.',
+        ),
+        SiphoAiErrorCode.creditsDepleted,
+      );
+    });
+
+    test('a plain rate limit stays a temporary quota', () async {
+      expect(
+        await failureFor('Resource has been exhausted (e.g. check quota).'),
+        SiphoAiErrorCode.quotaExceeded,
+      );
+    });
+  });
+
+  group('server coach', () {
+    test('"not configured" is recognised, other failures are not', () {
+      expect(
+        InsightService.isServerCoachNotConfigured(
+          FirebaseFunctionsException(
+            code: 'failed-precondition',
+            message: 'AI coach is not configured on the server.',
+          ),
+        ),
+        isTrue,
+      );
+      expect(
+        InsightService.isServerCoachNotConfigured(
+          FirebaseFunctionsException(
+            code: 'failed-precondition',
+            message: 'Add at least one expense first.',
+          ),
+        ),
+        isFalse,
+      );
+      expect(
+        InsightService.isServerCoachNotConfigured(
+          FirebaseFunctionsException(code: 'unavailable', message: 'offline'),
+        ),
+        isFalse,
+      );
+      expect(
+          InsightService.isServerCoachNotConfigured(StateError('x')), isFalse);
+    });
   });
 }

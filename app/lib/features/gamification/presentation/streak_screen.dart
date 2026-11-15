@@ -1,21 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_spacing.dart';
 import 'package:sipho/core/animations/lottie_widget.dart';
+import 'package:sipho/core/animations/sipho_lotties.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
+import 'package:sipho/features/gamification/data/game_state_repository.dart';
+import 'package:sipho/features/gamification/domain/streak_week.dart';
 
-class StreakScreen extends StatelessWidget {
-  const StreakScreen({super.key, this.streakDays = 13});
+class StreakScreen extends ConsumerWidget {
+  const StreakScreen({super.key});
 
-  final int streakDays;
+  /// One-letter weekday labels, Monday first, in the app locale.
+  static List<String> weekdayInitials(String locale) {
+    final format = DateFormat('EEEEE', locale);
+    // 2024-01-01 is a Monday.
+    return [
+      for (var i = 0; i < 7; i++) format.format(DateTime(2024, 1, 1 + i))
+    ];
+  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    const days = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+    final game = ref.watch(gameStateStreamProvider).valueOrNull;
+    final streakDays = game?.streak.current ?? 0;
+    final marks = streakWeekMarks(
+      lastActiveDay: game?.streak.lastActiveDay,
+      current: streakDays,
+      today: DateTime.now(),
+    );
+    final days = weekdayInitials(Localizations.localeOf(context).toString());
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -36,7 +55,7 @@ class StreakScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const LottieWidget(
-                assetPath: 'assets/animations/streak_fire.json',
+                assetPath: SiphoLotties.streakFire,
                 width: 190,
                 height: 180,
               ),
@@ -89,12 +108,12 @@ class StreakScreen extends StatelessWidget {
                               height: 29,
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                color: i < 5
+                                color: marks[i]
                                     ? AppColors.flamePill
                                     : AppColors.dayOff,
                                 shape: BoxShape.circle,
                               ),
-                              child: i < 5
+                              child: marks[i]
                                   ? const Text(
                                       '✓',
                                       style: TextStyle(

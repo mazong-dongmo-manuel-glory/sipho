@@ -1,28 +1,41 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_spacing.dart';
 import 'package:sipho/core/animations/lottie_widget.dart';
+import 'package:sipho/core/animations/sipho_lotties.dart';
+import 'package:sipho/core/feedback/feedback_cue.dart';
+import 'package:sipho/core/feedback/feedback_service.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
+import 'package:sipho/features/gamification/data/game_state_repository.dart';
 
-class ChestOpenScreen extends StatefulWidget {
+class ChestOpenScreen extends ConsumerStatefulWidget {
   const ChestOpenScreen({super.key});
 
   @override
-  State<ChestOpenScreen> createState() => _ChestOpenScreenState();
+  ConsumerState<ChestOpenScreen> createState() => _ChestOpenScreenState();
 }
 
-class _ChestOpenScreenState extends State<ChestOpenScreen> {
+class _ChestOpenScreenState extends ConsumerState<ChestOpenScreen> {
   bool _open = false;
+
+  void _openGift() {
+    if (_open) return;
+    setState(() => _open = true);
+    unawaited(ref.read(feedbackServiceProvider).play(SiphoCue.giftOpened));
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final game = ref.watch(gameStateStreamProvider).valueOrNull;
     return Scaffold(
       backgroundColor: _open ? AppColors.seedPill : AppColors.background,
       body: SafeArea(
@@ -34,17 +47,17 @@ class _ChestOpenScreenState extends State<ChestOpenScreen> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const Expanded(
-                      child: _Pill(
-                          AppColors.flamePill, AppColors.flameText, '🔥  12')),
+                  Expanded(
+                      child: _Pill(AppColors.flamePill, AppColors.flameText,
+                          '🔥  ${game?.streak.current ?? '—'}')),
                   const SizedBox(width: 16),
-                  const Expanded(
-                      child: _Pill(
-                          AppColors.seedPill, AppColors.seedText, '🌾  340')),
+                  Expanded(
+                      child: _Pill(AppColors.seedPill, AppColors.seedText,
+                          '🌾  ${game?.gems ?? '—'}')),
                   const SizedBox(width: 16),
                   Expanded(
                     child: _Pill(AppColors.mint, AppColors.primaryDark,
-                        l10n.homeLevelPill(7)),
+                        l10n.homeLevelPill(game?.level ?? 1)),
                   ),
                 ],
               ),
@@ -73,15 +86,21 @@ class _ChestOpenScreenState extends State<ChestOpenScreen> {
               const SizedBox(height: 12),
               Expanded(
                 child: GestureDetector(
-                  onTap: () => setState(() => _open = true),
+                  onTap: _openGift,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
                       const _Rays(),
                       if (_open)
                         const LottieWidget(
-                          assetPath:
-                              'assets/animations/confetti_celebration.json',
+                          assetPath: SiphoLotties.giftSparkles,
+                          width: 300,
+                          height: 300,
+                          repeat: false,
+                        ),
+                      if (_open)
+                        const LottieWidget(
+                          assetPath: SiphoLotties.confetti,
                           width: 320,
                           height: 260,
                         ),
@@ -149,7 +168,7 @@ class _ChestOpenScreenState extends State<ChestOpenScreen> {
                   if (_open) {
                     context.go('/home');
                   } else {
-                    setState(() => _open = true);
+                    _openGift();
                   }
                 },
                 color: AppColors.primary,

@@ -103,9 +103,126 @@
   "homeNextExpense": "Prochaine dépense · demain",
   "homePaid": "Payé ✓",
   "homeQuests": "Quêtes du jour",
-  "homeQuestExpenses": "Note 3 dépenses",
-  "homeQuestLesson": "Fais une leçon",
-  "homeQuestRestaurants": "Reste sous ton budget restos",
+  "homeQuestsEmpty": "Tes quêtes du jour arrivent. Reviens dans un instant !",
+  "homeBudgetDayTitle": "Journée sous budget !",
+  "homeBudgetDayBody": "Tu as tenu ton budget hier. +{xp} XP pour ta régularité.",
+  "@homeBudgetDayBody": {
+    "placeholders": {
+      "xp": {
+        "type": "int"
+      }
+    }
+  },
+  "homeNoSpendCta": "Aucune dépense aujourd'hui",
+  "homeNoSpendDone": "C'est noté : ta série continue.",
+  "homeNoSpendError": "Impossible de confirmer pour le moment. Réessaie plus tard.",
+  "friendsMyCode": "Ton code ami",
+  "friendsCopy": "Copier",
+  "friendsCodeCopied": "Code copié",
+  "friendsShare": "Inviter un ami",
+  "friendsShareMessage": "Rejoins-moi sur Sipho pour suivre ton argent en t'amusant ! Mon code ami : {code}",
+  "@friendsShareMessage": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "friendsCodeError": "Impossible de charger ton code pour le moment.",
+  "friendsAddTitle": "Ajouter un ami",
+  "friendsAddHint": "Code de ton ami",
+  "friendsAddCta": "Envoyer la demande",
+  "friendsRequestSent": "Demande envoyée.",
+  "friendsNowFriends": "Vous êtes maintenant amis !",
+  "friendsRequestsTitle": "Demandes reçues",
+  "friendsPendingTitle": "Demandes envoyées",
+  "friendsListTitle": "Mes amis",
+  "friendsAccept": "Accepter",
+  "friendsDecline": "Refuser",
+  "friendsRemove": "Retirer",
+  "friendsRemoveConfirm": "Retirer {name} de tes amis ?",
+  "@friendsRemoveConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "friendsEmpty": "Invite un ami pour vous encourager et suivre vos séries ensemble.",
+  "friendsPrivacy": "Tes amis voient ton pseudo, ton niveau, ta série et ta ligue. Jamais tes montants.",
+  "friendsStats": "Niveau {level} · 🔥 {streak}",
+  "@friendsStats": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      },
+      "streak": {
+        "type": "int"
+      }
+    }
+  },
+  "friendsUnknownName": "Ami Sipho",
+  "friendsRedeemTitle": "J'ai un code de parrainage",
+  "friendsRedeemCta": "Valider le code",
+  "friendsRedeemDone": "Bienvenue ! +{xp} XP, et vous voilà amis.",
+  "@friendsRedeemDone": {
+    "placeholders": {
+      "xp": {
+        "type": "int"
+      }
+    }
+  },
+  "friendsCodeInvalid": "Entre un code valide (lettres et chiffres).",
+  "friendsErrCodeNotFound": "Ce code n'existe pas. Vérifie-le avec ton ami.",
+  "friendsErrOwnCode": "C'est ton propre code : partage-le à un ami.",
+  "friendsErrAlreadyDone": "Déjà fait : demande en attente, amitié existante ou code déjà utilisé.",
+  "friendsErrLimit": "Limite atteinte. Réessaie plus tard.",
+  "friendsErrNetwork": "Pas de connexion. Réessaie dans un instant.",
+  "friendsErrNotAllowed": "Cette action n'est plus possible.",
+  "friendsErrGeneric": "Une erreur est survenue. Réessaie.",
+  "contactsTitle": "Retrouve tes amis dans tes contacts",
+  "contactsIntro": "Vois qui, parmi tes contacts, est déjà sur Sipho, et invite les autres en un geste.",
+  "contactsFind": "Trouver mes contacts",
+  "contactsConsentTitle": "Utiliser tes contacts ?",
+  "contactsConsentBody": "Sipho compare les e-mails et les numéros de tes contacts avec les comptes existants, sous forme d'empreintes chiffrées : ils ne sont ni lus par Sipho ni conservés.\n\nEn échange, les personnes qui ont ton e-mail ou ton numéro vérifié dans leurs contacts pourront te trouver. Tu peux t'en retirer à tout moment.",
+  "contactsConsentAccept": "Accepter et continuer",
+  "contactsRefresh": "Actualiser",
+  "contactsSuggestionsTitle": "Déjà sur Sipho",
+  "contactsAdd": "Ajouter",
+  "contactsMore": "Voir plus",
+  "contactsNoneOnSipho": "Aucun de tes contacts n'est encore sur Sipho. Invite-les !",
+  "contactsInviteTitle": "Invite tes proches",
+  "contactsInviteSms": "SMS",
+  "contactsInviteEmail": "E-mail",
+  "contactsInviteSubject": "Rejoins-moi sur Sipho",
+  "contactsInviteFailed": "Impossible d'ouvrir l'application de messagerie.",
+  "contactsDenied": "Sipho n'a pas accès à tes contacts.",
+  "contactsDeniedSettings": "Autorise l'accès dans les réglages pour continuer.",
+  "contactsOpenSettings": "Ouvrir les réglages",
+  "contactsStop": "Ne plus être trouvable par mes contacts",
+  "contactsStopped": "Tu n'es plus trouvable par tes contacts.",
+  "contactsErrEmail": "Il faut un e-mail ou un numéro de téléphone vérifié sur ton compte pour utiliser les contacts.",
+  "contactsAddPhone": "Ajouter mon numéro",
+  "contactsAddPhoneHint": "Pour que les gens qui ont ton numéro te retrouvent aussi (vérifié par SMS).",
+  "contactsPhoneTitle": "Ton numéro de téléphone",
+  "contactsPhoneLabel": "Numéro",
+  "contactsSendCode": "Envoyer le code",
+  "contactsCodeTitle": "Code reçu par SMS",
+  "contactsCodeLabel": "Code à 6 chiffres",
+  "contactsVerify": "Valider",
+  "contactsPhoneAdded": "Numéro vérifié et ajouté.",
+  "contactsPhoneLinked": "Numéro vérifié : {phone}",
+  "@contactsPhoneLinked": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "contactsErrPhoneInvalid": "Ce numéro n'est pas valide. Ajoute l'indicatif du pays (par ex. +225).",
+  "contactsErrPhoneCode": "Code incorrect ou expiré.",
+  "contactsErrPhoneUsed": "Ce numéro est déjà utilisé par un autre compte.",
+  "contactsErrPhoneTooMany": "Trop d'essais. Réessaie plus tard.",
   "homeEconomyTitle": "Les indicateurs officiels arrivent",
   "homeEconomyImpact": "Sipho n'affiche un taux que s'il vient d'une source datée.",
   "expenseDeleted": "Dépense retirée",
@@ -154,7 +271,7 @@
   },
   "rewardHabit": "Une bonne habitude de plus !",
   "rewardXp": "+5 XP",
-  "rewardToast": "✓  Bien joué ! 2/3 pour ta quête.",
+  "rewardToast": "✓  Bien joué ! Ta quête avance.",
   "scanTitle": "Scanner une facture",
   "scanHint": "Place ta facture dans le cadre",
   "scanPrivacy": "La photo sert à lire le total. Aucun numéro de carte n'est enregistré.",
@@ -274,10 +391,26 @@
   "chartsSlowDown": "On ralentit un peu ?",
   "chartsSummary": "12 % de moins que le mois dernier 🎉",
   "learnTitle": "Apprendre, à petits pas",
-  "learnUnit": "UNITÉ 1",
-  "learnUnitTitle": "Les bases du budget",
   "learnYourTurn": "À TOI DE JOUER",
   "learnUnit3": "Unité 3 : Le CELI 🇨🇦",
+  "learnUnitLabel": "UNITÉ {number}",
+  "@learnUnitLabel": {
+    "placeholders": {"number": {"type": "int"}}
+  },
+  "learnUnitProgress": "{done}/{total} leçons",
+  "@learnUnitProgress": {
+    "placeholders": {"done": {"type": "int"}, "total": {"type": "int"}}
+  },
+  "learnUnitBonus": "Termine-la : +{xp} XP · +{seeds} graines",
+  "@learnUnitBonus": {
+    "placeholders": {"xp": {"type": "int"}, "seeds": {"type": "int"}}
+  },
+  "learnUnitDone": "Unité terminée ✓",
+  "learnUnitLocked": "Termine l'unité d'avant",
+  "lessonUnitCompleted": "Unité terminée ! Bonus : +{xp} XP · +{seeds} graines",
+  "@lessonUnitCompleted": {
+    "placeholders": {"xp": {"type": "int"}, "seeds": {"type": "int"}}
+  },
   "quizKicker": "LE FONDS D'URGENCE",
   "quizQuestion": "Où placer ton fonds d'urgence ?",
   "quizHint": "Choisis la meilleure réponse.",
@@ -320,8 +453,53 @@
   "leagueTab": "Ligue",
   "leagueFriends": "Amis",
   "leagueCountry": "Mon pays",
-  "leagueTitle": "Ligue Or",
-  "leagueEnds": "Se termine dans 2 j 5 h",
+  "leagueTierBronze": "Bronze",
+  "leagueTierSilver": "Argent",
+  "leagueTierGold": "Or",
+  "leagueTierSapphire": "Saphir",
+  "leagueTierRuby": "Rubis",
+  "leagueTierEmerald": "Émeraude",
+  "leagueTierAmethyst": "Améthyste",
+  "leagueTierPearl": "Perle",
+  "leagueTierObsidian": "Obsidienne",
+  "leagueTierDiamond": "Diamant",
+  "leagueTitleNamed": "Ligue {tier}",
+  "@leagueTitleNamed": {
+    "placeholders": {"tier": {"type": "String"}}
+  },
+  "leagueEndsIn": "Se termine dans {duration}",
+  "@leagueEndsIn": {
+    "placeholders": {"duration": {"type": "String"}}
+  },
+  "leagueEnded": "Semaine terminée · résultats en cours",
+  "leagueDurationDaysHours": "{days} j {hours} h",
+  "@leagueDurationDaysHours": {
+    "placeholders": {"days": {"type": "int"}, "hours": {"type": "int"}}
+  },
+  "leagueDurationHoursMinutes": "{hours} h {minutes} min",
+  "@leagueDurationHoursMinutes": {
+    "placeholders": {"hours": {"type": "int"}, "minutes": {"type": "int"}}
+  },
+  "leagueXpValue": "{xp} XP",
+  "@leagueXpValue": {
+    "placeholders": {"xp": {"type": "int"}}
+  },
+  "leagueYouSuffix": "Toi",
+  "leagueAlone": "Tu es seul·e dans ton groupe pour l'instant. Les autres joueurs te rejoignent au fil de la semaine.",
+  "leagueError": "Impossible de charger la ligue. Vérifie ta connexion et réessaie.",
+  "leagueSoon": "Bientôt disponible",
+  "leagueResultPromoted": "Semaine dernière : {rank}ᵉ place, promotion en ligue {tier} !",
+  "@leagueResultPromoted": {
+    "placeholders": {"rank": {"type": "int"}, "tier": {"type": "String"}}
+  },
+  "leagueResultRelegated": "Semaine dernière : {rank}ᵉ place, retour en ligue {tier}.",
+  "@leagueResultRelegated": {
+    "placeholders": {"rank": {"type": "int"}, "tier": {"type": "String"}}
+  },
+  "leagueResultStayed": "Semaine dernière : {rank}ᵉ place, tu restes en ligue {tier}.",
+  "@leagueResultStayed": {
+    "placeholders": {"rank": {"type": "int"}, "tier": {"type": "String"}}
+  },
   "leaguePromotion": "↑  ZONE DE PROMOTION · TOP 7",
   "leagueRelegation": "↓  ZONE DE RELÉGATION · 5 DERNIERS",
   "profileMember": "Membre depuis nov. 2026",
@@ -335,6 +513,24 @@
   "profileLessons": "24",
   "profileLessonsLabel": "Leçons",
   "profileBadges": "Mes badges",
+  "badgeFirstLesson": "Première leçon",
+  "badgeFirstLessonHint": "Termine ta première leçon.",
+  "badgeUnit1": "Bases du budget",
+  "badgeUnit1Hint": "Termine l'unité 1.",
+  "badgeUnit2": "Épargnant",
+  "badgeUnit2Hint": "Termine l'unité 2.",
+  "badgeStreak7": "Série de 7 jours",
+  "badgeStreak7Hint": "Atteins une série de 7 jours.",
+  "badgeStreak30": "Série de 30 jours",
+  "badgeStreak30Hint": "Atteins une série de 30 jours.",
+  "badgeLevel5": "Niveau 5",
+  "badgeLevel5Hint": "Atteins le niveau 5.",
+  "badgeLevel10": "Niveau 10",
+  "badgeLevel10Hint": "Atteins le niveau 10.",
+  "badgeLeagueSilver": "Ligue Argent",
+  "badgeLeagueSilverHint": "Monte en ligue Argent.",
+  "badgeEarnedLabel": "Obtenu",
+  "badgeLockedLabel": "À gagner",
   "profileGoals": "Mes objectifs",
   "profileGoal": "Voyage au Cameroun · 1 200 / 3 000 $",
   "profileInvite": "Inviter des amis  →",
@@ -348,6 +544,21 @@
   "shopNest": "Nid fleuri",
   "shopFreeze": "Gel de série",
   "shopNote": "Les graines se gagnent, pas besoin de payer.",
+  "shopOwned": "Possédé",
+  "shopStockFull": "Stock plein",
+  "shopNotEnough": "Pas assez de graines",
+  "shopBought": "{item} est à toi !",
+  "@shopBought": {
+    "placeholders": {"item": {"type": "String"}}
+  },
+  "shopFreezeStock": "{count}/{max} en stock",
+  "@shopFreezeStock": {
+    "placeholders": {"count": {"type": "int"}, "max": {"type": "int"}}
+  },
+  "shopRefusedOwned": "Tu as déjà cet objet.",
+  "shopRefusedStock": "Ton stock de gels est plein.",
+  "shopRefusedSeeds": "Il te faut plus de graines.",
+  "shopError": "L'achat n'a pas abouti. Réessaie.",
   "adviceKicker": "UNE IDÉE POUR TOI",
   "adviceTitle": "Et si on cuisinait ?",
   "adviceBody": "Tes sorties au resto ont augmenté de 38 % ce mois-ci.",
@@ -495,8 +706,9 @@
   "quizAiTutorTitle": "Sipho relie ça à ton budget",
   "quizAiTutorError": "Sipho n'a pas pu générer d'exemple maintenant.",
   "aiErrorNotEnabled": "Active Firebase AI Logic (Gemini Developer API) dans la console Firebase pour activer Sipho IA.",
-  "aiErrorAppCheck": "App Check bloque cet appareil de dev : ajoute son jeton debug dans Firebase Console > App Check (ou désactive l'enforcement AI Logic).",
+  "aiErrorAppCheck": "Le serveur a refusé cet appareil (App Check). Les builds debug utilisent le jeton debug dev enregistré dans Firebase Console > App Check ; les builds release demandent Play Integrity / App Attest configurés.",
   "aiErrorQuota": "Quota IA temporairement atteint. Réessaie dans quelques minutes.",
+  "aiErrorCredits": "L'IA n'a plus de crédit sur ce projet Firebase. Recharge-le dans AI Studio (ai.studio/projects), puis réessaie.",
   "aiErrorNetwork": "Connexion réseau indisponible pour contacter Sipho IA.",
   "lessonSaveError": "Ta progression n'a pas pu être enregistrée. Vérifie ta connexion et réessaie.",
   "fixedMarkPaidError": "Impossible de marquer cette charge comme payée. Réessaie."

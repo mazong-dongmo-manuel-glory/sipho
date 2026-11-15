@@ -12,6 +12,8 @@ import 'package:sipho/core/widgets/sipho_button_3d.dart';
 import 'package:sipho/features/auth/data/auth_repository.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
 import 'package:sipho/features/gamification/data/game_state_repository.dart';
+import 'package:sipho/features/gamification/domain/badges.dart';
+import 'package:sipho/features/leaderboard/presentation/league_labels.dart';
 import 'package:sipho/features/profile/presentation/profile_edit_sheet.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -39,7 +41,7 @@ class ProfileScreen extends ConsumerWidget {
     final seedsText = game != null ? '${game.gems}' : '—';
     final levelNum = game?.level ?? 1;
     final leagueText = game != null && game.leagueId.isNotEmpty
-        ? game.leagueId[0].toUpperCase() + game.leagueId.substring(1)
+        ? leagueTierLabel(l10n, game.leagueId)
         : '—';
 
     final currency = finance?.currency ?? 'CAD';
@@ -203,18 +205,21 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
               children: [
-                _Badge(Icons.workspace_premium, locked: lessons < 1),
-                _Badge(
-                  Icons.local_fire_department,
-                  locked: (game?.streak.best ?? 0) < 7,
-                ),
-                _Badge(Icons.school, locked: lessons < 3),
-                const _Badge(Icons.lock, locked: true),
-                const _Badge(Icons.lock, locked: true),
-                const _Badge(Icons.lock, locked: true),
+                for (final badge in kBadges)
+                  _Badge(
+                    badge.icon,
+                    locked: !(game?.badges.contains(badge.id) ?? false),
+                    onTap: () => _showBadge(
+                      context,
+                      l10n,
+                      badge,
+                      earned: game?.badges.contains(badge.id) ?? false,
+                    ),
+                  ),
               ],
             ),
             const SizedBox(height: 16),
@@ -348,26 +353,48 @@ class _Stat extends StatelessWidget {
   }
 }
 
+void _showBadge(
+  BuildContext context,
+  AppLocalizations l10n,
+  BadgeDef badge, {
+  required bool earned,
+}) {
+  final status = earned ? l10n.badgeEarnedLabel : l10n.badgeLockedLabel;
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        content: Text(
+          '${badgeTitle(l10n, badge.id)} · $status\n${badgeHint(l10n, badge.id)}',
+        ),
+      ),
+    );
+}
+
 class _Badge extends StatelessWidget {
-  const _Badge(this.icon, {required this.locked});
+  const _Badge(this.icon, {required this.locked, required this.onTap});
 
   final IconData icon;
   final bool locked;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 48,
-      height: 48,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: locked ? AppColors.border : AppColors.seedPill,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Icon(
-        icon,
-        color: locked ? AppColors.badgeLock : AppColors.badgeGold,
-        size: 28,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 48,
+        height: 48,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: locked ? AppColors.border : AppColors.seedPill,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Icon(
+          locked ? Icons.lock : icon,
+          color: locked ? AppColors.badgeLock : AppColors.badgeGold,
+          size: 28,
+        ),
       ),
     );
   }

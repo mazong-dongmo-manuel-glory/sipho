@@ -9,6 +9,9 @@ import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/core/ai/sipho_ai_client.dart';
 import 'package:sipho/core/analytics/analytics_service.dart';
 import 'package:sipho/core/animations/lottie_widget.dart';
+import 'package:sipho/core/animations/sipho_lotties.dart';
+import 'package:sipho/core/feedback/feedback_cue.dart';
+import 'package:sipho/core/feedback/feedback_service.dart';
 import 'package:sipho/features/expenses/data/receipt_parser.dart';
 import 'package:sipho/features/expenses/domain/parsed_receipt.dart';
 
@@ -53,6 +56,7 @@ class _ReceiptScanScreenState extends ConsumerState<ReceiptScanScreen> {
         debugPrint('Analytics receipt_scanned skipped: $error');
       }
       if (!mounted) return;
+      unawaited(ref.read(feedbackServiceProvider).play(SiphoCue.scanDone));
       await context.push('/expenses/validate', extra: parsed);
     } catch (error) {
       debugPrint('[SiphoAI] Receipt scan failed: $error');
@@ -169,7 +173,7 @@ class _ReceiptScanScreenState extends ConsumerState<ReceiptScanScreen> {
                   ),
                   const IgnorePointer(
                     child: LottieWidget(
-                      assetPath: 'assets/animations/scan_laser.json',
+                      assetPath: SiphoLotties.scanLaser,
                       width: 300,
                       height: 280,
                     ),

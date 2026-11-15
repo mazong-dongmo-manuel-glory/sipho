@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +7,8 @@ import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_spacing.dart';
 import 'package:sipho/core/analytics/analytics_service.dart';
+import 'package:sipho/core/feedback/feedback_cue.dart';
+import 'package:sipho/core/feedback/feedback_service.dart';
 import 'package:sipho/core/money/amount_input.dart';
 import 'package:sipho/core/money/money.dart';
 import 'package:sipho/core/money/money_formatter.dart';
@@ -82,6 +86,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
         debugPrint('Analytics expense_added skipped: $error');
       }
       if (!mounted) return;
+      unawaited(ref.read(feedbackServiceProvider).play(SiphoCue.expenseAdded));
       final formatted = MoneyFormatter.format(
         Money(cents: cents, currency: currency),
         locale: Localizations.localeOf(context).toString(),

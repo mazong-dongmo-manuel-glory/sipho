@@ -16,7 +16,8 @@ void assertFirebaseConfigured(
   required String flavor,
 }) {
   if (!kFirebaseFlavors.contains(flavor)) {
-    throw StateError('Unknown flavor "$flavor". Expected one of $kFirebaseFlavors.');
+    throw StateError(
+        'Unknown flavor "$flavor". Expected one of $kFirebaseFlavors.');
   }
 
   final unconfigured = <String>[
@@ -29,7 +30,7 @@ void assertFirebaseConfigured(
       'Firebase is not configured for the "$flavor" flavor. '
       'Run `flutterfire configure --project=sipho-$flavor '
       '--out=lib/core/firebase/firebase_options_$flavor.dart` '
-      'and add the matching google-services.json under android/app/src/$flavor/.',
+      'and add the matching google-services.json under android/app/ (dev only).',
     );
   }
 

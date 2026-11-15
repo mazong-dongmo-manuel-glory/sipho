@@ -2,11 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
+import 'package:sipho/core/feedback/feedback_service.dart';
+import 'package:sipho/core/feedback/feedback_settings.dart';
+import 'package:sipho/core/sound/sound_service.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
 import 'package:sipho/features/fixed_expenses/data/fixed_expense_repository.dart';
 import 'package:sipho/features/fixed_expenses/domain/fixed_expense.dart';
 import 'package:sipho/features/fixed_expenses/domain/fixed_paid.dart';
 import 'package:sipho/features/fixed_expenses/presentation/fixed_paid_button.dart';
+
+class _RecordingBackend implements SoundBackend {
+  final played = <String>[];
+
+  @override
+  Future<void> init() async {}
+
+  @override
+  Future<void> play(String assetPath) async => played.add(assetPath);
+
+  @override
+  Future<void> preload(String assetPath) async {}
+
+  @override
+  Future<void> dispose() async {}
+}
 
 FixedExpense _bill(
   String id, {
@@ -102,11 +121,24 @@ void main() {
   });
 
   group('FixedPaidButton', () {
+    late _RecordingBackend audio;
+
     Future<_FakeRepo> pump(WidgetTester tester, {Object? error}) async {
       final repo = _FakeRepo()..error = error;
+      audio = _RecordingBackend();
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [fixedExpenseRepositoryProvider.overrideWithValue(repo)],
+          overrides: [
+            fixedExpenseRepositoryProvider.overrideWithValue(repo),
+            // Keep the native audio engine out of widget tests.
+            feedbackServiceProvider.overrideWithValue(
+              FeedbackService(
+                sound: SoundService(audio),
+                settings: () => FeedbackSettings.defaults,
+                haptic: (_) async {},
+              ),
+            ),
+          ],
           child: const MaterialApp(
             locale: Locale('fr'),
             localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -130,6 +162,7 @@ void main() {
 
       expect(repo.calls, [('rent', currentMonthKey())]);
       expect(find.byType(SnackBar), findsNothing);
+      expect(audio.played, ['assets/sounds/ding.ogg']);
     });
 
     testWidgets('a failure is reported to the user', (tester) async {
@@ -141,6 +174,7 @@ void main() {
       expect(repo.calls, hasLength(1));
       expect(find.byType(SnackBar), findsOneWidget);
       expect(find.textContaining('Impossible de marquer'), findsOneWidget);
+      expect(audio.played, isEmpty);
     });
   });
 }

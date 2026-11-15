@@ -39,6 +39,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Sipho uses the camera to read a receipt you choose to scan.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Sipho looks for friends among your contacts, only when you ask. Addresses are compared as encrypted fingerprints and are never stored.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Sipho reads a receipt photo you choose from your library.</string>
 	<key>UIApplicationSceneManifest</key>

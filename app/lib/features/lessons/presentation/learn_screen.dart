@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +7,8 @@ import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_spacing.dart';
 import 'package:sipho/core/ai/sipho_ai_client.dart';
+import 'package:sipho/core/feedback/feedback_cue.dart';
+import 'package:sipho/core/feedback/feedback_service.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
 import 'package:sipho/features/gamification/data/game_state_repository.dart';
@@ -33,6 +37,7 @@ class LearnScreen extends ConsumerWidget {
     final quests = ref.watch(learnQuestsProvider(language));
     final claimingId = ref.watch(questClaimControllerProvider);
     final ids = [for (final lesson in kCatalogLessons) lesson.id];
+    final units = unitProgressList(kCatalogUnits, completed);
 
     final streakText = game != null ? '${game.streak.current}' : '—';
     final seedsText = game != null ? '${game.gems}' : '—';
@@ -237,6 +242,9 @@ class LearnScreen extends ConsumerWidget {
                         .claim(quest.serverQuestId!);
                     if (!context.mounted) return;
                     if (ok) {
+                      unawaited(ref
+                          .read(feedbackServiceProvider)
+                          .play(SiphoCue.questClaimed));
                       await context.push('/chest');
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -257,49 +265,30 @@ class LearnScreen extends ConsumerWidget {
               const SizedBox(height: 10),
             ],
             const SizedBox(height: 10),
-            // ─── Lesson unit & path ─────────────────────────────────────────
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(18),
+            // ─── Lesson units & path ────────────────────────────────────────
+            for (final progress in units) ...[
+              _UnitHeader(
+                progress: progress,
+                language: language,
+                l10n: l10n,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.learnUnit,
-                    style: const TextStyle(
-                      fontFamily: 'Nunito',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.mint,
-                    ),
+              const SizedBox(height: 16),
+              for (final lesson in progress.unit.lessons) ...[
+                _LessonRow(
+                  title: lesson.title(language),
+                  done: completed.contains(lesson.id),
+                  unlocked: lessonUnlocked(
+                    ids,
+                    completed,
+                    ids.indexOf(lesson.id),
                   ),
-                  Text(
-                    l10n.learnUnitTitle,
-                    style: const TextStyle(
-                      fontFamily: 'Nunito',
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            for (var i = 0; i < kCatalogLessons.length; i++) ...[
-              _LessonRow(
-                title: kCatalogLessons[i].title(language),
-                done: completed.contains(kCatalogLessons[i].id),
-                unlocked: lessonUnlocked(ids, completed, i),
-                doneLabel: l10n.learnDone,
-                lockedLabel: l10n.learnLocked,
-                onTap: () => context.push('/lesson/${kCatalogLessons[i].id}'),
-              ),
-              const SizedBox(height: 12),
+                  doneLabel: l10n.learnDone,
+                  lockedLabel: l10n.learnLocked,
+                  onTap: () => context.push('/lesson/${lesson.id}'),
+                ),
+                const SizedBox(height: 12),
+              ],
+              const SizedBox(height: 8),
             ],
             const Center(child: SiphoArt.happy(frame: 107)),
             Container(
@@ -564,6 +553,107 @@ class _LearnQuestTile extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _UnitHeader extends StatelessWidget {
+  const _UnitHeader({
+    required this.progress,
+    required this.language,
+    required this.l10n,
+  });
+
+  final UnitProgress progress;
+  final String language;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final unit = progress.unit;
+    final locked = !progress.unlocked;
+    final background = locked ? AppColors.border : AppColors.primary;
+    final titleColor = locked ? AppColors.textSecondary : Colors.white;
+    final subColor = locked ? AppColors.textSecondary : AppColors.mint;
+    final status = progress.completed
+        ? l10n.learnUnitDone
+        : locked
+            ? '🔒  ${l10n.learnUnitLocked}'
+            : l10n.learnUnitBonus(unit.bonusXp, unit.bonusSeeds);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.learnUnitLabel(progress.index + 1),
+                  style: TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: subColor,
+                  ),
+                ),
+              ),
+              Text(
+                l10n.learnUnitProgress(progress.done, progress.total),
+                style: TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: subColor,
+                ),
+              ),
+            ],
+          ),
+          Text(
+            unit.title(language),
+            style: TextStyle(
+              fontFamily: 'Nunito',
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: titleColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: SizedBox(
+              height: 8,
+              child: Stack(
+                children: [
+                  ColoredBox(
+                    color: locked ? AppColors.surface : AppColors.primaryDark,
+                  ),
+                  FractionallySizedBox(
+                    widthFactor: progress.ratio,
+                    child: const ColoredBox(color: AppColors.accent),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            status,
+            style: TextStyle(
+              fontFamily: 'Nunito',
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: subColor,
+            ),
+          ),
+        ],
       ),
     );
   }

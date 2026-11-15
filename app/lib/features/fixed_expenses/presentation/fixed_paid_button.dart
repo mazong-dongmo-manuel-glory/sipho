@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
+import 'package:sipho/core/feedback/feedback_cue.dart';
+import 'package:sipho/core/feedback/feedback_service.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
 
 /// "Payé ✓" button: records a manual bill as paid for the current month through the
@@ -17,7 +21,9 @@ class FixedPaidButton extends ConsumerWidget {
     final messenger = ScaffoldMessenger.of(context);
     final ok =
         await ref.read(fixedPaidControllerProvider.notifier).markPaid(fixedId);
-    if (!ok && context.mounted) {
+    if (ok) {
+      unawaited(ref.read(feedbackServiceProvider).play(SiphoCue.fixedPaid));
+    } else if (context.mounted) {
       messenger.showSnackBar(SnackBar(content: Text(l10n.fixedMarkPaidError)));
     }
   }

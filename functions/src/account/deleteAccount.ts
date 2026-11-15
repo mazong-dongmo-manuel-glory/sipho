@@ -8,9 +8,11 @@ import {
   requireAuthUid,
 } from "../shared/security";
 import { logger } from "../shared/logger";
+import { storedHashes } from "../shared/contacts";
+import { removeFromContactIndex } from "../social/contactIndex";
 
 /**
- * Callable (v2, App Check enforced): full GDPR / Loi 25 erasure.
+ * Callable (v2, authenticated): full GDPR / Loi 25 erasure.
  * Requires explicit confirmation phrase `{ confirmPhrase: "DELETE MY ACCOUNT" }`.
  */
 export const deleteAccount = onCall(
@@ -31,6 +33,28 @@ export const deleteAccount = onCall(
     const db = admin.firestore();
     const bucket = admin.storage().bucket();
 
+    // 0. Leave the current league group (the ranking must not show a deleted account)
+    const league = await db.doc(`users/${uid}/league/current`).get();
+    const leagueKey: unknown = (
+      league.data() as { leagueKey?: unknown } | undefined
+    )?.leagueKey;
+    if (typeof leagueKey === "string" && leagueKey.length > 0) {
+      await db
+        .doc(`leagues/${leagueKey}/members/${uid}`)
+        .delete()
+        .catch(() => undefined);
+    }
+
+    // 0b. Withdraw from contact discovery (the hash must not outlive the account)
+    const discovery = await db.doc(`users/${uid}/social/contacts`).get();
+    await removeFromContactIndex(
+      uid,
+      storedHashes(
+        discovery.data() as
+          { hashes?: unknown; emailHash?: unknown } | undefined,
+      ),
+    ).catch(() => undefined);
+
     // 1. Delete user document and all nested subcollections
     await db.recursiveDelete(db.doc(`users/${uid}`));
 
@@ -41,8 +65,18 @@ export const deleteAccount = onCall(
       .limit(20)
       .get();
 
+    // Friendships (accepted and pending) must not outlive the account.
+    const friendshipsSnap = await db
+      .collection("friendships")
+      .where("users", "array-contains", uid)
+      .limit(200)
+      .get();
+
     const cleanupBatch = db.batch();
     cleanupBatch.delete(db.doc(`publicProfiles/${uid}`));
+    for (const friendDoc of friendshipsSnap.docs) {
+      cleanupBatch.delete(friendDoc.ref);
+    }
     for (const refDoc of referralsSnap.docs) {
       cleanupBatch.delete(refDoc.ref);
     }
@@ -59,5 +93,5 @@ export const deleteAccount = onCall(
 
     logger.info("account deleted successfully", { uid });
     return { success: true };
-  }
+  },
 );

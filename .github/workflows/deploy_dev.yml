@@ -30,18 +30,17 @@ jobs:
         working-directory: app
         run: flutter pub run build_runner build --delete-conflicting-outputs
 
-      # google-services.json is git-ignored; the dev flavor reads it from src/dev/.
+      # google-services.json is git-ignored; the Android module reads it from android/app/.
       - name: Write google-services.json (dev)
         working-directory: app
         env:
           GOOGLE_SERVICES_JSON_DEV: ${{ secrets.GOOGLE_SERVICES_JSON_DEV }}
         run: |
-          mkdir -p android/app/src/dev
-          echo "$GOOGLE_SERVICES_JSON_DEV" | base64 --decode > android/app/src/dev/google-services.json
+          echo "$GOOGLE_SERVICES_JSON_DEV" | base64 --decode > android/app/google-services.json
 
-      - name: Build Android APK (dev flavor)
+      - name: Build Android APK (dev)
         working-directory: app
-        run: flutter build apk --flavor dev --target lib/main_dev.dart --release
+        run: flutter build apk --target lib/main_dev.dart --release
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

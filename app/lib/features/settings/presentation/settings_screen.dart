@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,20 +7,24 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_spacing.dart';
+import 'package:sipho/core/feedback/feedback_cue.dart';
+import 'package:sipho/core/feedback/feedback_service.dart';
+import 'package:sipho/core/feedback/feedback_settings.dart';
+import 'package:sipho/core/sound/sound_service.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
 import 'package:sipho/features/auth/data/auth_repository.dart';
 import 'package:sipho/features/profile/presentation/profile_edit_sheet.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
-  static const _prefsKey = 'settings_toggles';
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  static const _prefsKey = kSettingsTogglesKey;
   final _on = <bool>[true, true, false, true, false, true, true, true, false];
 
   @override
@@ -45,6 +51,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _prefsKey,
       _on.map((on) => on ? '1' : '0').toList(),
     );
+    // Let the sound / vibration service pick the new preference up right away,
+    // and let the user feel / hear what they just switched on.
+    await ref.read(feedbackSettingsProvider.notifier).reload();
+    if (!value) return;
+    if (index == kSoundsToggleIndex) {
+      unawaited(ref.read(soundServiceProvider).play(SiphoSound.ding));
+    } else if (index == kHapticsToggleIndex) {
+      unawaited(performSystemHaptic(HapticKind.medium));
+    }
   }
 
   @override

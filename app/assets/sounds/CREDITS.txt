@@ -1,0 +1,31 @@
+Sipho sound effects
+===================
+
+All ten effects are derived from sound packs by Kenney (www.kenney.nl),
+released under Creative Commons Zero (CC0 1.0). Credit is not required;
+it is given here as a courtesy and for our licence records.
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Packs (downloaded from OpenGameArt.org):
+  - Interface Sounds       https://opengameart.org/content/interface-sounds
+  - Music Jingles          https://opengameart.org/content/85-short-music-jingles
+  - RPG Sound Effects      https://opengameart.org/content/50-rpg-sound-effects
+
+File          Source file(s)
+------------  ------------------------------------------------------------
+ding          Interface Sounds / confirmation_001
+soft_error    Interface Sounds / error_008
+coins         RPG Sounds / handleCoins
+flame         Music Jingles (steel drum) / jingles_STEEL16
+scan_done     Interface Sounds / confirmation_002
+gift_open     Music Jingles / jingles_HIT15 + jingles_STEEL08
+level_up      Music Jingles (steel drum) / jingles_STEEL02
+league_up     Music Jingles (steel drum) / jingles_STEEL08
+lesson_done   Music Jingles (steel drum) / jingles_STEEL10
+uh_oh         Interface Sounds / question_001
+
+The files were converted to mono OGG Vorbis, trimmed, faded out and
+loudness-matched with app/tool/build_sounds.py (re-run it to regenerate them).
+
+To replace a sound with a final recording, drop a file with the same name
+(e.g. level_up.ogg) in this folder: no code change is needed.

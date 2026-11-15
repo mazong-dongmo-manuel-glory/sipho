@@ -95,7 +95,17 @@ describe("Server security & gamification logic", () => {
     expect(CompleteLessonInputSchema.safeParse({ ...base, lessonId: "track_spending" }).success).toBe(
       true
     );
-    expect(ALLOWED_LESSON_IDS).toEqual(["emergency_fund", "needs_wants", "track_spending"]);
+    expect(CompleteLessonInputSchema.safeParse({ ...base, lessonId: "small_amounts" }).success).toBe(
+      true
+    );
+    expect(ALLOWED_LESSON_IDS).toEqual([
+      "emergency_fund",
+      "needs_wants",
+      "track_spending",
+      "savings_goal",
+      "pay_yourself_first",
+      "small_amounts",
+    ]);
   });
 
   test("callGeminiJson uses active Gemini 3.5+ models, omits temperature, and skips thought parts", async () => {

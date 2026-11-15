@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sipho/core/firebase/firebase_providers.dart';
 import 'package:sipho/features/auth/presentation/auth_provider.dart';
+import 'package:sipho/features/gamification/domain/game_extras.dart';
 import 'package:sipho/features/gamification/domain/game_state.dart';
 import 'package:sipho/features/gamification/domain/quest.dart';
 
@@ -13,6 +14,18 @@ final gameStateStreamProvider = StreamProvider<GameState?>((ref) {
   final uid = ref.watch(authStateProvider).valueOrNull?.uid;
   if (uid == null) return Stream.value(null);
   return ref.watch(gameStateRepositoryProvider).watchOptionalGameState(uid);
+});
+
+/// Day-level markers (budget-day reward, "no spending today") from the same document.
+final gameExtrasStreamProvider = StreamProvider<GameExtras>((ref) {
+  final uid = ref.watch(authStateProvider).valueOrNull?.uid;
+  if (uid == null) return Stream.value(const GameExtras());
+  return ref
+      .watch(firestoreProvider)
+      .doc('users/$uid/game/state')
+      .snapshots()
+      .map((doc) => parseGameExtras(doc.data()))
+      .distinct();
 });
 
 class GameStateRepository {

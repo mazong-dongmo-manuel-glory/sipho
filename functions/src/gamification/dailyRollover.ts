@@ -3,6 +3,7 @@ import { getFirestore, FieldValue, Firestore } from "firebase-admin/firestore";
 import { normalizeGameState } from "../shared/gameState";
 import { deadlineGuard, forEachDocument } from "../shared/pagination";
 import { ensureDailyQuests, expireDailyQuests } from "../shared/dailyQuests";
+import { awardBudgetDayIfEarned } from "./budgetDay";
 import {
   localDateKey,
   offsetRangesForLocalWindow,
@@ -84,6 +85,14 @@ export async function processUserRollover(
   // Quests first: idempotent (deterministic ids), so a failure below just retries next hour.
   await expireDailyQuests(db(), uid, now);
   await ensureDailyQuests(db(), uid, time, locale, now);
+
+  // "Journée sous budget" for the day that just ended. Idempotent (marker per day); a failure
+  // here must never block the streak below, so it is logged and skipped.
+  try {
+    await awardBudgetDayIfEarned(uid, userData, yesterdayKey);
+  } catch (err) {
+    logger.error("budget day evaluation failed", { uid, dayKey: yesterdayKey, err: String(err) });
+  }
 
   if (!gameProbe.exists) return;
 

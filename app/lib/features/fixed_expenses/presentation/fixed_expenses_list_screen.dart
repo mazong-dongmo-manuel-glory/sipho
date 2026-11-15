@@ -46,10 +46,9 @@ class SocleView extends ConsumerWidget {
             .watch(transactionsForMonthProvider(currentMonthKey()))
             .valueOrNull ??
         const <SiphoTransaction>[];
-    final paidIds = ref
-            .watch(paidFixedIdsProvider(currentMonthKey()))
-            .valueOrNull ??
-        const <String>{};
+    final paidIds =
+        ref.watch(paidFixedIdsProvider(currentMonthKey())).valueOrNull ??
+            const <String>{};
     final monthLabel =
         DateFormat.yMMMM(Localizations.localeOf(context).toString())
             .format(DateTime.now())

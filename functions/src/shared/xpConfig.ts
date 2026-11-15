@@ -9,6 +9,9 @@ export const XP_CONFIG = {
   // Practice XP for replaying an already-mastered lesson, capped per local day.
   lessonReplay: 2,
   lessonReplayMax: 10,
+  // One-time bonus for finishing every lesson of a unit (see shared/lessonPath.ts).
+  unitComplete: 30,
+  unitCompleteSeeds: 10,
 
   transactionAdd: 2,
   transactionMax: 10,
@@ -19,6 +22,9 @@ export const XP_CONFIG = {
 
   referralInviter: 50,
   referralInvitee: 25,
+
+  // README 5.2: a local day under the daily budget (with at least one expense logged), once a day.
+  budgetDayUnder: 15,
 
   questDailyComplete: 15,
   questWeeklyComplete: 50,

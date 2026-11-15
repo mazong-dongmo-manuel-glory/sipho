@@ -4,6 +4,7 @@ import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_spacing.dart';
 import 'package:sipho/core/animations/lottie_widget.dart';
+import 'package:sipho/core/animations/sipho_lotties.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
 
@@ -38,7 +39,7 @@ class LessonDoneScreen extends StatelessWidget {
                   alignment: Alignment.center,
                   children: [
                     LottieWidget(
-                      assetPath: 'assets/animations/confetti_celebration.json',
+                      assetPath: SiphoLotties.confetti,
                       width: 340,
                       height: 280,
                     ),

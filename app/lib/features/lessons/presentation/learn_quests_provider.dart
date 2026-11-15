@@ -1,9 +1,28 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sipho/core/firebase/firebase_providers.dart';
 import 'package:sipho/features/auth/presentation/auth_provider.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
 import 'package:sipho/features/insights/data/insight_service.dart';
 import 'package:sipho/features/lessons/domain/learn_quests.dart';
+
+/// Asks the server to make sure today's daily quests exist (once per session and account).
+///
+/// Quests are normally created by the profile trigger and renewed by the hourly rollover; this
+/// closes the gaps (rollover not yet run, new quest template deployed during the day). It is
+/// best-effort: a failure only means the quests show up at the next rollover.
+final dailyQuestsRefreshProvider = FutureProvider<void>((ref) async {
+  final uid = ref.watch(authStateProvider).valueOrNull?.uid;
+  if (uid == null) return;
+  try {
+    await ref
+        .read(firebaseFunctionsProvider)
+        .httpsCallable('refreshDailyQuests')
+        .call<Map<String, dynamic>>();
+  } catch (error) {
+    debugPrint('[Quests] refreshDailyQuests failed: $error');
+  }
+});
 
 final serverQuestsStreamProvider =
     StreamProvider<List<ServerQuestRecord>>((ref) {
@@ -36,6 +55,7 @@ final serverQuestsStreamProvider =
           rewardXp: (data['rewardXp'] as num?)?.toInt() ?? 15,
           status: status,
           isAiGenerated: source.startsWith('ai_'),
+          period: (data['period'] as String?) ?? '',
         ),
       );
     }

@@ -14,16 +14,16 @@ import UIKit
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
 
     #if DEBUG
+      // Debug builds only: imposes the dev App Check debug token chosen in Dart, so it survives
+      // reinstalls and is the same on every simulator (App Check reads this key when it activates).
       let channel = FlutterMethodChannel(
         name: "com.cargonomade.sipho/app_check_debug",
         binaryMessenger: engineBridge.applicationRegistrar.messenger()
       )
       channel.setMethodCallHandler { call, result in
-        if call.method == "getDebugToken" {
-          let defaults = UserDefaults.standard
-          let token = defaults.string(forKey: "GACAppCheckDebugToken")
-            ?? defaults.string(forKey: "FIRAAppCheckDebugToken")
-          result(token)
+        if call.method == "seedDebugToken", let token = call.arguments as? String, !token.isEmpty {
+          UserDefaults.standard.set(token, forKey: "GACAppCheckDebugToken")
+          result(nil)
         } else {
           result(FlutterMethodNotImplemented)
         }

@@ -21,7 +21,8 @@ bool isFixedPaid(
 }) {
   if (expense.type == 'envelope') return false;
   if (paidIds.contains(expense.id)) return true;
-  return expense.payMode != 'manual' && effectiveDueDay(expense, now) <= now.day;
+  return expense.payMode != 'manual' &&
+      effectiveDueDay(expense, now) <= now.day;
 }
 
 /// Whether the "Payé ✓" button should be offered: a manual bill not yet paid this month.

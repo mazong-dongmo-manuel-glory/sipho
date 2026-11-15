@@ -585,23 +585,455 @@ abstract class AppLocalizations {
   /// **'Today\'s quests'**
   String get homeQuests;
 
-  /// No description provided for @homeQuestExpenses.
+  /// No description provided for @homeQuestsEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Log 3 expenses'**
-  String get homeQuestExpenses;
+  /// **'Your quests for today are on their way. Check back in a moment!'**
+  String get homeQuestsEmpty;
 
-  /// No description provided for @homeQuestLesson.
+  /// No description provided for @homeBudgetDayTitle.
   ///
   /// In en, this message translates to:
-  /// **'Do a lesson'**
-  String get homeQuestLesson;
+  /// **'Day under budget!'**
+  String get homeBudgetDayTitle;
 
-  /// No description provided for @homeQuestRestaurants.
+  /// No description provided for @homeBudgetDayBody.
   ///
   /// In en, this message translates to:
-  /// **'Stay under your restaurant budget'**
-  String get homeQuestRestaurants;
+  /// **'You stayed within your budget yesterday. +{xp} XP for your consistency.'**
+  String homeBudgetDayBody(int xp);
+
+  /// No description provided for @homeNoSpendCta.
+  ///
+  /// In en, this message translates to:
+  /// **'No spending today'**
+  String get homeNoSpendCta;
+
+  /// No description provided for @homeNoSpendDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Noted: your streak goes on.'**
+  String get homeNoSpendDone;
+
+  /// No description provided for @homeNoSpendError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t confirm right now. Please try again later.'**
+  String get homeNoSpendError;
+
+  /// No description provided for @friendsMyCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Your friend code'**
+  String get friendsMyCode;
+
+  /// No description provided for @friendsCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get friendsCopy;
+
+  /// No description provided for @friendsCodeCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Code copied'**
+  String get friendsCodeCopied;
+
+  /// No description provided for @friendsShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite a friend'**
+  String get friendsShare;
+
+  /// No description provided for @friendsShareMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Join me on Sipho and make tracking your money fun! My friend code: {code}'**
+  String friendsShareMessage(String code);
+
+  /// No description provided for @friendsCodeError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load your code right now.'**
+  String get friendsCodeError;
+
+  /// No description provided for @friendsAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a friend'**
+  String get friendsAddTitle;
+
+  /// No description provided for @friendsAddHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your friend\'s code'**
+  String get friendsAddHint;
+
+  /// No description provided for @friendsAddCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Send request'**
+  String get friendsAddCta;
+
+  /// No description provided for @friendsRequestSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Request sent.'**
+  String get friendsRequestSent;
+
+  /// No description provided for @friendsNowFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'You are now friends!'**
+  String get friendsNowFriends;
+
+  /// No description provided for @friendsRequestsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Requests received'**
+  String get friendsRequestsTitle;
+
+  /// No description provided for @friendsPendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Requests sent'**
+  String get friendsPendingTitle;
+
+  /// No description provided for @friendsListTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My friends'**
+  String get friendsListTitle;
+
+  /// No description provided for @friendsAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get friendsAccept;
+
+  /// No description provided for @friendsDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get friendsDecline;
+
+  /// No description provided for @friendsRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get friendsRemove;
+
+  /// No description provided for @friendsRemoveConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name} from your friends?'**
+  String friendsRemoveConfirm(String name);
+
+  /// No description provided for @friendsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite a friend to cheer each other on and follow your streaks together.'**
+  String get friendsEmpty;
+
+  /// No description provided for @friendsPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Friends see your nickname, level, streak and league. Never your amounts.'**
+  String get friendsPrivacy;
+
+  /// No description provided for @friendsStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Level {level} · 🔥 {streak}'**
+  String friendsStats(int level, int streak);
+
+  /// No description provided for @friendsUnknownName.
+  ///
+  /// In en, this message translates to:
+  /// **'Sipho friend'**
+  String get friendsUnknownName;
+
+  /// No description provided for @friendsRedeemTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'I have a referral code'**
+  String get friendsRedeemTitle;
+
+  /// No description provided for @friendsRedeemCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Redeem code'**
+  String get friendsRedeemCta;
+
+  /// No description provided for @friendsRedeemDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome! +{xp} XP, and you are now friends.'**
+  String friendsRedeemDone(int xp);
+
+  /// No description provided for @friendsCodeInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid code (letters and digits).'**
+  String get friendsCodeInvalid;
+
+  /// No description provided for @friendsErrCodeNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This code doesn\'t exist. Check it with your friend.'**
+  String get friendsErrCodeNotFound;
+
+  /// No description provided for @friendsErrOwnCode.
+  ///
+  /// In en, this message translates to:
+  /// **'That\'s your own code: share it with a friend.'**
+  String get friendsErrOwnCode;
+
+  /// No description provided for @friendsErrAlreadyDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Already done: request pending, already friends, or code already used.'**
+  String get friendsErrAlreadyDone;
+
+  /// No description provided for @friendsErrLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Limit reached. Please try again later.'**
+  String get friendsErrLimit;
+
+  /// No description provided for @friendsErrNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'No connection. Please try again in a moment.'**
+  String get friendsErrNetwork;
+
+  /// No description provided for @friendsErrNotAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'This action is no longer possible.'**
+  String get friendsErrNotAllowed;
+
+  /// No description provided for @friendsErrGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get friendsErrGeneric;
+
+  /// No description provided for @contactsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Find your friends in your contacts'**
+  String get contactsTitle;
+
+  /// No description provided for @contactsIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'See which of your contacts are already on Sipho, and invite the others in one tap.'**
+  String get contactsIntro;
+
+  /// No description provided for @contactsFind.
+  ///
+  /// In en, this message translates to:
+  /// **'Find my contacts'**
+  String get contactsFind;
+
+  /// No description provided for @contactsConsentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use your contacts?'**
+  String get contactsConsentTitle;
+
+  /// No description provided for @contactsConsentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sipho compares your contacts\' e-mails and phone numbers with existing accounts as encrypted fingerprints: they are neither read nor kept by Sipho.\n\nIn return, people who have your verified e-mail or phone number in their contacts will be able to find you. You can opt out at any time.'**
+  String get contactsConsentBody;
+
+  /// No description provided for @contactsConsentAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Agree and continue'**
+  String get contactsConsentAccept;
+
+  /// No description provided for @contactsRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get contactsRefresh;
+
+  /// No description provided for @contactsSuggestionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Already on Sipho'**
+  String get contactsSuggestionsTitle;
+
+  /// No description provided for @contactsAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get contactsAdd;
+
+  /// No description provided for @contactsMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show more'**
+  String get contactsMore;
+
+  /// No description provided for @contactsNoneOnSipho.
+  ///
+  /// In en, this message translates to:
+  /// **'None of your contacts is on Sipho yet. Invite them!'**
+  String get contactsNoneOnSipho;
+
+  /// No description provided for @contactsInviteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite your people'**
+  String get contactsInviteTitle;
+
+  /// No description provided for @contactsInviteSms.
+  ///
+  /// In en, this message translates to:
+  /// **'SMS'**
+  String get contactsInviteSms;
+
+  /// No description provided for @contactsInviteEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'E-mail'**
+  String get contactsInviteEmail;
+
+  /// No description provided for @contactsInviteSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'Join me on Sipho'**
+  String get contactsInviteSubject;
+
+  /// No description provided for @contactsInviteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the messaging app.'**
+  String get contactsInviteFailed;
+
+  /// No description provided for @contactsDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Sipho can\'t access your contacts.'**
+  String get contactsDenied;
+
+  /// No description provided for @contactsDeniedSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow access in settings to continue.'**
+  String get contactsDeniedSettings;
+
+  /// No description provided for @contactsOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get contactsOpenSettings;
+
+  /// No description provided for @contactsStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop being findable by my contacts'**
+  String get contactsStop;
+
+  /// No description provided for @contactsStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'You can no longer be found by your contacts.'**
+  String get contactsStopped;
+
+  /// No description provided for @contactsErrEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'A verified e-mail or phone number on your account is required to use contacts.'**
+  String get contactsErrEmail;
+
+  /// No description provided for @contactsAddPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Add my number'**
+  String get contactsAddPhone;
+
+  /// No description provided for @contactsAddPhoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'So people who have your number can find you too (verified by SMS).'**
+  String get contactsAddPhoneHint;
+
+  /// No description provided for @contactsPhoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone number'**
+  String get contactsPhoneTitle;
+
+  /// No description provided for @contactsPhoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Number'**
+  String get contactsPhoneLabel;
+
+  /// No description provided for @contactsSendCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Send code'**
+  String get contactsSendCode;
+
+  /// No description provided for @contactsCodeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Code sent by SMS'**
+  String get contactsCodeTitle;
+
+  /// No description provided for @contactsCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'6-digit code'**
+  String get contactsCodeLabel;
+
+  /// No description provided for @contactsVerify.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get contactsVerify;
+
+  /// No description provided for @contactsPhoneAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Number verified and added.'**
+  String get contactsPhoneAdded;
+
+  /// No description provided for @contactsPhoneLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified number: {phone}'**
+  String contactsPhoneLinked(String phone);
+
+  /// No description provided for @contactsErrPhoneInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'This number isn\'t valid. Add the country code (e.g. +225).'**
+  String get contactsErrPhoneInvalid;
+
+  /// No description provided for @contactsErrPhoneCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong or expired code.'**
+  String get contactsErrPhoneCode;
+
+  /// No description provided for @contactsErrPhoneUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'This number is already used by another account.'**
+  String get contactsErrPhoneUsed;
+
+  /// No description provided for @contactsErrPhoneTooMany.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Please try again later.'**
+  String get contactsErrPhoneTooMany;
 
   /// No description provided for @homeEconomyTitle.
   ///
@@ -858,7 +1290,7 @@ abstract class AppLocalizations {
   /// No description provided for @rewardToast.
   ///
   /// In en, this message translates to:
-  /// **'✓  Nice work! 2/3 on your quest.'**
+  /// **'✓  Nice work! Your quest is moving forward.'**
   String get rewardToast;
 
   /// No description provided for @scanTitle.
@@ -1329,18 +1761,6 @@ abstract class AppLocalizations {
   /// **'Learn'**
   String get learnTitle;
 
-  /// No description provided for @learnUnit.
-  ///
-  /// In en, this message translates to:
-  /// **'UNIT 1'**
-  String get learnUnit;
-
-  /// No description provided for @learnUnitTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Budget basics'**
-  String get learnUnitTitle;
-
   /// No description provided for @learnYourTurn.
   ///
   /// In en, this message translates to:
@@ -1352,6 +1772,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unit 3: The TFSA 🇨🇦'**
   String get learnUnit3;
+
+  /// No description provided for @learnUnitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'UNIT {number}'**
+  String learnUnitLabel(int number);
+
+  /// No description provided for @learnUnitProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{done}/{total} lessons'**
+  String learnUnitProgress(int done, int total);
+
+  /// No description provided for @learnUnitBonus.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish it: +{xp} XP · +{seeds} seeds'**
+  String learnUnitBonus(int xp, int seeds);
+
+  /// No description provided for @learnUnitDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit complete ✓'**
+  String get learnUnitDone;
+
+  /// No description provided for @learnUnitLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish the previous unit'**
+  String get learnUnitLocked;
+
+  /// No description provided for @lessonUnitCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit complete! Bonus: +{xp} XP · +{seeds} seeds'**
+  String lessonUnitCompleted(int xp, int seeds);
 
   /// No description provided for @quizKicker.
   ///
@@ -1581,17 +2037,143 @@ abstract class AppLocalizations {
   /// **'My country'**
   String get leagueCountry;
 
-  /// No description provided for @leagueTitle.
+  /// No description provided for @leagueTierBronze.
   ///
   /// In en, this message translates to:
-  /// **'Gold League'**
-  String get leagueTitle;
+  /// **'Bronze'**
+  String get leagueTierBronze;
 
-  /// No description provided for @leagueEnds.
+  /// No description provided for @leagueTierSilver.
   ///
   /// In en, this message translates to:
-  /// **'Ends in 2 d 5 h'**
-  String get leagueEnds;
+  /// **'Silver'**
+  String get leagueTierSilver;
+
+  /// No description provided for @leagueTierGold.
+  ///
+  /// In en, this message translates to:
+  /// **'Gold'**
+  String get leagueTierGold;
+
+  /// No description provided for @leagueTierSapphire.
+  ///
+  /// In en, this message translates to:
+  /// **'Sapphire'**
+  String get leagueTierSapphire;
+
+  /// No description provided for @leagueTierRuby.
+  ///
+  /// In en, this message translates to:
+  /// **'Ruby'**
+  String get leagueTierRuby;
+
+  /// No description provided for @leagueTierEmerald.
+  ///
+  /// In en, this message translates to:
+  /// **'Emerald'**
+  String get leagueTierEmerald;
+
+  /// No description provided for @leagueTierAmethyst.
+  ///
+  /// In en, this message translates to:
+  /// **'Amethyst'**
+  String get leagueTierAmethyst;
+
+  /// No description provided for @leagueTierPearl.
+  ///
+  /// In en, this message translates to:
+  /// **'Pearl'**
+  String get leagueTierPearl;
+
+  /// No description provided for @leagueTierObsidian.
+  ///
+  /// In en, this message translates to:
+  /// **'Obsidian'**
+  String get leagueTierObsidian;
+
+  /// No description provided for @leagueTierDiamond.
+  ///
+  /// In en, this message translates to:
+  /// **'Diamond'**
+  String get leagueTierDiamond;
+
+  /// No description provided for @leagueTitleNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'{tier} League'**
+  String leagueTitleNamed(String tier);
+
+  /// No description provided for @leagueEndsIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends in {duration}'**
+  String leagueEndsIn(String duration);
+
+  /// No description provided for @leagueEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'Week over · results coming up'**
+  String get leagueEnded;
+
+  /// No description provided for @leagueDurationDaysHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} d {hours} h'**
+  String leagueDurationDaysHours(int days, int hours);
+
+  /// No description provided for @leagueDurationHoursMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h {minutes} min'**
+  String leagueDurationHoursMinutes(int hours, int minutes);
+
+  /// No description provided for @leagueXpValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{xp} XP'**
+  String leagueXpValue(int xp);
+
+  /// No description provided for @leagueYouSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get leagueYouSuffix;
+
+  /// No description provided for @leagueAlone.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re the only one in your group so far. Other players join as the week goes on.'**
+  String get leagueAlone;
+
+  /// No description provided for @leagueError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load the league. Check your connection and try again.'**
+  String get leagueError;
+
+  /// No description provided for @leagueSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get leagueSoon;
+
+  /// No description provided for @leagueResultPromoted.
+  ///
+  /// In en, this message translates to:
+  /// **'Last week: #{rank}, promoted to {tier} League!'**
+  String leagueResultPromoted(int rank, String tier);
+
+  /// No description provided for @leagueResultRelegated.
+  ///
+  /// In en, this message translates to:
+  /// **'Last week: #{rank}, moved down to {tier} League.'**
+  String leagueResultRelegated(int rank, String tier);
+
+  /// No description provided for @leagueResultStayed.
+  ///
+  /// In en, this message translates to:
+  /// **'Last week: #{rank}, you stay in {tier} League.'**
+  String leagueResultStayed(int rank, String tier);
 
   /// No description provided for @leaguePromotion.
   ///
@@ -1671,6 +2253,114 @@ abstract class AppLocalizations {
   /// **'My badges'**
   String get profileBadges;
 
+  /// No description provided for @badgeFirstLesson.
+  ///
+  /// In en, this message translates to:
+  /// **'First lesson'**
+  String get badgeFirstLesson;
+
+  /// No description provided for @badgeFirstLessonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish your first lesson.'**
+  String get badgeFirstLessonHint;
+
+  /// No description provided for @badgeUnit1.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget basics'**
+  String get badgeUnit1;
+
+  /// No description provided for @badgeUnit1Hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish unit 1.'**
+  String get badgeUnit1Hint;
+
+  /// No description provided for @badgeUnit2.
+  ///
+  /// In en, this message translates to:
+  /// **'Saver'**
+  String get badgeUnit2;
+
+  /// No description provided for @badgeUnit2Hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish unit 2.'**
+  String get badgeUnit2Hint;
+
+  /// No description provided for @badgeStreak7.
+  ///
+  /// In en, this message translates to:
+  /// **'7-day streak'**
+  String get badgeStreak7;
+
+  /// No description provided for @badgeStreak7Hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reach a 7-day streak.'**
+  String get badgeStreak7Hint;
+
+  /// No description provided for @badgeStreak30.
+  ///
+  /// In en, this message translates to:
+  /// **'30-day streak'**
+  String get badgeStreak30;
+
+  /// No description provided for @badgeStreak30Hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reach a 30-day streak.'**
+  String get badgeStreak30Hint;
+
+  /// No description provided for @badgeLevel5.
+  ///
+  /// In en, this message translates to:
+  /// **'Level 5'**
+  String get badgeLevel5;
+
+  /// No description provided for @badgeLevel5Hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reach level 5.'**
+  String get badgeLevel5Hint;
+
+  /// No description provided for @badgeLevel10.
+  ///
+  /// In en, this message translates to:
+  /// **'Level 10'**
+  String get badgeLevel10;
+
+  /// No description provided for @badgeLevel10Hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reach level 10.'**
+  String get badgeLevel10Hint;
+
+  /// No description provided for @badgeLeagueSilver.
+  ///
+  /// In en, this message translates to:
+  /// **'Silver league'**
+  String get badgeLeagueSilver;
+
+  /// No description provided for @badgeLeagueSilverHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Move up to the Silver league.'**
+  String get badgeLeagueSilverHint;
+
+  /// No description provided for @badgeEarnedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Earned'**
+  String get badgeEarnedLabel;
+
+  /// No description provided for @badgeLockedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'To earn'**
+  String get badgeLockedLabel;
+
   /// No description provided for @profileGoals.
   ///
   /// In en, this message translates to:
@@ -1748,6 +2438,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Seeds are earned, never bought with money.'**
   String get shopNote;
+
+  /// No description provided for @shopOwned.
+  ///
+  /// In en, this message translates to:
+  /// **'Owned'**
+  String get shopOwned;
+
+  /// No description provided for @shopStockFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock full'**
+  String get shopStockFull;
+
+  /// No description provided for @shopNotEnough.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough seeds'**
+  String get shopNotEnough;
+
+  /// No description provided for @shopBought.
+  ///
+  /// In en, this message translates to:
+  /// **'{item} is yours!'**
+  String shopBought(String item);
+
+  /// No description provided for @shopFreezeStock.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}/{max} in stock'**
+  String shopFreezeStock(int count, int max);
+
+  /// No description provided for @shopRefusedOwned.
+  ///
+  /// In en, this message translates to:
+  /// **'You already own this one.'**
+  String get shopRefusedOwned;
+
+  /// No description provided for @shopRefusedStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Your freeze stock is full.'**
+  String get shopRefusedStock;
+
+  /// No description provided for @shopRefusedSeeds.
+  ///
+  /// In en, this message translates to:
+  /// **'You need more seeds for this.'**
+  String get shopRefusedSeeds;
+
+  /// No description provided for @shopError.
+  ///
+  /// In en, this message translates to:
+  /// **'The purchase did not go through. Try again.'**
+  String get shopError;
 
   /// No description provided for @adviceKicker.
   ///
@@ -2562,7 +3306,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiErrorAppCheck.
   ///
   /// In en, this message translates to:
-  /// **'App Check blocked this dev device: register its debug token in Firebase Console > App Check (or unenforce AI Logic).'**
+  /// **'The server refused this device (App Check). Debug builds use the dev debug token registered in Firebase Console > App Check; release builds need Play Integrity / App Attest configured.'**
   String get aiErrorAppCheck;
 
   /// No description provided for @aiErrorQuota.
@@ -2570,6 +3314,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'AI quota temporarily reached. Please try again in a few minutes.'**
   String get aiErrorQuota;
+
+  /// No description provided for @aiErrorCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'The AI has no credit left on this Firebase project. Top up in AI Studio (ai.studio/projects), then try again.'**
+  String get aiErrorCredits;
 
   /// No description provided for @aiErrorNetwork.
   ///

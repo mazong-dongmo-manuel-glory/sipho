@@ -9,12 +9,13 @@ import {
   requireAuthUid,
 } from "../shared/security";
 import { initialGameStatePayload, normalizeGameState } from "../shared/gameState";
+import { friendPairId } from "../shared/friends";
 import { logger } from "../shared/logger";
 
 const db = (): Firestore => getFirestore();
 
 /**
- * Callable (v2, App Check enforced): redeem a referral code atomically.
+ * Callable (v2, authenticated): redeem a referral code atomically.
  * - Cannot redeem your own code
  * - Each user can redeem at most ONE referral code ever. The source of truth is the
  *   server-only marker `users/{uid}/referral/redemption` (clients cannot write it); the
@@ -49,6 +50,10 @@ export const referralRedeem = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
     if (!referralSnap.exists) {
       throw new HttpsError("not-found", "Referral code not found.");
     }
+    const codeOwner = (referralSnap.data() as { ownerUid?: unknown }).ownerUid;
+    const friendRef =
+      typeof codeOwner === "string" ? db().doc(`friendships/${friendPairId(uid, codeOwner)}`) : null;
+    const friendSnap = friendRef ? await tx.get(friendRef) : null;
 
     const refData = referralSnap.data() as {
       ownerUid?: unknown;
@@ -100,6 +105,22 @@ export const referralRedeem = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
       ownerUid,
       redeemedAt: FieldValue.serverTimestamp(),
     });
+
+    // Inviter and invitee become friends right away (no request needed: the invitation was it).
+    if (friendRef && friendSnap?.data()?.status !== "accepted") {
+      if (friendSnap?.exists) {
+        tx.update(friendRef, { status: "accepted", acceptedAt: FieldValue.serverTimestamp() });
+      } else {
+        tx.set(friendRef, {
+          users: [uid, ownerUid].sort(),
+          status: "accepted",
+          requesterUid: ownerUid,
+          via: "referral",
+          createdAt: FieldValue.serverTimestamp(),
+          acceptedAt: FieldValue.serverTimestamp(),
+        });
+      }
+    }
 
     tx.set(
       inviteeUserRef,

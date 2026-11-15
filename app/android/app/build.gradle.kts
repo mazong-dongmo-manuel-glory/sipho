@@ -35,30 +35,8 @@ android {
         versionName = flutter.versionName
     }
 
-    // One Firebase project per flavor (see DECISIONS.md ADR-005). Each flavor reads its own
-    // google-services.json from android/app/src/<flavor>/ and its own Dart options file.
-    //   flutter run --flavor dev     -t lib/main_dev.dart
-    //   flutter run --flavor staging -t lib/main_staging.dart
-    //   flutter run --flavor prod    -t lib/main.dart
-    flavorDimensions += "env"
-    productFlavors {
-        create("dev") {
-            dimension = "env"
-            // TODO: switch to applicationIdSuffix = ".dev" once that Android app is registered in
-            // the dev Firebase project (and its SHA-1 added), so dev and prod can coexist on a device.
-            manifestPlaceholders["appName"] = "Sipho Dev"
-        }
-        create("staging") {
-            dimension = "env"
-            applicationIdSuffix = ".staging"
-            versionNameSuffix = "-staging"
-            manifestPlaceholders["appName"] = "Sipho Staging"
-        }
-        create("prod") {
-            dimension = "env"
-            manifestPlaceholders["appName"] = "Sipho"
-        }
-    }
+    // No Android flavors: a single build, google-services.json lives in android/app/. The
+    // environment (dev/staging/prod) is picked on the Dart side (lib/main*.dart, ADR-005).
 
     buildTypes {
         release {

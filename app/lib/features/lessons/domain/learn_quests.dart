@@ -11,6 +11,7 @@ class ServerQuestRecord {
     required this.rewardXp,
     required this.status,
     required this.isAiGenerated,
+    this.period = '',
   });
 
   final String id;
@@ -22,6 +23,41 @@ class ServerQuestRecord {
   final int rewardXp;
   final String status; // active | completed | claimed
   final bool isAiGenerated;
+
+  /// `daily` for quests renewed every local day by the server; empty otherwise.
+  final String period;
+}
+
+/// Maximum number of daily quests the Home tab shows (README: 3 per day).
+const int kHomeMaxDailyQuests = 3;
+
+/// The server-issued daily quests to show on Home: only `period == 'daily'`,
+/// never claimed/expired ones, unfinished first, capped at [kHomeMaxDailyQuests].
+List<ServerQuestRecord> dailyQuestsForHome(List<ServerQuestRecord> quests) {
+  final daily = [
+    for (final q in quests)
+      if (q.period == 'daily' && q.status != 'claimed' && q.status != 'expired')
+        q,
+  ];
+  bool done(ServerQuestRecord q) =>
+      q.status == 'completed' || q.progress >= q.target;
+  // List.sort is not stable, so tie-break on the original index.
+  final indexed = [for (var i = 0; i < daily.length; i++) (i, daily[i])];
+  indexed.sort((a, b) {
+    final byDone = (done(a.$2) ? 1 : 0).compareTo(done(b.$2) ? 1 : 0);
+    return byDone != 0 ? byDone : a.$1.compareTo(b.$1);
+  });
+  return [for (final e in indexed.take(kHomeMaxDailyQuests)) e.$2];
+}
+
+/// Where tapping a quest row on Home leads.
+///
+/// A finished quest (and any lesson quest) goes to the Learn tab, where the reward is claimed and
+/// the next lesson is offered; a tracking quest goes straight to the add-expense form.
+String homeQuestRoute(ServerQuestRecord quest) {
+  final done = quest.status == 'completed' || quest.progress >= quest.target;
+  if (done || quest.type == 'COMPLETE_LESSON') return '/learn';
+  return '/expenses/add';
 }
 
 class LearnQuestItem {
@@ -75,6 +111,13 @@ List<LearnQuestItem> buildLearnQuests({
   final nextId =
       nextLessonId(catalogIds, completedLessonIds) ?? catalogIds.first;
   final completedCount = completedLessonIds.where(catalogIds.contains).length;
+  // The unit in progress (or the last one once the whole path is done).
+  final unit = (currentUnit(kCatalogUnits, completedLessonIds) ??
+          unitProgressList(kCatalogUnits, completedLessonIds).last)
+      .unit;
+  final unitDone =
+      unit.lessons.where((l) => completedLessonIds.contains(l.id)).length;
+  final unitTitle = unit.title(languageCode);
 
   final items = <LearnQuestItem>[
     // 1. Next lesson quest
@@ -89,18 +132,18 @@ List<LearnQuestItem> buildLearnQuests({
       target: 1,
       actionRoute: '/lesson/$nextId',
     ),
-    // 2. Unit mastery quest (all 3 lessons)
+    // 2. Unit mastery quest (every lesson of the unit in progress)
     LearnQuestItem(
       id: 'learn_unit_mastery',
       emoji: '🎓',
       title: isFr
-          ? 'Terminer l\'unité (${kCatalogLessons.length} leçons)'
-          : 'Finish the unit (${kCatalogLessons.length} lessons)',
+          ? 'Terminer l\'unité (${unit.lessons.length} leçons)'
+          : 'Finish the unit (${unit.lessons.length} lessons)',
       subtitle: isFr
-          ? 'Fonds d\'urgence, besoins/envies et suivi'
-          : 'Emergency fund, needs vs wants, and tracking',
-      progress: completedCount,
-      target: kCatalogLessons.length,
+          ? '$unitTitle · bonus de ${unit.bonusXp} XP à la fin'
+          : '$unitTitle · ${unit.bonusXp} XP bonus at the end',
+      progress: unitDone,
+      target: unit.lessons.length,
       actionRoute: '/lesson/$nextId',
     ),
     // 3. Real-life application: set up income + 1 fixed strand

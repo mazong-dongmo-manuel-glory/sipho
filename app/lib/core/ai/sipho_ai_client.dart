@@ -9,25 +9,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
-
-const _appCheckDebugChannel =
-    MethodChannel('com.cargonomade.sipho/app_check_debug');
-
-/// Reads the native Android/iOS Firebase App Check debug secret in debug builds.
-Future<String?> readNativeAppCheckDebugToken() async {
-  if (!kDebugMode) return null;
-  try {
-    final token =
-        await _appCheckDebugChannel.invokeMethod<String>('getDebugToken');
-    if (token != null && token.trim().isNotEmpty) {
-      return token.trim();
-    }
-  } catch (_) {}
-  return null;
-}
 
 /// Default active Gemini model on Firebase AI Logic (Gemini Developer API).
 /// Replaces `gemini-2.0-flash`, which was retired on June 1, 2026.
@@ -51,6 +34,7 @@ enum SiphoAiErrorCode {
   appCheckRejected,
   modelUnavailable,
   quotaExceeded,
+  creditsDepleted,
   networkError,
   emptyResponse,
   invalidResponse,
@@ -142,7 +126,7 @@ String? extractGenerativeModelText(GenerateContentResponse response) {
 }
 
 /// Resilient Firebase AI Logic client (Gemini Developer API) compatible with
-/// Gemini 3.x / 4.x models, App Check headers, Remote Config model overrides,
+/// Gemini 3.x / 4.x models, Auth and App Check headers, Remote Config model overrides,
 /// and automatic model fallback.
 class SiphoAiClient {
   SiphoAiClient({
@@ -228,12 +212,7 @@ class SiphoAiClient {
         headers['X-Firebase-AppCheck'] = appCheckToken;
       }
     } catch (error) {
-      debugPrint(
-        '[SiphoAI] App Check token unavailable. If App Check is enforced for '
-        'Firebase AI Logic on project $projectId, register the '
-        'Simulator/Emulator debug token in Firebase Console > App Check > Apps: '
-        '$error',
-      );
+      debugPrint('[SiphoAI] App Check token unavailable: $error');
     }
 
     return headers;
@@ -322,7 +301,8 @@ class SiphoAiClient {
       };
 
       try {
-        final response = await _transport(uri, headers, jsonEncode(payload));
+        final encodedPayload = jsonEncode(payload);
+        final response = await _transport(uri, headers, encodedPayload);
         if (response.statusCode >= 200 && response.statusCode < 300) {
           final text = extractResponseTextFromJson(response.body);
           if (text != null && text.trim().isNotEmpty) {
@@ -445,11 +425,26 @@ class SiphoAiClient {
       debugPrint(
         '[SiphoAI] HTTP $statusCode ($apiStatus) on "$projectId": $apiMessage. '
         'Verify: (1) Firebase Console > AI Services > AI Logic is enabled, and '
-        '(2) Firebase Console > App Check > Apps has your debug token registered '
-        '(or temporarily delay App Check enforcement for Firebase AI Logic).',
+        '(2) Firebase Console > App Check > APIs: Firebase AI Logic is set to "Unenforced".',
       );
       return SiphoAiException(
         code: SiphoAiErrorCode.appCheckRejected,
+        statusCode: statusCode,
+        message: apiMessage,
+      );
+    }
+
+    // Not a rate limit: the Gemini project has no credit left, so waiting never helps.
+    if ((statusCode == 429 || apiStatus == 'RESOURCE_EXHAUSTED') &&
+        (lower.contains('prepayment') ||
+            lower.contains('credits are depleted') ||
+            lower.contains('billing'))) {
+      debugPrint(
+        '[SiphoAI] Gemini credits depleted on "$projectId": top up in AI Studio '
+        '(https://ai.studio/projects) or enable billing. $apiMessage',
+      );
+      return SiphoAiException(
+        code: SiphoAiErrorCode.creditsDepleted,
         statusCode: statusCode,
         message: apiMessage,
       );
@@ -561,6 +556,8 @@ String siphoAiUserMessage(
         return l10n.aiErrorAppCheck;
       case SiphoAiErrorCode.quotaExceeded:
         return l10n.aiErrorQuota;
+      case SiphoAiErrorCode.creditsDepleted:
+        return l10n.aiErrorCredits;
       case SiphoAiErrorCode.networkError:
         return l10n.aiErrorNetwork;
       case SiphoAiErrorCode.modelUnavailable:
@@ -573,45 +570,18 @@ String siphoAiUserMessage(
   return fallback;
 }
 
-/// Displays a localized AI error SnackBar. In debug builds, if App Check blocked
-/// the device, displays the exact native debug UUID and offers a 1-tap Copy action.
+/// Displays a localized AI error SnackBar.
 Future<void> showSiphoAiErrorSnackBar(
   BuildContext context,
   Object error,
   AppLocalizations l10n, {
   required String fallback,
 }) async {
-  final baseMessage = siphoAiUserMessage(error, l10n, fallback: fallback);
-  String? debugToken;
-  if (kDebugMode &&
-      error is SiphoAiException &&
-      error.code == SiphoAiErrorCode.appCheckRejected) {
-    debugToken = await readNativeAppCheckDebugToken();
-    if (debugToken != null) {
-      debugPrint(
-        '[SiphoAI] 👉 App Check Debug Token for this device: $debugToken',
-      );
-    }
-  }
+  final message = siphoAiUserMessage(error, l10n, fallback: fallback);
   if (!context.mounted) return;
-  final isFr = Localizations.localeOf(context).languageCode == 'fr';
-  final fullText =
-      debugToken == null ? baseMessage : '$baseMessage\nToken: $debugToken';
-
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(
-      SnackBar(
-        duration: Duration(seconds: debugToken != null ? 10 : 5),
-        content: Text(fullText),
-        action: debugToken == null
-            ? null
-            : SnackBarAction(
-                label: isFr ? 'COPIER' : 'COPY',
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: debugToken!));
-                },
-              ),
-      ),
+      SnackBar(duration: const Duration(seconds: 5), content: Text(message)),
     );
 }

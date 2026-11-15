@@ -128,6 +128,12 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      // ── Contact discovery opt-in: CLIENT READ ONLY, Functions write ────
+      match /social/contacts {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
       // ── Fixed expenses ──────────────────────────────────────────────────
       match /fixedExpenses/{expenseId} {
         allow read, delete: if isOwner(uid);
@@ -307,11 +313,19 @@ service cloud.firestore {
     match /leagues/{leagueId} {
       allow read: if isSignedIn();
       allow write: if false;
+
+      // Ranking rows: pseudo, avatar, level, weekly XP. No money amounts. Functions write.
+      match /members/{memberUid} {
+        allow read: if isSignedIn();
+        allow write: if false;
+      }
     }
 
     // ─── Referrals ──────────────────────────────────────────────────────────
+    // Codes are resolved by Cloud Functions only; `uses` lists invitees' uids, so only the owner
+    // may read the document.
     match /referrals/{code} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() && resource.data.ownerUid == request.auth.uid;
       allow write: if false;
     }
 

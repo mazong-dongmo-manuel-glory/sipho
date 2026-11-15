@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +7,8 @@ import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_spacing.dart';
 import 'package:sipho/core/analytics/analytics_service.dart';
+import 'package:sipho/core/feedback/feedback_cue.dart';
+import 'package:sipho/core/feedback/feedback_service.dart';
 import 'package:sipho/core/money/amount_input.dart';
 import 'package:sipho/core/time/local_day.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
@@ -96,6 +100,7 @@ class _ReceiptValidationScreenState
         debugPrint('Analytics expense_added skipped: $error');
       }
       if (!mounted) return;
+      unawaited(ref.read(feedbackServiceProvider).play(SiphoCue.expenseAdded));
       context.go('/expenses');
     } catch (_) {
       if (!mounted) return;

@@ -7,7 +7,12 @@ export { onTransactionWrite } from './gamification/onTransactionWrite';
 export { completeLesson } from './gamification/completeLesson';
 export { markFixedPaid } from './gamification/markFixedPaid';
 export { claimQuest } from './gamification/claimQuest';
+export { refreshDailyQuests } from './gamification/refreshDailyQuests';
+export { confirmNoSpend } from './gamification/confirmNoSpend';
 export { dailyRollover } from './gamification/dailyRollover';
+export { joinLeague, onGameXpChange, leagueWeekly } from './gamification/league';
+export { onGameBadgeCheck } from './gamification/badges';
+export { buyShopItem } from './gamification/shop';
 
 // Stats & Users
 export { onUserCreate } from './stats/onUserCreate';
@@ -27,6 +32,10 @@ export { economySummaries } from './ai/economySummaries';
 export { economyFetch } from './economy/economyFetch';
 export { fxRates } from './economy/fxRates';
 export { economyAlerts } from './economy/economyAlerts';
+
+// Friends & invitations
+export { getInviteCode, sendFriendRequest, respondFriendRequest, removeFriend } from './social/friends';
+export { setContactDiscovery, findContacts, sendContactFriendRequest } from './social/contacts';
 
 // Account & Referrals
 export { deleteAccount } from './account/deleteAccount';

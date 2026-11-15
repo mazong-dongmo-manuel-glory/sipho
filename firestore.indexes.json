@@ -43,18 +43,19 @@
       ]
     },
     {
-      "collectionGroup": "devices",
+      "collectionGroup": "leagues",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+        { "fieldPath": "tier", "order": "ASCENDING" },
+        { "fieldPath": "week", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "leagues",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "tier", "order": "ASCENDING" },
-        { "fieldPath": "week", "order": "DESCENDING" }
+        { "fieldPath": "processed", "order": "ASCENDING" },
+        { "fieldPath": "endsAt", "order": "ASCENDING" }
       ]
     }
   ],

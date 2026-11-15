@@ -14,9 +14,13 @@ FirebaseOptions _options(String projectId) => FirebaseOptions(
 
 void main() {
   test('dev flavor is configured and points at the dev project', () {
-    for (final options in [dev.DefaultFirebaseOptions.android, dev.DefaultFirebaseOptions.ios]) {
+    for (final options in [
+      dev.DefaultFirebaseOptions.android,
+      dev.DefaultFirebaseOptions.ios
+    ]) {
       expect(options.projectId, kDevFirebaseProjectId);
-      expect(() => assertFirebaseConfigured(options, flavor: 'dev'), returnsNormally);
+      expect(() => assertFirebaseConfigured(options, flavor: 'dev'),
+          returnsNormally);
     }
   });
 
@@ -39,7 +43,8 @@ void main() {
     });
   });
 
-  test('an unconfigured flavor refuses to start instead of falling back to dev', () {
+  test('an unconfigured flavor refuses to start instead of falling back to dev',
+      () {
     expect(
       () => assertFirebaseConfigured(
         staging.DefaultFirebaseOptions.android,
@@ -52,20 +57,24 @@ void main() {
       )),
     );
     expect(
-      () => assertFirebaseConfigured(prod.DefaultFirebaseOptions.ios, flavor: 'prod'),
+      () => assertFirebaseConfigured(prod.DefaultFirebaseOptions.ios,
+          flavor: 'prod'),
       throwsStateError,
     );
   });
 
-  test('a configured prod flavor is accepted, but not if it targets the dev project', () {
+  test(
+      'a configured prod flavor is accepted, but not if it targets the dev project',
+      () {
     expect(
       () => assertFirebaseConfigured(_options('sipho-prod'), flavor: 'prod'),
       returnsNormally,
     );
     expect(
-      () => assertFirebaseConfigured(_options(kDevFirebaseProjectId), flavor: 'prod'),
-      throwsA(isA<StateError>()
-          .having((e) => e.message, 'message', contains('dev Firebase project'))),
+      () => assertFirebaseConfigured(_options(kDevFirebaseProjectId),
+          flavor: 'prod'),
+      throwsA(isA<StateError>().having(
+          (e) => e.message, 'message', contains('dev Firebase project'))),
     );
     expect(
       () => assertFirebaseConfigured(_options('sipho-staging'), flavor: 'qa'),

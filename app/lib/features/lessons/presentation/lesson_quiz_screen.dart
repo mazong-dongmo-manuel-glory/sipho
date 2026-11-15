@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +8,9 @@ import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_spacing.dart';
 import 'package:sipho/core/ai/sipho_ai_client.dart';
 import 'package:sipho/core/animations/lottie_widget.dart';
+import 'package:sipho/core/animations/sipho_lotties.dart';
+import 'package:sipho/core/feedback/feedback_cue.dart';
+import 'package:sipho/core/feedback/feedback_service.dart';
 import 'package:sipho/core/firebase/firebase_providers.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
@@ -29,6 +34,9 @@ class _LessonQuizScreenState extends ConsumerState<LessonQuizScreen> {
   bool _saving = false;
   bool _askingTutor = false;
   LessonTutorReply? _tutorReply;
+  // Set when this completion finished the unit (the server pays the bonus).
+  int? _unitBonusXp;
+  int _unitBonusSeeds = 0;
   late final DateTime _startedAt = DateTime.now();
 
   CatalogLesson get _lesson {
@@ -42,16 +50,18 @@ class _LessonQuizScreenState extends ConsumerState<LessonQuizScreen> {
     final correct = lesson.choices[_selected].correct;
     if (!correct) {
       setState(() => _checked = true);
+      unawaited(ref.read(feedbackServiceProvider).play(SiphoCue.lessonWrong));
       return;
     }
     setState(() {
       _checked = true;
       _saving = true;
     });
+    unawaited(ref.read(feedbackServiceProvider).play(SiphoCue.lessonCorrect));
     final elapsedSeconds =
         DateTime.now().difference(_startedAt).inSeconds.clamp(2, 3600);
     try {
-      await ref
+      final result = await ref
           .read(firebaseFunctionsProvider)
           .httpsCallable('completeLesson')
           .call<Map<String, dynamic>>({
@@ -59,6 +69,13 @@ class _LessonQuizScreenState extends ConsumerState<LessonQuizScreen> {
         'score': 100,
         'durationSeconds': elapsedSeconds,
       });
+      final data = result.data;
+      if (data['unitCompleted'] != null && mounted) {
+        setState(() {
+          _unitBonusXp = (data['unitBonusXp'] as num?)?.toInt() ?? 0;
+          _unitBonusSeeds = (data['unitBonusSeeds'] as num?)?.toInt() ?? 0;
+        });
+      }
     } catch (error) {
       // No client-side fallback: lesson progress and XP are written by the `completeLesson`
       // Cloud Function only (Firestore rules refuse client writes to completedLessonIds).
@@ -114,9 +131,12 @@ class _LessonQuizScreenState extends ConsumerState<LessonQuizScreen> {
 
     final lesson = _lesson;
     final correct = _checked && lesson.choices[_selected].correct;
+    // Progress inside the lesson's own unit.
+    final unitLessons =
+        unitOfLesson(kCatalogUnits, lesson.id)?.lessons ?? kCatalogLessons;
     final progress =
-        (kCatalogLessons.indexWhere((item) => item.id == lesson.id) + 1) /
-            kCatalogLessons.length;
+        (unitLessons.indexWhere((item) => item.id == lesson.id) + 1) /
+            unitLessons.length;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -300,7 +320,10 @@ class _LessonQuizScreenState extends ConsumerState<LessonQuizScreen> {
               if (_checked && correct)
                 _ResultBanner(
                   title: l10n.quizExcellent,
-                  body: lesson.explanation(language),
+                  body: _unitBonusXp == null
+                      ? lesson.explanation(language)
+                      : '${lesson.explanation(language)}\n\n'
+                          '🎓 ${l10n.lessonUnitCompleted(_unitBonusXp!, _unitBonusSeeds)}',
                   action: l10n.continueBtn.toUpperCase(),
                   loading: _saving,
                   onPressed: () => context.pop(),
@@ -382,7 +405,7 @@ class _ResultBanner extends StatelessWidget {
               ),
               if (tone == AppColors.primary)
                 const LottieWidget(
-                  assetPath: 'assets/animations/xp_coins.json',
+                  assetPath: SiphoLotties.xpCoins,
                   width: 48,
                   height: 36,
                 ),

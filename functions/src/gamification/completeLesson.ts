@@ -1,4 +1,5 @@
-import { onCall } from "firebase-functions/v2/https";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { isLessonUnlocked, lessonsToCheck, unitBonusFor } from "../shared/lessonPath";
 import { getFirestore, FieldValue, Firestore } from "firebase-admin/firestore";
 import { CompleteLessonInputSchema } from "../shared/validators";
 import { XP_CONFIG, xpToLevel } from "../shared/xpConfig";
@@ -51,6 +52,21 @@ export const completeLesson = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
       tx.get(lessonProgressRef),
     ]);
 
+    // Everything below that decides unlocking and the unit bonus is read before any write.
+    const relatedRefs = lessonsToCheck(lessonId).map((id) =>
+      db().doc(`users/${uid}/lessonProgress/${id}`)
+    );
+    const relatedSnaps = relatedRefs.length > 0 ? await tx.getAll(...relatedRefs) : [];
+    const completedBefore = new Set<string>();
+    const legacyCompleted: unknown = userSnap.data()?.completedLessonIds;
+    if (Array.isArray(legacyCompleted)) {
+      for (const id of legacyCompleted as unknown[]) {
+        if (typeof id === "string") completedBefore.add(id);
+      }
+    }
+    for (const snap of relatedSnaps) if (snap.exists) completedBefore.add(snap.id);
+    if (existingProgressSnap.exists) completedBefore.add(lessonId);
+
     const today = localDateKey(now, resolveUserTime(userSnap.data()));
     const dailyRef = db().doc(`users/${uid}/dailyXp/${today}`);
     const dailySnap = await tx.get(dailyRef);
@@ -67,6 +83,9 @@ export const completeLesson = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
         levelUp: false,
         newLevel: currentGame.level,
         alreadyCompleted: true,
+        unitCompleted: null as string | null,
+        unitBonusXp: 0,
+        unitBonusSeeds: 0,
       };
     }
 
@@ -77,6 +96,15 @@ export const completeLesson = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
     // A fresh `attemptId` can never be used to farm XP: first completion pays once per lesson
     // (lessonId is whitelisted), replays only earn a small practice XP capped per local day.
     const alreadyCompletedBefore = existingProgressSnap.exists;
+
+    // The path is enforced here, not only in the app: a locked lesson earns nothing.
+    if (!alreadyCompletedBefore && !isLessonUnlocked(lessonId, completedBefore)) {
+      throw new HttpsError(
+        "failed-precondition",
+        "This lesson is locked: finish the previous lesson first."
+      );
+    }
+
     const isPerfect = score === 100;
     const replayXpToday =
       typeof dailySnap.data()?.fromLessonReplays === "number"
@@ -97,7 +125,15 @@ export const completeLesson = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
       xpGained += XP_CONFIG.lessonBonusStreak;
     }
 
-    const seedsGained = alreadyCompletedBefore ? 0 : isPerfect ? 5 : score >= 70 ? 3 : 1;
+    let seedsGained = alreadyCompletedBefore ? 0 : isPerfect ? 5 : score >= 70 ? 3 : 1;
+
+    // One-time unit bonus, on the first completion of the unit's last missing lesson.
+    const unitBonus = unitBonusFor(lessonId, completedBefore);
+    if (unitBonus) {
+      xpGained += unitBonus.xp;
+      seedsGained += unitBonus.seeds;
+    }
+
     const newXp = baseGame.xp + xpGained;
     const newLevel = xpToLevel(newXp);
     const levelUp = newLevel > baseGame.level;
@@ -185,6 +221,9 @@ export const completeLesson = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
       levelUp,
       newLevel,
       alreadyCompleted: false,
+      unitCompleted: unitBonus?.unitId ?? null,
+      unitBonusXp: unitBonus?.xp ?? 0,
+      unitBonusSeeds: unitBonus?.seeds ?? 0,
     };
   });
 
@@ -198,6 +237,7 @@ export const completeLesson = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
     score,
     xpGained: result.xpGained,
     newStreak: result.newStreak,
+    unitCompleted: result.unitCompleted,
   });
 
   return result;

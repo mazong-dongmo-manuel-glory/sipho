@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ALL_LESSON_IDS } from "./lessonPath";
 
 // ─── Allowed categories (aligned with Flutter ExpenseCategory) ───────────────
 
@@ -14,14 +15,10 @@ export const ALLOWED_EXPENSE_CATEGORIES = [
 ] as const;
 
 /**
- * Lessons that can award XP. Keep in sync with `kCatalogLessons` in the Flutter app
- * (app/lib/features/lessons/domain/lesson_catalog.dart): an unknown id must never earn XP.
+ * Lessons that can award XP, derived from the lesson path (shared/lessonPath.ts, mirrored by
+ * `kCatalogUnits` in the Flutter app): an unknown id must never earn XP.
  */
-export const ALLOWED_LESSON_IDS = [
-  "emergency_fund",
-  "needs_wants",
-  "track_spending",
-] as const;
+export const ALLOWED_LESSON_IDS = ALL_LESSON_IDS;
 
 // ─── Primitive validators ─────────────────────────────────────────────────────
 

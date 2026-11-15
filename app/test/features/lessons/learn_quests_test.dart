@@ -32,6 +32,27 @@ void main() {
     expect(tracking.isCompleted, isFalse);
   });
 
+  test('the unit quest follows the unit in progress', () {
+    final quests = buildLearnQuests(
+      languageCode: 'en',
+      completedLessonIds: const {
+        'emergency_fund',
+        'needs_wants',
+        'track_spending',
+        'savings_goal',
+      },
+      monthExpenseCount: 0,
+      activeFixedCount: 0,
+      hasMonthlyIncome: false,
+    );
+
+    final unitMastery = quests.firstWhere((q) => q.id == 'learn_unit_mastery');
+    expect(unitMastery.clampedProgress, 1);
+    expect(unitMastery.safeTarget, 3);
+    expect(unitMastery.subtitle, contains('Saving, one step at a time'));
+    expect(unitMastery.actionRoute, '/lesson/pay_yourself_first');
+  });
+
   test('prepends AI server quests and marks completed ones claimable', () {
     final quests = buildLearnQuests(
       languageCode: 'en',

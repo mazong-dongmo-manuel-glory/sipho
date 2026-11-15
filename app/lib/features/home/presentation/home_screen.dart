@@ -8,6 +8,7 @@ import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_spacing.dart';
 import 'package:sipho/core/ai/sipho_ai_client.dart';
 import 'package:sipho/core/animations/lottie_widget.dart';
+import 'package:sipho/core/animations/sipho_lotties.dart';
 import 'package:sipho/core/money/money.dart';
 import 'package:sipho/core/money/money_formatter.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
@@ -19,9 +20,14 @@ import 'package:sipho/features/finance/presentation/income_sheet.dart';
 import 'package:sipho/features/fixed_expenses/domain/fixed_expense_schedule.dart';
 import 'package:sipho/features/fixed_expenses/domain/fixed_paid.dart';
 import 'package:sipho/features/fixed_expenses/presentation/fixed_paid_button.dart';
+import 'package:sipho/features/gamification/data/game_state_repository.dart';
+import 'package:sipho/features/gamification/domain/game_extras.dart';
+import 'package:sipho/features/gamification/presentation/no_spend_controller.dart';
 import 'package:sipho/features/insights/data/insight_service.dart';
 import 'package:sipho/features/insights/domain/insight_text.dart';
 import 'package:sipho/features/insights/presentation/spend_snapshot_builder.dart';
+import 'package:sipho/features/lessons/domain/learn_quests.dart';
+import 'package:sipho/features/lessons/presentation/learn_quests_provider.dart';
 import 'package:sipho/features/notifications/data/notification_service.dart';
 
 final homeRewardProvider =
@@ -53,6 +59,37 @@ Future<void> _askInsight(
   }
 }
 
+/// Opens the add-expense form and, when an expense was saved, shows the reward card on Home.
+Future<void> _addExpense(BuildContext context, WidgetRef ref) async {
+  final added = await context.push<({String amount, String category})>(
+    '/expenses/add',
+  );
+  if (added != null) {
+    ref.read(homeRewardProvider.notifier).state = added;
+  }
+}
+
+void _openQuest(BuildContext context, WidgetRef ref, ServerQuestRecord quest) {
+  final route = homeQuestRoute(quest);
+  if (route == '/expenses/add') {
+    _addExpense(context, ref);
+  } else {
+    context.go(route);
+  }
+}
+
+Future<void> _confirmNoSpend(
+  BuildContext context,
+  WidgetRef ref,
+  AppLocalizations l10n,
+) async {
+  final ok = await ref.read(noSpendControllerProvider.notifier).confirm();
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(ok ? l10n.homeNoSpendDone : l10n.homeNoSpendError)),
+  );
+}
+
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -63,6 +100,7 @@ class HomeScreen extends ConsumerWidget {
     final palette = _HomePalette(dark);
     final reward = ref.watch(homeRewardProvider);
     ref.watch(ensureUserProfileProvider);
+    ref.watch(dailyQuestsRefreshProvider);
     final monthKey = currentMonthKey();
     final summary = ref.watch(monthSummaryProvider(monthKey));
     final transactions =
@@ -70,6 +108,11 @@ class HomeScreen extends ConsumerWidget {
             const <SiphoTransaction>[];
     final finance = ref.watch(userFinanceProvider).valueOrNull;
     final currency = finance?.currency ?? 'CAD';
+    final game = ref.watch(gameStateStreamProvider).valueOrNull;
+    final extras = ref.watch(gameExtrasStreamProvider).valueOrNull;
+    final dailyQuests = dailyQuestsForHome(
+      ref.watch(serverQuestsStreamProvider).valueOrNull ?? const [],
+    );
     final insightState = ref.watch(insightControllerProvider);
     final activeAdvice = ref.watch(activeCoachAdviceProvider);
     ref.listen(pendingNotificationRouteProvider, (previous, next) {
@@ -84,8 +127,8 @@ class HomeScreen extends ConsumerWidget {
       ref.watch(activeFixedExpensesProvider).valueOrNull ?? const [],
       DateTime.now().day,
     );
-    final paidIds =
-        ref.watch(paidFixedIdsProvider(monthKey)).valueOrNull ?? const <String>{};
+    final paidIds = ref.watch(paidFixedIdsProvider(monthKey)).valueOrNull ??
+        const <String>{};
     final nextFixedPaid = nextFixed != null &&
         isFixedPaid(nextFixed, paidIds: paidIds, now: DateTime.now());
     return Scaffold(
@@ -104,22 +147,22 @@ class HomeScreen extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    const _Pill(
+                    _Pill(
                       background: AppColors.flamePill,
                       foreground: AppColors.flameText,
-                      label: '🔥  12',
+                      label: '🔥  ${game?.streak.current ?? '—'}',
                     ),
                     const SizedBox(width: 16),
-                    const _Pill(
+                    _Pill(
                       background: AppColors.seedPill,
                       foreground: AppColors.seedText,
-                      label: '🌾  340',
+                      label: '🌾  ${game?.gems ?? '—'}',
                     ),
                     const SizedBox(width: 16),
                     _Pill(
                       background: AppColors.mint,
                       foreground: AppColors.primaryDark,
-                      label: l10n.homeLevelPill(7),
+                      label: l10n.homeLevelPill(game?.level ?? 1),
                     ),
                   ],
                 ),
@@ -155,7 +198,7 @@ class HomeScreen extends ConsumerWidget {
                     ),
                     if (reward != null)
                       const LottieWidget(
-                        assetPath: 'assets/animations/xp_coins.json',
+                        assetPath: SiphoLotties.xpCoins,
                         width: 56,
                         height: 48,
                       ),
@@ -200,6 +243,28 @@ class HomeScreen extends ConsumerWidget {
                   )
                 else
                   _RewardCard(l10n: l10n, reward: reward),
+                if (isBudgetDayBannerVisible(extras?.budgetDay, DateTime.now()))
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: _BudgetDayCard(
+                      l10n: l10n,
+                      xp: extras!.budgetDay!.xp,
+                    ),
+                  ),
+                if (reward == null &&
+                    canConfirmNoSpend(
+                      extras: extras,
+                      today: DateTime.now(),
+                      expenseDates: [for (final tx in transactions) tx.date],
+                    ))
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: _NoSpendButton(
+                      label: l10n.homeNoSpendCta,
+                      color: palette.read,
+                      onTap: () => _confirmNoSpend(context, ref, l10n),
+                    ),
+                  ),
                 const SizedBox(height: 16),
                 Text(
                   l10n.homeQuests,
@@ -215,8 +280,8 @@ class HomeScreen extends ConsumerWidget {
                 _QuestCard(
                   l10n: l10n,
                   palette: palette,
-                  loggedCount: transactions.length,
-                  lessonDone: finance?.completedLessonIds.isNotEmpty ?? false,
+                  quests: dailyQuests,
+                  onOpen: (quest) => _openQuest(context, ref, quest),
                 ),
                 const SizedBox(height: 12),
                 if (reward == null)
@@ -237,15 +302,7 @@ class HomeScreen extends ConsumerWidget {
                 right: 20,
                 bottom: 16,
                 child: _AddButton(
-                  onTap: () async {
-                    final added =
-                        await context.push<({String amount, String category})>(
-                      '/expenses/add',
-                    );
-                    if (added != null) {
-                      ref.read(homeRewardProvider.notifier).state = added;
-                    }
-                  },
+                  onTap: () => _addExpense(context, ref),
                 ),
               ),
           ],
@@ -551,59 +608,65 @@ class _NextExpense extends StatelessWidget {
   }
 }
 
+/// Today's quests, straight from the server (`users/{uid}/quests`, `period == daily`).
+/// Progress is computed server-side, so the client never invents a quest state.
 class _QuestCard extends StatelessWidget {
   const _QuestCard({
     required this.l10n,
     required this.palette,
-    required this.loggedCount,
-    required this.lessonDone,
+    required this.quests,
+    required this.onOpen,
   });
 
   final AppLocalizations l10n;
   final _HomePalette palette;
-  final int loggedCount;
-  final bool lessonDone;
+  final List<ServerQuestRecord> quests;
+  final ValueChanged<ServerQuestRecord> onOpen;
 
   @override
   Widget build(BuildContext context) {
-    final logged = loggedCount.clamp(0, 3);
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
       decoration: BoxDecoration(
         color: palette.card,
         borderRadius: BorderRadius.circular(18),
       ),
-      child: Column(
-        children: [
-          _QuestRow(
-            icon: Icons.edit_note_rounded,
-            color: AppColors.primary,
-            titleColor: palette.title,
-            muted: palette.muted,
-            title: l10n.homeQuestExpenses,
-            progress: logged / 3,
-            trailing: logged >= 3 ? '✓' : '$logged/3',
-          ),
-          _QuestRow(
-            icon: Icons.school_rounded,
-            color: AppColors.terracotta,
-            titleColor: palette.title,
-            muted: palette.muted,
-            title: l10n.homeQuestLesson,
-            progress: lessonDone ? 1 : 0,
-            trailing: lessonDone ? '✓' : '0/1',
-          ),
-          _QuestRow(
-            icon: Icons.restaurant_rounded,
-            color: AppColors.primary,
-            titleColor: palette.title,
-            muted: palette.muted,
-            title: l10n.homeQuestRestaurants,
-            progress: 1,
-            trailing: '✓',
-          ),
-        ],
-      ),
+      child: quests.isEmpty
+          ? Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                l10n.homeQuestsEmpty,
+                style: TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 13,
+                  height: 1.2,
+                  color: palette.muted,
+                ),
+              ),
+            )
+          : Column(
+              children: [
+                for (final quest in quests) _questRow(quest),
+              ],
+            ),
+    );
+  }
+
+  Widget _questRow(ServerQuestRecord quest) {
+    final target = quest.target <= 0 ? 1 : quest.target;
+    final progress = quest.progress.clamp(0, target);
+    final done = quest.status == 'completed' || progress >= target;
+    final isLesson = quest.type == 'COMPLETE_LESSON';
+    return _QuestRow(
+      icon: isLesson ? Icons.school_rounded : Icons.edit_note_rounded,
+      color: isLesson ? AppColors.terracotta : AppColors.primary,
+      titleColor: palette.title,
+      muted: palette.muted,
+      title: quest.title,
+      progress: progress / target,
+      trailing: done ? '✓' : '$progress/$target',
+      onTap: () => onOpen(quest),
     );
   }
 }
@@ -617,6 +680,7 @@ class _QuestRow extends StatelessWidget {
     required this.title,
     required this.progress,
     required this.trailing,
+    required this.onTap,
   });
 
   final IconData icon;
@@ -626,61 +690,73 @@ class _QuestRow extends StatelessWidget {
   final String title;
   final double progress;
   final String trailing;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 21),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontFamily: 'Nunito',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    height: 1.2,
-                    color: titleColor,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(9),
-                  child: SizedBox(
-                    height: 7,
-                    child: Stack(
-                      children: [
-                        const ColoredBox(color: AppColors.border),
-                        FractionallySizedBox(
-                          widthFactor: progress,
-                          child: const ColoredBox(color: AppColors.primary),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            trailing,
-            style: TextStyle(
-              fontFamily: 'Nunito',
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: muted,
-            ),
-          ),
-          const Icon(Icons.card_giftcard, size: 16, color: AppColors.gift),
-        ],
+    return Semantics(
+      button: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: _content(),
+        ),
       ),
+    );
+  }
+
+  Widget _content() {
+    return Row(
+      children: [
+        Icon(icon, color: color, size: 21),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  height: 1.2,
+                  color: titleColor,
+                ),
+              ),
+              const SizedBox(height: 4),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(9),
+                child: SizedBox(
+                  height: 7,
+                  child: Stack(
+                    children: [
+                      const ColoredBox(color: AppColors.border),
+                      FractionallySizedBox(
+                        widthFactor: progress,
+                        child: const ColoredBox(color: AppColors.primary),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          trailing,
+          style: TextStyle(
+            fontFamily: 'Nunito',
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: muted,
+          ),
+        ),
+        const Icon(Icons.card_giftcard, size: 16, color: AppColors.gift),
+      ],
     );
   }
 }
@@ -838,6 +914,90 @@ class _RewardCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Shown the day after a day under budget: the server evaluated it at midnight and paid the XP.
+class _BudgetDayCard extends StatelessWidget {
+  const _BudgetDayCard({required this.l10n, required this.xp});
+
+  final AppLocalizations l10n;
+  final int xp;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: true,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.mint,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.savings_rounded, color: AppColors.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.homeBudgetDayTitle,
+                    style: const TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      height: 1.2,
+                      color: AppColors.primaryDark,
+                    ),
+                  ),
+                  Text(
+                    l10n.homeBudgetDayBody(xp),
+                    style: const TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 12,
+                      height: 1.2,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NoSpendButton extends StatelessWidget {
+  const _NoSpendButton({
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton.icon(
+      onPressed: onTap,
+      icon: Icon(Icons.check_circle_outline_rounded, size: 18, color: color),
+      label: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'Nunito',
+          fontSize: 13,
+          fontWeight: FontWeight.w800,
+          color: color,
+        ),
       ),
     );
   }
