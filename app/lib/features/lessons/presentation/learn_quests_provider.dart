@@ -13,7 +13,10 @@ final serverQuestsStreamProvider =
   return ref
       .watch(firestoreProvider)
       .collection('users/$uid/quests')
-      .limit(15)
+      // Newest first: daily quests are renewed every day, so an unordered `limit` would keep
+      // returning the oldest (expired) ones and hide today's quest.
+      .orderBy('createdAt', descending: true)
+      .limit(20)
       .snapshots()
       .map((snap) {
     final records = <ServerQuestRecord>[];

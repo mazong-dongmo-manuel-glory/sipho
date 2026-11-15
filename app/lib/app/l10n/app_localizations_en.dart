@@ -1324,4 +1324,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aiErrorNetwork =>
       'Network connection unavailable to reach Sipho AI.';
+
+  @override
+  String get lessonSaveError =>
+      'Your progress couldn\'t be saved. Check your connection and try again.';
+
+  @override
+  String get fixedMarkPaidError =>
+      'Couldn\'t mark this bill as paid. Try again.';
 }

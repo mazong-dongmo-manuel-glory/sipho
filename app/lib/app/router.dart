@@ -15,7 +15,6 @@ import 'package:sipho/features/expenses/presentation/receipt_validation_screen.d
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
 import 'package:sipho/features/fixed_expenses/domain/fixed_expense_draft.dart';
 import 'package:sipho/features/fixed_expenses/presentation/fixed_amount_screen.dart';
-import 'package:sipho/features/fixed_expenses/presentation/fixed_expense_detail_screen.dart';
 import 'package:sipho/features/fixed_expenses/presentation/fixed_expense_swipe_screen.dart';
 import 'package:sipho/features/fixed_expenses/presentation/fixed_expenses_list_screen.dart';
 import 'package:sipho/features/gamification/presentation/chest_open_screen.dart';
@@ -135,11 +134,6 @@ GoRouter router(RouterRef ref) {
       GoRoute(
         path: '/fixed-expenses/swipe',
         builder: (_, __) => const FixedExpenseSwipeScreen(),
-      ),
-      GoRoute(
-        path: '/fixed-expenses/:id',
-        builder: (_, state) =>
-            FixedExpenseDetailScreen(id: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/economy',

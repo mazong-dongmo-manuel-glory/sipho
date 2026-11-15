@@ -1,108 +1,131 @@
 import { onSchedule } from "firebase-functions/v2/scheduler";
-import { getFirestore, FieldValue, Firestore, Timestamp } from "firebase-admin/firestore";
+import { getFirestore, FieldValue, Firestore } from "firebase-admin/firestore";
 import { normalizeGameState } from "../shared/gameState";
-import { userLocalDateKey } from "../shared/security";
+import { deadlineGuard, forEachDocument } from "../shared/pagination";
+import { ensureDailyQuests, expireDailyQuests } from "../shared/dailyQuests";
+import {
+  localDateKey,
+  offsetRangesForLocalWindow,
+  resolveUserTime,
+  shiftDateKey,
+} from "../shared/timezone";
 import { logger } from "../shared/logger";
 
 const db = (): Firestore => getFirestore();
 
+const TIMEOUT_SECONDS = 540;
+
 /**
- * Hourly scheduler: end-of-day streak & quest rollover per user's local timezone.
+ * Users whose (stored) UTC offset puts them between 00:00 and 03:00 local are examined each hour.
+ * The window is deliberately wider than one run: the stored offset can lag behind a DST change,
+ * and `lastRolloverDay` makes each user's rollover run exactly once per local day regardless.
+ */
+const ROLLOVER_WINDOW_START_MINUTE = 0;
+const ROLLOVER_WINDOW_END_MINUTE = 3 * 60;
+
+/**
+ * Hourly scheduler: end-of-day streak & daily-quest rollover per user's local day.
+ *
+ * Users are paginated (no 500-user cap) and located by `utcOffsetMinutes` (half-hour zones
+ * supported); the day boundary itself is computed from the IANA `timezone` (DST-correct).
  */
 export const dailyRollover = onSchedule(
   {
     schedule: "every 1 hours",
     region: "us-central1",
-    timeoutSeconds: 540,
+    timeoutSeconds: TIMEOUT_SECONDS,
   },
   async (_event) => {
     const now = new Date();
-    const currentHourUtc = now.getUTCHours();
-    const targetOffsets = [-currentHourUtc, 24 - currentHourUtc].filter(
-      (offset) => offset >= -12 && offset <= 14
+    const shouldStop = deadlineGuard(TIMEOUT_SECONDS);
+    const ranges = offsetRangesForLocalWindow(
+      now,
+      ROLLOVER_WINDOW_START_MINUTE,
+      ROLLOVER_WINDOW_END_MINUTE
     );
+    logger.info("dailyRollover started", { ranges: JSON.stringify(ranges) });
 
-    logger.info("dailyRollover started", { currentHourUtc, targetOffsets });
-
-    for (const offset of targetOffsets) {
-      const usersSnap = await db()
-        .collection("users")
-        .where("timezoneOffset", "==", offset)
-        .limit(500)
-        .get();
-
-      logger.info("processing rollover batch", { offset, count: usersSnap.size });
-
-      await Promise.allSettled(
-        usersSnap.docs.map((doc) => processUserRollover(doc.id, offset, now))
+    let processed = 0;
+    let failed = 0;
+    for (const [lo, hi] of ranges) {
+      const result = await forEachDocument(
+        db()
+          .collection("users")
+          .where("utcOffsetMinutes", ">=", lo)
+          .where("utcOffsetMinutes", "<=", hi),
+        (doc) => processUserRollover(doc.id, doc.data(), now),
+        { label: "dailyRollover", shouldStop }
       );
+      processed += result.processed;
+      failed += result.failed;
+      if (result.stoppedEarly) break;
     }
 
-    logger.info("dailyRollover completed");
+    logger.info("dailyRollover completed", { processed, failed });
   }
 );
 
-async function processUserRollover(
+export async function processUserRollover(
   uid: string,
-  offsetHours: number,
+  userData: Record<string, unknown>,
   now: Date
 ): Promise<void> {
+  const time = resolveUserTime(userData);
+  const todayKey = localDateKey(now, time);
+  const yesterdayKey = shiftDateKey(todayKey, -1);
+  const locale = userData.locale === "en" ? "en" : "fr";
+
   const gameRef = db().doc(`users/${uid}/game/state`);
   const publicRef = db().doc(`publicProfiles/${uid}`);
-  const gameSnap = await gameRef.get();
-  if (!gameSnap.exists) return;
 
-  const game = normalizeGameState(gameSnap.data());
-  const yesterday = new Date(now.getTime() - 86_400_000);
-  const yesterdayKey = userLocalDateKey(yesterday, offsetHours);
-  const todayKey = userLocalDateKey(now, offsetHours);
+  const gameProbe = await gameRef.get();
+  if (gameProbe.exists && gameProbe.data()?.lastRolloverDay === todayKey) return;
 
-  const activeRecently =
-    game.streak.lastActiveDay === yesterdayKey ||
-    game.streak.lastActiveDay === todayKey;
+  // Quests first: idempotent (deterministic ids), so a failure below just retries next hour.
+  await expireDailyQuests(db(), uid, now);
+  await ensureDailyQuests(db(), uid, time, locale, now);
 
-  if (!activeRecently && game.streak.current > 0) {
-    if (game.streak.freezes > 0) {
-      await gameRef.update({
-        "streak.freezes": game.streak.freezes - 1,
-        "streak.lastActiveDay": yesterdayKey,
-        updatedAt: FieldValue.serverTimestamp(),
-      });
-      logger.info("streak freeze applied", { uid });
-    } else {
-      const wasStreak = game.streak.current;
-      await Promise.all([
-        gameRef.update({
-          "streak.current": 0,
+  if (!gameProbe.exists) return;
+
+  // Streak + marker in ONE transaction so a retry can never consume a freeze twice.
+  await db().runTransaction(async (tx) => {
+    const snap = await tx.get(gameRef);
+    if (!snap.exists || snap.data()?.lastRolloverDay === todayKey) return;
+
+    const game = normalizeGameState(snap.data());
+    const activeRecently =
+      game.streak.lastActiveDay === yesterdayKey || game.streak.lastActiveDay === todayKey;
+
+    if (!activeRecently && game.streak.current > 0) {
+      if (game.streak.freezes > 0) {
+        tx.update(gameRef, {
+          "streak.freezes": game.streak.freezes - 1,
+          "streak.lastActiveDay": yesterdayKey,
+          lastRolloverDay: todayKey,
           updatedAt: FieldValue.serverTimestamp(),
-        }),
-        publicRef.set(
+        });
+        logger.info("streak freeze applied", { uid });
+      } else {
+        tx.update(gameRef, {
+          "streak.current": 0,
+          lastRolloverDay: todayKey,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+        tx.set(
+          publicRef,
           { streak: 0, updatedAt: FieldValue.serverTimestamp() },
           { merge: true }
-        ),
-        db().collection(`users/${uid}/events`).add({
+        );
+        tx.set(db().collection(`users/${uid}/events`).doc(), {
           type: "STREAK_BROKEN",
-          wasStreak,
+          wasStreak: game.streak.current,
           at: FieldValue.serverTimestamp(),
-        }),
-      ]);
-      logger.info("streak broken", { uid, wasStreak });
+        });
+        logger.info("streak broken", { uid, wasStreak: game.streak.current });
+      }
+      return;
     }
-  }
 
-  const expiredQuestsSnap = await db()
-    .collection(`users/${uid}/quests`)
-    .where("type", "==", "daily")
-    .where("status", "==", "active")
-    .where("expiresAt", "<=", Timestamp.fromDate(now))
-    .get();
-
-  if (!expiredQuestsSnap.empty) {
-    const batch = db().batch();
-    for (const doc of expiredQuestsSnap.docs) {
-      batch.update(doc.ref, { status: "expired" });
-    }
-    await batch.commit();
-    logger.info("expired daily quests", { uid, count: expiredQuestsSnap.size });
-  }
+    tx.update(gameRef, { lastRolloverDay: todayKey });
+  });
 }

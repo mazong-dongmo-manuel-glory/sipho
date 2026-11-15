@@ -2,6 +2,7 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { getFirestore, FieldValue, Firestore } from "firebase-admin/firestore";
 import { z } from "zod";
 import { normalizeGameState } from "../shared/gameState";
+import { deadlineGuard, forEachDocument } from "../shared/pagination";
 import { logger } from "../shared/logger";
 import { callGeminiJson } from "./geminiClient";
 
@@ -40,34 +41,32 @@ interface WeeklySummary {
  * Weekly scheduler (every Monday at 06:00 UTC).
  * Sends ONLY aggregated integer cents (zero PII) to Gemini with strict schema validation.
  */
+const TIMEOUT_SECONDS = 1800;
+
 export const weeklyInsights = onSchedule(
   {
     schedule: "every monday 06:00",
     region: "us-central1",
-    timeoutSeconds: 540,
+    timeoutSeconds: TIMEOUT_SECONDS,
     memory: "512MiB",
   },
   async (_event) => {
     logger.info("weeklyInsights started");
 
-    const usersSnap = await db()
-      .collection("users")
-      .where("onboardingDone", "==", true)
-      .limit(500)
-      .get();
+    // Paginated (no 500-user cap); 10 users in parallel with a 1s pause keeps Gemini under quota.
+    const result = await forEachDocument(
+      db().collection("users").where("onboardingDone", "==", true),
+      (doc) => generateUserInsight(doc.id, doc.data() as UserProfile),
+      {
+        label: "weeklyInsights",
+        pageSize: 100,
+        concurrency: 10,
+        pauseMsBetweenChunks: 1000,
+        shouldStop: deadlineGuard(TIMEOUT_SECONDS),
+      }
+    );
 
-    logger.info("weekly insights: processing users", { count: usersSnap.size });
-
-    const batchSize = 10;
-    for (let i = 0; i < usersSnap.docs.length; i += batchSize) {
-      const slice = usersSnap.docs.slice(i, i + batchSize);
-      await Promise.allSettled(
-        slice.map((doc) => generateUserInsight(doc.id, doc.data() as UserProfile))
-      );
-      await sleep(1000);
-    }
-
-    logger.info("weeklyInsights completed");
+    logger.info("weeklyInsights completed", { ...result });
   }
 );
 
@@ -219,8 +218,4 @@ function getISOWeek(date: Date): number {
   d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   return Math.ceil(((d.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

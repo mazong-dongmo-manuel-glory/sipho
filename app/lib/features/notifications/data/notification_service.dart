@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sipho/core/time/device_timezone.dart';
 import 'package:sipho/features/notifications/domain/notif_prefs.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
@@ -98,9 +99,11 @@ class NotificationService {
     required String dailyTitle,
     required String dailyBody,
   }) async {
+    final timezone = await readDeviceTimezone();
     await _firestore.doc('users/$uid').update({
       'notifPrefs': prefs.toMap(),
-      'timezoneOffset': DateTime.now().timeZoneOffset.inHours,
+      // IANA id + offset in minutes: the server schedules pushes in the user's local time.
+      ...timezone.toProfileFields(),
     });
     _uid = uid;
     if (prefs.streakReminder) {
@@ -116,7 +119,8 @@ class NotificationService {
   }) async {
     await _ensureLocal();
     tzdata.initializeTimeZones();
-    final when = _nextEveningUtc();
+    final deviceZone = await readDeviceTimezone();
+    final when = _nextEvening(deviceZone.id);
     const details = NotificationDetails(
       android: AndroidNotificationDetails(
         'streak',
@@ -204,13 +208,36 @@ class NotificationService {
   }
 }
 
-/// Next 19:00 local, expressed in UTC so the plugin can schedule it.
-tz.TZDateTime _nextEveningUtc() {
-  final now = DateTime.now();
-  var evening = DateTime(now.year, now.month, now.day, 19);
-  if (!evening.isAfter(now)) {
+/// Next 19:00 local time.
+///
+/// With the IANA zone the notification is scheduled in that zone, so
+/// `DateTimeComponents.time` keeps firing at 19:00 wall-clock across daylight-saving changes.
+/// Without it we fall back to the device's current UTC offset (correct until the next DST shift).
+tz.TZDateTime _nextEvening(String? zoneId, {DateTime? now, int hour = 19}) {
+  final clock = now ?? DateTime.now();
+  if (zoneId != null) {
+    try {
+      final location = tz.getLocation(zoneId);
+      tz.setLocalLocation(location);
+      return nextLocalHour(location, tz.TZDateTime.from(clock, location), hour);
+    } catch (error) {
+      debugPrint('Unknown time zone "$zoneId", using UTC offset: $error');
+    }
+  }
+  var evening = DateTime(clock.year, clock.month, clock.day, hour);
+  if (!evening.isAfter(clock)) {
     evening = evening.add(const Duration(days: 1));
   }
-  final utc = evening.subtract(now.timeZoneOffset);
+  final utc = evening.subtract(clock.timeZoneOffset);
   return tz.TZDateTime.from(utc, tz.UTC);
+}
+
+/// First instant after [now] that is [hour]:00 wall-clock in [location].
+@visibleForTesting
+tz.TZDateTime nextLocalHour(tz.Location location, tz.TZDateTime now, int hour) {
+  var next = tz.TZDateTime(location, now.year, now.month, now.day, hour);
+  if (!next.isAfter(now)) {
+    next = tz.TZDateTime(location, now.year, now.month, now.day + 1, hour);
+  }
+  return next;
 }

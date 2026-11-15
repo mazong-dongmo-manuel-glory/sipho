@@ -13,6 +13,10 @@ export const ALLOWED_EXPENSE_CATEGORIES = [
   "shopping",
 ] as const;
 
+/**
+ * Lessons that can award XP. Keep in sync with `kCatalogLessons` in the Flutter app
+ * (app/lib/features/lessons/domain/lesson_catalog.dart): an unknown id must never earn XP.
+ */
 export const ALLOWED_LESSON_IDS = [
   "emergency_fund",
   "needs_wants",
@@ -72,12 +76,9 @@ export type TransactionInput = z.infer<typeof TransactionInputSchema>;
 // ─── Lesson completion ────────────────────────────────────────────────────────
 
 export const CompleteLessonInputSchema = z.object({
-  lessonId: z
-    .string()
-    .trim()
-    .min(1)
-    .max(64)
-    .regex(/^[a-z0-9_-]+$/, "Invalid lessonId"),
+  lessonId: z.enum(ALLOWED_LESSON_IDS, {
+    errorMap: () => ({ message: "Unknown lessonId" }),
+  }),
   score: z.number().int().min(0).max(100),
   durationSeconds: z.number().int().min(2, "Duration too short").max(3600),
   attemptId: z

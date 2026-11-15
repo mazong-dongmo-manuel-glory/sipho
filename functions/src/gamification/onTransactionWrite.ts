@@ -3,7 +3,12 @@ import { getFirestore, FieldValue, Firestore, Timestamp } from "firebase-admin/f
 import { logger } from "../shared/logger";
 import { XP_CONFIG, xpToLevel } from "../shared/xpConfig";
 import { idempotencyKey, checkAndMarkIdempotencyKey } from "../shared/idempotency";
-import { initialGameStatePayload, normalizeGameState } from "../shared/gameState";
+import {
+  computeNextStreak,
+  initialGameStatePayload,
+  normalizeGameState,
+} from "../shared/gameState";
+import { localDateKey, resolveUserTime } from "../shared/timezone";
 
 const db = (): Firestore => getFirestore();
 
@@ -19,7 +24,9 @@ interface StoredTransaction {
  * Triggered on every transaction create/update/delete under `users/{uid}/transactions/{txId}`.
  * Handles:
  *   1. Accurate monthly aggregates (create, edit delta, and delete)
- *   2. Daily-capped XP on creation (never re-awarded on edits)
+ *   2. Daily-capped XP + streak on creation (never re-awarded on edits). The cap and the streak
+ *      are keyed on the SERVER's current local day, never on the user-supplied `date`, so
+ *      backdating an expense cannot open a fresh daily cap.
  *   3. Quest progress on creation
  *   4. Budget/envelope alerts (80% warning, 100% exceeded) deduplicated per month & threshold
  */
@@ -90,8 +97,7 @@ export const onTransactionWrite = onDocumentWritten(
 
     // ── 2. XP + quest progress on new transaction only ───────────────────────
     if (isCreate && afterData) {
-      const dayKey = extractDateKey(afterData.date);
-      await awardTransactionXp(uid, txId, dayKey);
+      await recordTransactionActivity(uid, txId, new Date());
       await updateQuestProgress(uid, "ADD_TRANSACTION", 1);
     }
 
@@ -134,27 +140,41 @@ function extractMonthKey(date?: string | Timestamp): string {
   return extractDateKey(date).slice(0, 7);
 }
 
-async function awardTransactionXp(uid: string, txId: string, dayKey: string): Promise<void> {
-  const dailyRef = db().doc(`users/${uid}/dailyXp/${dayKey}`);
-  const gameRef = db().doc(`users/${uid}/game/state`);
+/**
+ * Records that the user was active today (server-side local day):
+ *  - advances the streak (logging an expense counts, like finishing a lesson),
+ *  - awards capped XP (`XP_CONFIG.transactionMax` per local day).
+ */
+export async function recordTransactionActivity(uid: string, txId: string, now: Date): Promise<void> {
   const userRef = db().doc(`users/${uid}`);
+  const gameRef = db().doc(`users/${uid}/game/state`);
+  const publicRef = db().doc(`publicProfiles/${uid}`);
 
   await db().runTransaction(async (t) => {
+    const userSnap = await t.get(userRef);
+    const dayKey = localDateKey(now, resolveUserTime(userSnap.data()));
+    const dailyRef = db().doc(`users/${uid}/dailyXp/${dayKey}`);
     const [dailySnap, gameSnap] = await Promise.all([t.get(dailyRef), t.get(gameRef)]);
+
     const earnedToday =
       typeof dailySnap.data()?.fromTransactions === "number"
         ? (dailySnap.data()?.fromTransactions as number)
         : 0;
-
-    if (earnedToday >= XP_CONFIG.transactionMax) return;
-
-    const xpGain = Math.min(
-      XP_CONFIG.transactionAdd,
-      XP_CONFIG.transactionMax - earnedToday
+    const xpGain = Math.max(
+      0,
+      Math.min(XP_CONFIG.transactionAdd, XP_CONFIG.transactionMax - earnedToday)
     );
+
     const baseGame = gameSnap.exists
       ? normalizeGameState(gameSnap.data())
       : normalizeGameState(initialGameStatePayload());
+    const { nextStreak } = computeNextStreak(baseGame.streak, dayKey);
+    const streakChanged =
+      nextStreak.current !== baseGame.streak.current ||
+      nextStreak.lastActiveDay !== baseGame.streak.lastActiveDay;
+
+    if (xpGain === 0 && !streakChanged) return;
+
     const newXp = baseGame.xp + xpGain;
     const newLevel = xpToLevel(newXp);
 
@@ -165,7 +185,7 @@ async function awardTransactionXp(uid: string, txId: string, dayKey: string): Pr
         level: newLevel,
         gems: baseGame.gems,
         weeklyXp: baseGame.weeklyXp + xpGain,
-        streak: baseGame.streak,
+        streak: nextStreak,
         leagueId: baseGame.leagueId,
         badges: baseGame.badges,
         updatedAt: FieldValue.serverTimestamp(),
@@ -173,11 +193,26 @@ async function awardTransactionXp(uid: string, txId: string, dayKey: string): Pr
       { merge: true }
     );
 
-    t.set(
-      dailyRef,
-      { fromTransactions: earnedToday + xpGain, updatedAt: FieldValue.serverTimestamp() },
-      { merge: true }
-    );
+    if (xpGain > 0) {
+      t.set(
+        dailyRef,
+        { fromTransactions: earnedToday + xpGain, updatedAt: FieldValue.serverTimestamp() },
+        { merge: true }
+      );
+    }
+
+    if (streakChanged) {
+      t.set(
+        publicRef,
+        {
+          level: newLevel,
+          streak: nextStreak.current,
+          league: baseGame.leagueId,
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
 
     t.set(
       userRef,
@@ -185,7 +220,13 @@ async function awardTransactionXp(uid: string, txId: string, dayKey: string): Pr
       { merge: true }
     );
 
-    logger.info("xp awarded for transaction", { uid, txId, xpGain, dayKey });
+    logger.info("transaction activity recorded", {
+      uid,
+      txId,
+      xpGain,
+      dayKey,
+      streak: nextStreak.current,
+    });
   });
 }
 
@@ -199,9 +240,13 @@ async function updateQuestProgress(uid: string, type: string, increment: number)
 
   if (questsSnap.empty) return;
 
+  const nowMs = Date.now();
   const batch = db().batch();
+  let touched = 0;
   for (const doc of questsSnap.docs) {
-    const quest = doc.data() as { target?: number; progress?: number };
+    const quest = doc.data() as { target?: number; progress?: number; expiresAt?: Timestamp };
+    if (quest.expiresAt && quest.expiresAt.toMillis() <= nowMs) continue;
+    touched += 1;
     const target = Math.max(1, quest.target ?? 1);
     const newProgress = Math.min(target, (quest.progress ?? 0) + increment);
     const done = newProgress >= target;
@@ -210,7 +255,7 @@ async function updateQuestProgress(uid: string, type: string, increment: number)
       ...(done ? { status: "completed", completedAt: FieldValue.serverTimestamp() } : {}),
     });
   }
-  await batch.commit();
+  if (touched > 0) await batch.commit();
 }
 
 async function resolveCategoryLimitCents(uid: string, category: string): Promise<number | null> {

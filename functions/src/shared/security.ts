@@ -85,12 +85,3 @@ export async function enforceRateLimit(params: {
     throw new HttpsError("resource-exhausted", "Too many requests. Please try again later.");
   }
 }
-
-/**
- * Computes a user's local YYYY-MM-DD date string using their stored integer hour offset.
- */
-export function userLocalDateKey(now: Date, timezoneOffsetHours = 0): string {
-  const clamped = Math.max(-12, Math.min(14, Math.trunc(timezoneOffsetHours)));
-  const shifted = new Date(now.getTime() + clamped * 3_600_000);
-  return shifted.toISOString().slice(0, 10);
-}

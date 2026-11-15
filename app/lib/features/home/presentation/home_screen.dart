@@ -17,6 +17,8 @@ import 'package:sipho/features/finance/domain/month_summary.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
 import 'package:sipho/features/finance/presentation/income_sheet.dart';
 import 'package:sipho/features/fixed_expenses/domain/fixed_expense_schedule.dart';
+import 'package:sipho/features/fixed_expenses/domain/fixed_paid.dart';
+import 'package:sipho/features/fixed_expenses/presentation/fixed_paid_button.dart';
 import 'package:sipho/features/insights/data/insight_service.dart';
 import 'package:sipho/features/insights/domain/insight_text.dart';
 import 'package:sipho/features/insights/presentation/spend_snapshot_builder.dart';
@@ -82,6 +84,10 @@ class HomeScreen extends ConsumerWidget {
       ref.watch(activeFixedExpensesProvider).valueOrNull ?? const [],
       DateTime.now().day,
     );
+    final paidIds =
+        ref.watch(paidFixedIdsProvider(monthKey)).valueOrNull ?? const <String>{};
+    final nextFixedPaid = nextFixed != null &&
+        isFixedPaid(nextFixed, paidIds: paidIds, now: DateTime.now());
     return Scaffold(
       backgroundColor: palette.background,
       body: SafeArea(
@@ -176,7 +182,9 @@ class HomeScreen extends ConsumerWidget {
                             ? l10n.homeNoExpenseYet
                             : '${expenseCategoryLabel(l10n, latest.category)} · ${_formatCents(context, latest.amountMainCents ?? latest.amountCents, latest.currency)}',
                     subtitle: nextFixed != null
-                        ? l10n.homeNextFixed(nextFixed.dueDay)
+                        ? (nextFixedPaid
+                            ? l10n.soclePaidOn('${nextFixed.dueDay}')
+                            : l10n.homeNextFixed(nextFixed.dueDay))
                         : latest == null
                             ? l10n.homeAddFirstExpense
                             : l10n.homeLatestExpense,
@@ -185,6 +193,10 @@ class HomeScreen extends ConsumerWidget {
                         : latest == null
                             ? Icons.add_rounded
                             : expenseCategoryIcon(latest.category),
+                    trailing: nextFixed != null &&
+                            canMarkFixedPaid(nextFixed, paidIds: paidIds)
+                        ? FixedPaidButton(fixedId: nextFixed.id)
+                        : null,
                   )
                 else
                   _RewardCard(l10n: l10n, reward: reward),
@@ -478,12 +490,14 @@ class _NextExpense extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.icon,
+    this.trailing,
   });
 
   final _HomePalette palette;
   final String title;
   final String subtitle;
   final IconData icon;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -527,6 +541,10 @@ class _NextExpense extends StatelessWidget {
               ],
             ),
           ),
+          if (trailing != null) ...[
+            const SizedBox(width: 8),
+            trailing!,
+          ],
         ],
       ),
     );

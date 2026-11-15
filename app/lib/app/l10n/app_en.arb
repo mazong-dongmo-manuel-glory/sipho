@@ -523,5 +523,7 @@
   "aiErrorNotEnabled": "Enable Firebase AI Logic (Gemini Developer API) in Firebase Console to activate Sipho AI.",
   "aiErrorAppCheck": "App Check blocked this dev device: register its debug token in Firebase Console > App Check (or unenforce AI Logic).",
   "aiErrorQuota": "AI quota temporarily reached. Please try again in a few minutes.",
-  "aiErrorNetwork": "Network connection unavailable to reach Sipho AI."
+  "aiErrorNetwork": "Network connection unavailable to reach Sipho AI.",
+  "lessonSaveError": "Your progress couldn't be saved. Check your connection and try again.",
+  "fixedMarkPaidError": "Couldn't mark this bill as paid. Try again."
 }

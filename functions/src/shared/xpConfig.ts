@@ -6,11 +6,16 @@ export const XP_CONFIG = {
   lessonPerfect: 20,
   lessonComplete: 10,
   lessonBonusStreak: 5,
+  // Practice XP for replaying an already-mastered lesson, capped per local day.
+  lessonReplay: 2,
+  lessonReplayMax: 10,
 
   transactionAdd: 2,
   transactionMax: 10,
 
   fixedPaid: 5,
+  // Max XP from marking fixed expenses as paid per local day.
+  fixedPaidMax: 15,
 
   referralInviter: 50,
   referralInvitee: 25,

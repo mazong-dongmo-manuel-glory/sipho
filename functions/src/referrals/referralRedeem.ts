@@ -16,7 +16,10 @@ const db = (): Firestore => getFirestore();
 /**
  * Callable (v2, App Check enforced): redeem a referral code atomically.
  * - Cannot redeem your own code
- * - Each user can redeem at most ONE referral code ever
+ * - Each user can redeem at most ONE referral code ever. The source of truth is the
+ *   server-only marker `users/{uid}/referral/redemption` (clients cannot write it); the
+ *   `redeemedReferralCode` profile field is a convenience copy that clients cannot modify either
+ *   (see firestore.rules `touchesServerOnlyUserFields`).
  * - Awards server-side XP to both inviter and invitee
  */
 export const referralRedeem = onCall(SECURE_CALLABLE_OPTIONS, async (request) => {
@@ -33,12 +36,14 @@ export const referralRedeem = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
   const referralRef = db().doc(`referrals/${referralCode}`);
   const inviteeUserRef = db().doc(`users/${uid}`);
   const inviteeGameRef = db().doc(`users/${uid}/game/state`);
+  const redemptionRef = db().doc(`users/${uid}/referral/redemption`);
 
   await db().runTransaction(async (tx) => {
-    const [referralSnap, inviteeUserSnap, inviteeGameSnap] = await Promise.all([
+    const [referralSnap, inviteeUserSnap, inviteeGameSnap, redemptionSnap] = await Promise.all([
       tx.get(referralRef),
       tx.get(inviteeUserRef),
       tx.get(inviteeGameRef),
+      tx.get(redemptionRef),
     ]);
 
     if (!referralSnap.exists) {
@@ -56,7 +61,7 @@ export const referralRedeem = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
       throw new HttpsError("invalid-argument", "Cannot redeem your own code.");
     }
 
-    if (inviteeUserSnap.data()?.redeemedReferralCode) {
+    if (redemptionSnap.exists || inviteeUserSnap.data()?.redeemedReferralCode) {
       throw new HttpsError("already-exists", "You have already redeemed a referral code.");
     }
 
@@ -88,6 +93,12 @@ export const referralRedeem = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
     tx.update(referralRef, {
       uses: FieldValue.arrayUnion(uid),
       updatedAt: FieldValue.serverTimestamp(),
+    });
+
+    tx.set(redemptionRef, {
+      referralCode,
+      ownerUid,
+      redeemedAt: FieldValue.serverTimestamp(),
     });
 
     tx.set(

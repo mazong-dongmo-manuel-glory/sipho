@@ -28,8 +28,12 @@ service cloud.firestore {
     }
 
     // Fields on users/{uid} that only Cloud Functions / Admin SDK may write.
-    function touchesServerOnlyUserFields() {
-      return request.resource.data.diff(resource.data).affectedKeys().hasAny([
+    // - xp / level / gems / streak / league...: gamification state
+    // - redeemedReferralCode / referredByUid: one-shot referral bonus (clearing them would let a
+    //   user redeem again)
+    // - completedLessonIds / lastActiveDate: progress written by completeLesson / onTransactionWrite
+    function serverOnlyUserFields() {
+      return [
         'plan',
         'xp',
         'level',
@@ -41,8 +45,26 @@ service cloud.firestore {
         'weeklyXp',
         'badges',
         'admin',
-        'role'
-      ]);
+        'role',
+        'redeemedReferralCode',
+        'referredByUid',
+        'completedLessonIds',
+        'lastActiveDate'
+      ];
+    }
+
+    function touchesServerOnlyUserFields() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasAny(serverOnlyUserFields());
+    }
+
+    // IANA zone id (e.g. "Asia/Kolkata") + current UTC offset in minutes (half-hour zones OK).
+    function validUserTimeFields(data) {
+      return (!('timezone' in data)
+              || (data.timezone is string && data.timezone.size() > 0 && data.timezone.size() <= 64))
+        && (!('utcOffsetMinutes' in data)
+            || (data.utcOffsetMinutes is int
+                && data.utcOffsetMinutes >= -720
+                && data.utcOffsetMinutes <= 840));
     }
 
     function validUserIncomeField(data) {
@@ -73,26 +95,14 @@ service cloud.firestore {
           'timezone',
           'onboardingDone'
         ])
-        && !request.resource.data.keys().hasAny([
-          'plan',
-          'xp',
-          'level',
-          'gems',
-          'seeds',
-          'streak',
-          'league',
-          'leagueId',
-          'weeklyXp',
-          'badges',
-          'admin',
-          'role'
-        ])
+        && !request.resource.data.keys().hasAny(serverOnlyUserFields())
         && request.resource.data.displayName is string
         && request.resource.data.displayName.size() <= 80
         && isCountryCode(request.resource.data.countryCode)
         && isCurrency(request.resource.data.currency)
         && request.resource.data.locale in ['fr', 'en']
         && request.resource.data.timezone is string
+        && validUserTimeFields(request.resource.data)
         && request.resource.data.onboardingDone is bool
         && validUserIncomeField(request.resource.data);
 
@@ -107,6 +117,7 @@ service cloud.firestore {
             || isCurrency(request.resource.data.currency))
         && (!('locale' in request.resource.data)
             || request.resource.data.locale in ['fr', 'en'])
+        && validUserTimeFields(request.resource.data)
         && validUserIncomeField(request.resource.data);
 
       allow delete: if false; // Use deleteAccount callable
@@ -131,7 +142,13 @@ service cloud.firestore {
           && request.resource.data.name.size() > 0
           && request.resource.data.name.size() <= 80
           && request.resource.data.category is string
-          && request.resource.data.category.size() <= 40;
+          && request.resource.data.category.size() <= 40
+          && (!('payMode' in request.resource.data)
+              || request.resource.data.payMode in ['auto', 'manual'])
+          && (!('type' in request.resource.data)
+              || request.resource.data.type in ['bill', 'envelope'])
+          && (!('active' in request.resource.data)
+              || request.resource.data.active is bool);
       }
 
       // ── Monthly aggregates: Functions write ──────────────────────────────
@@ -155,6 +172,8 @@ service cloud.firestore {
           && request.resource.data.source in ['manual', 'receipt']
           && isCurrency(request.resource.data.currency)
           && isIsoDate(request.resource.data.date)
+          && request.resource.data.date >= '2000-01-01'
+          && request.resource.data.date <= '2100-12-31'
           && request.resource.data.category is string
           && request.resource.data.category.size() > 0
           && request.resource.data.category.size() <= 40

@@ -50,22 +50,8 @@ export const onUserCreate = functions.auth.user().onCreate(async (user) => {
     { merge: true }
   );
 
-  const initialQuestRef = db.doc(`users/${uid}/quests/daily_expenses`);
-  batch.set(
-    initialQuestRef,
-    {
-      templateId: "log_expenses",
-      type: "ADD_TRANSACTION",
-      progress: 0,
-      target: 3,
-      rewardXp: 15,
-      rewardGems: 5,
-      status: "active",
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      expiresAt: null,
-    },
-    { merge: true }
-  );
+  // Daily quests are created by `onUserProfileCreate` (needs the user's time zone) and
+  // renewed every local day by `dailyRollover`.
 
   await batch.commit();
   logger.info("user initial state initialized successfully", { uid });

@@ -8,8 +8,8 @@ import {
   enforceRateLimit,
   parseInput,
   requireAuthUid,
-  userLocalDateKey,
 } from "../shared/security";
+import { localDateKey, resolveUserTime } from "../shared/timezone";
 import {
   computeNextStreak,
   initialGameStatePayload,
@@ -42,6 +42,7 @@ export const completeLesson = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
   const lessonProgressRef = db().doc(`users/${uid}/lessonProgress/${lessonId}`);
   const lessonHistoryRef = db().doc(`users/${uid}/lessonHistory/${lessonId}`);
   const publicRef = db().doc(`publicProfiles/${uid}`);
+  const now = new Date();
 
   const result = await db().runTransaction(async (tx) => {
     const [userSnap, gameSnap, existingProgressSnap] = await Promise.all([
@@ -50,11 +51,9 @@ export const completeLesson = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
       tx.get(lessonProgressRef),
     ]);
 
-    const tzOffset =
-      typeof userSnap.data()?.timezoneOffset === "number"
-        ? (userSnap.data()?.timezoneOffset as number)
-        : 0;
-    const today = userLocalDateKey(new Date(), tzOffset);
+    const today = localDateKey(now, resolveUserTime(userSnap.data()));
+    const dailyRef = db().doc(`users/${uid}/dailyXp/${today}`);
+    const dailySnap = await tx.get(dailyRef);
 
     const idemKey = idempotencyKey("completeLesson", uid, lessonId, attemptId ?? today);
     const idemRef = db().collection("_idempotency").doc(encodeKey(idemKey));
@@ -75,11 +74,20 @@ export const completeLesson = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
       ? normalizeGameState(gameSnap.data())
       : normalizeGameState(initialGameStatePayload());
 
-    // Replay of an already-mastered lesson gives capped practice XP (prevents XP farming).
+    // A fresh `attemptId` can never be used to farm XP: first completion pays once per lesson
+    // (lessonId is whitelisted), replays only earn a small practice XP capped per local day.
     const alreadyCompletedBefore = existingProgressSnap.exists;
     const isPerfect = score === 100;
+    const replayXpToday =
+      typeof dailySnap.data()?.fromLessonReplays === "number"
+        ? (dailySnap.data()?.fromLessonReplays as number)
+        : 0;
+    const replayXp = Math.max(
+      0,
+      Math.min(XP_CONFIG.lessonReplay, XP_CONFIG.lessonReplayMax - replayXpToday)
+    );
     let xpGained = alreadyCompletedBefore
-      ? 2
+      ? replayXp
       : isPerfect
         ? XP_CONFIG.lessonPerfect
         : XP_CONFIG.lessonComplete;
@@ -113,6 +121,17 @@ export const completeLesson = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
       },
       { merge: true }
     );
+
+    if (alreadyCompletedBefore && replayXp > 0) {
+      tx.set(
+        dailyRef,
+        {
+          fromLessonReplays: replayXpToday + replayXp,
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
 
     tx.set(
       lessonProgressRef,

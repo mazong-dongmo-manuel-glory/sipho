@@ -11,6 +11,7 @@ export { dailyRollover } from './gamification/dailyRollover';
 
 // Stats & Users
 export { onUserCreate } from './stats/onUserCreate';
+export { onUserProfileCreate } from './stats/onUserProfileCreate';
 export { generateMonth } from './stats/generateMonth';
 
 // Notifications

@@ -1333,4 +1333,12 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get aiErrorNetwork =>
       'Connexion réseau indisponible pour contacter Sipho IA.';
+
+  @override
+  String get lessonSaveError =>
+      'Ta progression n\'a pas pu être enregistrée. Vérifie ta connexion et réessaie.';
+
+  @override
+  String get fixedMarkPaidError =>
+      'Impossible de marquer cette charge comme payée. Réessaie.';
 }

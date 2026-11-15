@@ -74,6 +74,41 @@ final activeFixedExpensesProvider = StreamProvider<List<FixedExpense>>((ref) {
   return ref.watch(fixedExpenseRepositoryProvider).watchFixedExpenses(uid);
 });
 
+/// Ids of the fixed expenses already paid in the given month (`yyyy-MM`).
+final paidFixedIdsProvider =
+    StreamProvider.family<Set<String>, String>((ref, monthKey) {
+  final uid = ref.watch(authStateProvider).valueOrNull?.uid;
+  if (uid == null) return Stream.value(const <String>{});
+  return ref
+      .watch(fixedExpenseRepositoryProvider)
+      .watchPaidFixedIds(uid, monthKey);
+});
+
+/// Marks bills as paid and tracks the ones in flight (to disable their button).
+class FixedPaidController extends Notifier<Set<String>> {
+  @override
+  Set<String> build() => const <String>{};
+
+  /// Returns true on success. The paid state itself comes back through [paidFixedIdsProvider].
+  Future<bool> markPaid(String fixedId) async {
+    if (state.contains(fixedId)) return false;
+    state = {...state, fixedId};
+    try {
+      await ref
+          .read(fixedExpenseRepositoryProvider)
+          .markPaid(fixedId, currentMonthKey());
+      return true;
+    } catch (_) {
+      return false;
+    } finally {
+      state = {...state}..remove(fixedId);
+    }
+  }
+}
+
+final fixedPaidControllerProvider =
+    NotifierProvider<FixedPaidController, Set<String>>(FixedPaidController.new);
+
 final monthSummaryProvider =
     Provider.family<AsyncValue<MonthSummary>, String>((ref, monthKey) {
   final finance = ref.watch(userFinanceProvider);

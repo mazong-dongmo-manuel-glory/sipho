@@ -1,6 +1,9 @@
 {
   "projects": {
-    "sipho": "sipho-f5a01"
+    "default": "sipho-f5a01",
+    "dev": "sipho-f5a01",
+    "staging": "sipho-staging",
+    "prod": "sipho-prod"
   },
   "targets": {},
   "etags": {}

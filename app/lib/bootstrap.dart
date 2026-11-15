@@ -9,12 +9,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sipho/app/app.dart';
 import 'package:sipho/core/ai/sipho_ai_client.dart';
+import 'package:sipho/core/firebase/firebase_environment.dart';
 
 Future<void> bootstrap(FirebaseOptions options,
     {required String flavor}) async {
   await runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+
+      // Refuse to run a flavor that is unconfigured or wired to another environment's project.
+      try {
+        assertFirebaseConfigured(options, flavor: flavor);
+      } on StateError catch (error) {
+        runApp(_ConfigErrorApp(message: error.message));
+        return;
+      }
 
       try {
         if (Firebase.apps.isEmpty) {
@@ -72,6 +81,26 @@ Future<void> bootstrap(FirebaseOptions options,
       } catch (_) {}
     },
   );
+}
+
+class _ConfigErrorApp extends StatelessWidget {
+  const _ConfigErrorApp({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Center(child: Text(message)),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 Future<void> _logAppCheckDebugStatus() async {

@@ -48,10 +48,12 @@ lcov.info
 google-services.json
 GoogleService-Info.plist
 
-# Options Firebase générées par flutterfire configure
-# EXCEPTION : firebase_options_dev.dart peut être commis (placeholder / valeurs non sensibles)
-app/lib/core/firebase/firebase_options_staging.dart
-app/lib/core/firebase/firebase_options_prod.dart
+# Options Firebase générées par flutterfire configure.
+# Les fichiers app/lib/core/firebase/firebase_options_{dev,staging,prod}.dart SONT commités :
+# main.dart / main_staging.dart les importent, donc `flutter analyze` et la CI en ont besoin.
+# Les clés API client Firebase sont des identifiants, pas des secrets (l'accès est protégé par
+# les règles Firestore + App Check). Seuls google-services.json / GoogleService-Info.plist
+# (ci-dessus) restent hors du dépôt : en CI ils viennent de secrets.
 firebase_options.dart
 
 # Firebase credentials

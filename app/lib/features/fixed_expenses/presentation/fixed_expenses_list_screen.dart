@@ -15,7 +15,9 @@ import 'package:sipho/features/finance/presentation/finance_providers.dart';
 import 'package:sipho/features/fixed_expenses/domain/fixed_expense.dart';
 import 'package:sipho/features/fixed_expenses/domain/fixed_expense_draft.dart';
 import 'package:sipho/features/fixed_expenses/domain/fixed_expense_schedule.dart';
+import 'package:sipho/features/fixed_expenses/domain/fixed_paid.dart';
 import 'package:sipho/features/fixed_expenses/presentation/edit_fixed_expense_sheet.dart';
+import 'package:sipho/features/fixed_expenses/presentation/fixed_paid_button.dart';
 
 class FixedExpensesListScreen extends StatelessWidget {
   const FixedExpensesListScreen({super.key});
@@ -44,6 +46,10 @@ class SocleView extends ConsumerWidget {
             .watch(transactionsForMonthProvider(currentMonthKey()))
             .valueOrNull ??
         const <SiphoTransaction>[];
+    final paidIds = ref
+            .watch(paidFixedIdsProvider(currentMonthKey()))
+            .valueOrNull ??
+        const <String>{};
     final monthLabel =
         DateFormat.yMMMM(Localizations.localeOf(context).toString())
             .format(DateTime.now())
@@ -144,7 +150,7 @@ class SocleView extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 12),
-        ..._rows(context, l10n, fixed, transactions, currency),
+        ..._rows(context, l10n, fixed, transactions, currency, paidIds),
         const SizedBox(height: 12),
         SiphoButton3D(
           label: l10n.socleAdd,
@@ -161,6 +167,7 @@ class SocleView extends ConsumerWidget {
     AsyncValue<List<FixedExpense>> fixed,
     List<SiphoTransaction> transactions,
     String currency,
+    Set<String> paidIds,
   ) {
     return fixed.when(
       loading: () => const [
@@ -195,7 +202,8 @@ class SocleView extends ConsumerWidget {
           ];
         }
         final total = items.fold<int>(0, (sum, item) => sum + item.amountCents);
-        final today = DateTime.now().day;
+        final now = DateTime.now();
+        final today = now.day;
         return [
           for (final item in items) ...[
             _Row(
@@ -203,13 +211,19 @@ class SocleView extends ConsumerWidget {
               item.name.trim().isNotEmpty
                   ? item.name.trim()
                   : expenseCategoryLabel(l10n, item.category),
-              _note(l10n, item, transactions),
+              isFixedPaid(item, paidIds: paidIds, now: now)
+                  ? l10n.soclePaidOn('${item.dueDay}')
+                  : _note(l10n, item, transactions),
               _formatCents(context, item.amountCents, currency),
               onTap: () => showEditFixedExpenseSheet(context, item),
-              noteColor:
-                  item.type != 'envelope' && (item.dueDay - today).abs() <= 1
-                      ? AppColors.warnBrown
-                      : AppColors.textSecondary,
+              trailing: canMarkFixedPaid(item, paidIds: paidIds)
+                  ? FixedPaidButton(fixedId: item.id)
+                  : null,
+              noteColor: item.type != 'envelope' &&
+                      !isFixedPaid(item, paidIds: paidIds, now: now) &&
+                      (item.dueDay - today).abs() <= 1
+                  ? AppColors.warnBrown
+                  : AppColors.textSecondary,
               progress: item.type == 'envelope'
                   ? envelopeRatio(
                       _spent(transactions, item.category), item.amountCents)
@@ -350,6 +364,7 @@ class _Row extends StatelessWidget {
     this.note,
     this.amount, {
     this.onTap,
+    this.trailing,
     this.noteColor = AppColors.textSecondary,
     this.progress,
   });
@@ -359,6 +374,7 @@ class _Row extends StatelessWidget {
   final String note;
   final String amount;
   final VoidCallback? onTap;
+  final Widget? trailing;
   final Color noteColor;
   final double? progress;
 
@@ -434,6 +450,10 @@ class _Row extends StatelessWidget {
                     color: AppColors.primaryDark,
                   ),
                 ),
+                if (trailing != null) ...[
+                  const SizedBox(width: 8),
+                  trailing!,
+                ],
                 if (onTap != null) ...[
                   const SizedBox(width: 6),
                   const Icon(

@@ -2576,6 +2576,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Network connection unavailable to reach Sipho AI.'**
   String get aiErrorNetwork;
+
+  /// No description provided for @lessonSaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Your progress couldn\'t be saved. Check your connection and try again.'**
+  String get lessonSaveError;
+
+  /// No description provided for @fixedMarkPaidError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t mark this bill as paid. Try again.'**
+  String get fixedMarkPaidError;
 }
 
 class _AppLocalizationsDelegate

@@ -2,7 +2,16 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { getFirestore, FieldValue, Firestore, Timestamp } from "firebase-admin/firestore";
 import { getMessaging, Messaging } from "firebase-admin/messaging";
 import { normalizeGameState } from "../shared/gameState";
-import { userLocalDateKey } from "../shared/security";
+import { deadlineGuard, forEachDocument } from "../shared/pagination";
+import {
+  localDateKey,
+  localMinuteOfDay,
+  minuteInWindow,
+  offsetRangesForLocalWindow,
+  resolveUserTime,
+  shiftDateKey,
+  UserTime,
+} from "../shared/timezone";
 import { logger } from "../shared/logger";
 import { pickTemplate, NotifType } from "./templates";
 
@@ -10,9 +19,17 @@ const db = (): Firestore => getFirestore();
 const fcm = (): Messaging => getMessaging();
 
 const MAX_ENGAGEMENT_NOTIFS_PER_DAY = 2;
+const TIMEOUT_SECONDS = 540;
+
+// Local-time windows (minutes since local midnight).
+const STREAK_REMINDER_WINDOW: [number, number] = [18 * 60, 20 * 60]; // 18:00–19:59
+const FIXED_DUE_WINDOW: [number, number] = [10 * 60, 12 * 60]; // 10:00–11:59
+const QUIET_HOURS: [number, number] = [21 * 60 + 30, 8 * 60]; // 21:30–08:00 (wraps midnight)
 
 interface UserProfile {
   locale?: string;
+  timezone?: string;
+  utcOffsetMinutes?: number;
   timezoneOffset?: number;
   notifPrefs?: Record<string, boolean>;
 }
@@ -21,31 +38,54 @@ interface UserProfile {
  * Runs every 15 minutes.
  * Respects quiet hours (21:30–08:00 local), per-type preferences,
  * max 2 engagement pushes per day, and cleans up dead FCM tokens.
+ * Every query is paginated, so the job keeps working beyond a few hundred users.
  */
 export const notifyScheduler = onSchedule(
   {
     schedule: "every 15 minutes",
     region: "us-central1",
-    timeoutSeconds: 540,
+    timeoutSeconds: TIMEOUT_SECONDS,
   },
   async (_event) => {
     const now = new Date();
+    const shouldStop = deadlineGuard(TIMEOUT_SECONDS);
     logger.info("notifyScheduler tick", { now: now.toISOString() });
 
     await Promise.allSettled([
-      sendStreakReminders(now),
-      sendFixedDueReminders(now),
-      sendQuestExpiryWarnings(now),
-      sendUnreadBudgetAlerts(now),
+      sendStreakReminders(now, shouldStop),
+      sendFixedDueReminders(now, shouldStop),
+      sendQuestExpiryWarnings(now, shouldStop),
+      sendUnreadBudgetAlerts(now, shouldStop),
     ]);
   }
 );
 
-function isQuietHour(now: Date, offsetHours = 0): boolean {
-  const shifted = new Date(now.getTime() + offsetHours * 3_600_000);
-  const minutes = shifted.getUTCHours() * 60 + shifted.getUTCMinutes();
-  // Quiet hours: 21:30 (1290) through 08:00 (480)
-  return minutes >= 21 * 60 + 30 || minutes < 8 * 60;
+function isQuietHour(now: Date, time: UserTime): boolean {
+  return minuteInWindow(localMinuteOfDay(now, time), QUIET_HOURS[0], QUIET_HOURS[1]);
+}
+
+/**
+ * Visits users whose stored UTC offset places them inside the local-time window. The caller must
+ * re-check the exact local time with the IANA zone (the stored offset may lag behind a DST change).
+ */
+async function forEachUserInLocalWindow(
+  now: Date,
+  window: [number, number],
+  label: string,
+  shouldStop: () => boolean,
+  handler: (uid: string, profile: UserProfile) => Promise<void>
+): Promise<void> {
+  for (const [lo, hi] of offsetRangesForLocalWindow(now, window[0], window[1])) {
+    const result = await forEachDocument(
+      db()
+        .collection("users")
+        .where("utcOffsetMinutes", ">=", lo)
+        .where("utcOffsetMinutes", "<=", hi),
+      (doc) => handler(doc.id, doc.data() as UserProfile),
+      { label, shouldStop }
+    );
+    if (result.stoppedEarly) return;
+  }
 }
 
 async function canConsumeDailyQuota(uid: string, today: string): Promise<boolean> {
@@ -70,25 +110,14 @@ async function canConsumeDailyQuota(uid: string, today: string): Promise<boolean
 
 // ─── Streak reminders (18:00–19:59 local) ─────────────────────────────────────
 
-async function sendStreakReminders(now: Date): Promise<void> {
-  const hour = now.getUTCHours();
-  const rawOffsets = [18 - hour, 19 - hour, 18 - hour - 24, 19 - hour - 24, 18 - hour + 24, 19 - hour + 24];
-  const targetOffsets = Array.from(
-    new Set(rawOffsets.filter((o) => o >= -12 && o <= 14))
+async function sendStreakReminders(now: Date, shouldStop: () => boolean): Promise<void> {
+  await forEachUserInLocalWindow(
+    now,
+    STREAK_REMINDER_WINDOW,
+    "streakReminders",
+    shouldStop,
+    (uid, profile) => maybeSendStreakReminder(uid, profile, now)
   );
-
-  for (const offset of targetOffsets) {
-    const usersSnap = await db()
-      .collection("users")
-      .where("timezoneOffset", "==", offset)
-      .where("notifPrefs.streakReminder", "==", true)
-      .limit(250)
-      .get();
-
-    for (const userDoc of usersSnap.docs) {
-      await maybeSendStreakReminder(userDoc.id, userDoc.data() as UserProfile, now);
-    }
-  }
 }
 
 async function maybeSendStreakReminder(
@@ -96,10 +125,21 @@ async function maybeSendStreakReminder(
   profile: UserProfile,
   now: Date
 ): Promise<void> {
-  const offset = typeof profile.timezoneOffset === "number" ? profile.timezoneOffset : 0;
-  if (isQuietHour(now, offset)) return;
+  if (profile.notifPrefs?.streakReminder !== true) return;
 
-  const today = userLocalDateKey(now, offset);
+  const time = resolveUserTime(profile as Record<string, unknown>);
+  if (
+    !minuteInWindow(
+      localMinuteOfDay(now, time),
+      STREAK_REMINDER_WINDOW[0],
+      STREAK_REMINDER_WINDOW[1]
+    )
+  ) {
+    return;
+  }
+  if (isQuietHour(now, time)) return;
+
+  const today = localDateKey(now, time);
   const notifRef = db().doc(`users/${uid}/notifState/streak`);
   const notifSnap = await notifRef.get();
   if (notifSnap.data()?.lastReminderDate === today) return;
@@ -121,34 +161,29 @@ async function maybeSendStreakReminder(
 
 // ─── Fixed expense due tomorrow (manual bills) ────────────────────────────────
 
-async function sendFixedDueReminders(now: Date): Promise<void> {
-  const hour = now.getUTCHours();
-  const rawOffsets = [10 - hour, 10 - hour - 24, 10 - hour + 24];
-  const targetOffsets = Array.from(
-    new Set(rawOffsets.filter((o) => o >= -12 && o <= 14))
+async function sendFixedDueReminders(now: Date, shouldStop: () => boolean): Promise<void> {
+  await forEachUserInLocalWindow(
+    now,
+    FIXED_DUE_WINDOW,
+    "fixedDueReminders",
+    shouldStop,
+    (uid, profile) => maybeSendFixedDue(uid, profile, now)
   );
-
-  for (const offset of targetOffsets) {
-    const usersSnap = await db()
-      .collection("users")
-      .where("timezoneOffset", "==", offset)
-      .where("notifPrefs.fixedDue", "==", true)
-      .limit(200)
-      .get();
-
-    for (const userDoc of usersSnap.docs) {
-      await maybeSendFixedDue(userDoc.id, userDoc.data() as UserProfile, now);
-    }
-  }
 }
 
 async function maybeSendFixedDue(uid: string, profile: UserProfile, now: Date): Promise<void> {
-  const offset = typeof profile.timezoneOffset === "number" ? profile.timezoneOffset : 0;
-  if (isQuietHour(now, offset)) return;
+  if (profile.notifPrefs?.fixedDue !== true) return;
 
-  const tomorrow = new Date(now.getTime() + (offset + 24) * 3_600_000);
-  const tomorrowDay = tomorrow.getUTCDate();
-  const today = userLocalDateKey(now, offset);
+  const time = resolveUserTime(profile as Record<string, unknown>);
+  if (
+    !minuteInWindow(localMinuteOfDay(now, time), FIXED_DUE_WINDOW[0], FIXED_DUE_WINDOW[1])
+  ) {
+    return;
+  }
+  if (isQuietHour(now, time)) return;
+
+  const today = localDateKey(now, time);
+  const tomorrowDay = Number(shiftDateKey(today, 1).slice(8, 10));
 
   const dueSnap = await db()
     .collection(`users/${uid}/fixedExpenses`)
@@ -183,91 +218,94 @@ async function maybeSendFixedDue(uid: string, profile: UserProfile, now: Date): 
 
 // ─── Quest expiry ─────────────────────────────────────────────────────────────
 
-async function sendQuestExpiryWarnings(now: Date): Promise<void> {
+async function sendQuestExpiryWarnings(now: Date, shouldStop: () => boolean): Promise<void> {
   const in2h = new Date(now.getTime() + 2 * 3_600_000);
 
-  const questsSnap = await db()
-    .collectionGroup("quests")
-    .where("status", "==", "active")
-    .where("expiresAt", "<=", Timestamp.fromDate(in2h))
-    .where("expiresAt", ">", Timestamp.fromDate(now))
-    .where("expireWarningSent", "==", false)
-    .limit(200)
-    .get();
+  // Needs the COLLECTION_GROUP composite index (status, expireWarningSent, expiresAt).
+  await forEachDocument(
+    db()
+      .collectionGroup("quests")
+      .where("status", "==", "active")
+      .where("expireWarningSent", "==", false)
+      .where("expiresAt", "<=", Timestamp.fromDate(in2h))
+      .where("expiresAt", ">", Timestamp.fromDate(now)),
+    async (doc) => {
+      const uid = doc.ref.path.split("/")[1];
+      if (!uid) return;
 
-  for (const doc of questsSnap.docs) {
-    const pathParts = doc.ref.path.split("/");
-    const uid = pathParts[1];
-    if (!uid) continue;
+      const userSnap = await db().doc(`users/${uid}`).get();
+      const profile = (userSnap.data() ?? {}) as UserProfile;
+      const time = resolveUserTime(profile as Record<string, unknown>);
+      if (isQuietHour(now, time)) return;
 
-    const userSnap = await db().doc(`users/${uid}`).get();
-    const profile = (userSnap.data() ?? {}) as UserProfile;
-    const offset = typeof profile.timezoneOffset === "number" ? profile.timezoneOffset : 0;
-    if (isQuietHour(now, offset)) continue;
+      const quest = doc.data() as { name?: string; expiresAt: Timestamp; locale?: string };
+      const hoursLeft = Math.max(
+        1,
+        Math.round((quest.expiresAt.toMillis() - now.getTime()) / 3_600_000)
+      );
+      const locale = quest.locale === "en" || profile.locale === "en" ? "en" : "fr";
+      const tpl = pickTemplate("QUEST_EXPIRING", locale, {
+        questName: quest.name ?? "Sipho",
+        hours: String(hoursLeft),
+      });
 
-    const quest = doc.data() as { name?: string; expiresAt: Timestamp; locale?: string };
-    const hoursLeft = Math.max(1, Math.round((quest.expiresAt.toMillis() - now.getTime()) / 3_600_000));
-    const locale = quest.locale === "en" || profile.locale === "en" ? "en" : "fr";
-    const tpl = pickTemplate("QUEST_EXPIRING", locale, {
-      questName: quest.name ?? "Sipho",
-      hours: String(hoursLeft),
-    });
-
-    await sendToUser(uid, tpl.title, tpl.body, {
-      type: "QUEST_EXPIRING",
-      questId: doc.id,
-      route: "/home",
-    });
-    await doc.ref.update({ expireWarningSent: true });
-  }
+      await sendToUser(uid, tpl.title, tpl.body, {
+        type: "QUEST_EXPIRING",
+        questId: doc.id,
+        route: "/home",
+      });
+      await doc.ref.update({ expireWarningSent: true });
+    },
+    { label: "questExpiryWarnings", shouldStop, pageSize: 200, concurrency: 10 }
+  );
 }
 
 // ─── Unread budget alerts ─────────────────────────────────────────────────────
 
-async function sendUnreadBudgetAlerts(now: Date): Promise<void> {
+async function sendUnreadBudgetAlerts(now: Date, shouldStop: () => boolean): Promise<void> {
   const since = new Date(now.getTime() - 30 * 60 * 1000);
 
-  const alertsSnap = await db()
-    .collectionGroup("alerts")
-    .where("type", "in", ["BUDGET_WARNING", "BUDGET_EXCEEDED"])
-    .where("createdAt", ">", Timestamp.fromDate(since))
-    .where("pushed", "==", false)
-    .limit(200)
-    .get();
+  // Needs the COLLECTION_GROUP composite index (pushed, type, createdAt).
+  await forEachDocument(
+    db()
+      .collectionGroup("alerts")
+      .where("pushed", "==", false)
+      .where("type", "in", ["BUDGET_WARNING", "BUDGET_EXCEEDED"])
+      .where("createdAt", ">", Timestamp.fromDate(since)),
+    async (doc) => {
+      const uid = doc.ref.path.split("/")[1];
+      if (!uid) return;
 
-  for (const doc of alertsSnap.docs) {
-    const pathParts = doc.ref.path.split("/");
-    const uid = pathParts[1];
-    if (!uid) continue;
+      const userSnap = await db().doc(`users/${uid}`).get();
+      const profile = (userSnap.data() ?? {}) as UserProfile;
+      if (profile.notifPrefs?.budgetAlert === false) {
+        await doc.ref.update({ pushed: true });
+        return;
+      }
 
-    const userSnap = await db().doc(`users/${uid}`).get();
-    const profile = (userSnap.data() ?? {}) as UserProfile;
-    if (profile.notifPrefs?.budgetAlert === false) {
+      const time = resolveUserTime(profile as Record<string, unknown>);
+      if (isQuietHour(now, time)) return;
+
+      const alert = doc.data() as {
+        type: NotifType;
+        category: string;
+        pct: number;
+        locale?: string;
+      };
+      const locale = alert.locale === "en" || profile.locale === "en" ? "en" : "fr";
+      const tpl = pickTemplate(alert.type, locale, {
+        category: alert.category,
+        pct: String(alert.pct),
+      });
+      await sendToUser(uid, tpl.title, tpl.body, {
+        type: alert.type,
+        category: alert.category,
+        route: "/budget",
+      });
       await doc.ref.update({ pushed: true });
-      continue;
-    }
-
-    const offset = typeof profile.timezoneOffset === "number" ? profile.timezoneOffset : 0;
-    if (isQuietHour(now, offset)) continue;
-
-    const alert = doc.data() as {
-      type: NotifType;
-      category: string;
-      pct: number;
-      locale?: string;
-    };
-    const locale = alert.locale === "en" || profile.locale === "en" ? "en" : "fr";
-    const tpl = pickTemplate(alert.type, locale, {
-      category: alert.category,
-      pct: String(alert.pct),
-    });
-    await sendToUser(uid, tpl.title, tpl.body, {
-      type: alert.type,
-      category: alert.category,
-      route: "/budget",
-    });
-    await doc.ref.update({ pushed: true });
-  }
+    },
+    { label: "unreadBudgetAlerts", shouldStop, pageSize: 200, concurrency: 10 }
+  );
 }
 
 // ─── FCM helper with dead-token cleanup ───────────────────────────────────────

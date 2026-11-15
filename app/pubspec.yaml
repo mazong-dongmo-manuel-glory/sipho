@@ -5,7 +5,7 @@ version: 0.1.0+1
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
-  flutter: '>=3.22.0'
+  flutter: '>=3.47.0'
 
 dependencies:
   flutter:
@@ -63,6 +63,7 @@ dependencies:
   timezone: ^0.10.1
   url_launcher: ^6.3.0
   flutter_svg: ^2.0.16
+  flutter_timezone: ^5.1.1
 
 dev_dependencies:
   flutter_test:

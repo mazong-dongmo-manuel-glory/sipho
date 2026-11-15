@@ -356,7 +356,7 @@ Chaque feature : **data** (repositories Firestore, DTO), **domain** (modèles `f
 
 | Chemin | Champs principaux | Écrit par |
 |---|---|---|
-| `users/{uid}` | displayName, photoUrl, countryCode, regionCode?, city?, locationConsent, homeCountry?, remittanceCountries[], lifeStage, currency, locale, timezone, onboardingDone, mainGoal, incomeMonthlyCents?, createdAt, plan | Client (sauf `plan`) |
+| `users/{uid}` | displayName, photoUrl, countryCode, regionCode?, city?, locationConsent, homeCountry?, remittanceCountries[], lifeStage, currency, locale, timezone (id IANA), utcOffsetMinutes, onboardingDone, mainGoal, incomeMonthlyCents?, createdAt, plan | Client (sauf `plan`) |
 | `users/{uid}/game/state` | xp, level, gems, streak{current,best,lastActiveDay,freezes}, leagueId, weeklyXp, badges[] | **Functions** |
 | `users/{uid}/fixedExpenses/{id}` | name, category, icon, amountCents, dueDay, payMode, type, active, createdAt | Client |
 | `users/{uid}/months/{yyyy-MM}` | incomeCents, fixedPaid{}, totals{}, remainingCents | Functions |
@@ -379,7 +379,11 @@ Chaque feature : **data** (repositories Firestore, DTO), **domain** (modèles `f
 | `lessons/{id}` | unit, order, title{fr,en}, steps[], version, countries[] | Admin |
 | `questTemplates/{id}` · `notifTemplates/{id}` | templates | Admin |
 
-Index composites : transactions(date desc, category), quests(status, expiresAt), devices(updatedAt).
+Index composites : transactions(date desc, category), quests(status, expiresAt), devices(updatedAt) ; collection group : quests(status, expireWarningSent, expiresAt), alerts(pushed, type, createdAt).
+
+Fuseau horaire : le client écrit l'id IANA (`timezone`, ex. `Asia/Kolkata`) et le décalage courant en **minutes** (`utcOffsetMinutes`, ex. 330) à chaque lancement. Le serveur résout le jour local avec l'id IANA (heure d'été exacte) et n'utilise `utcOffsetMinutes` que pour présélectionner les utilisateurs d'un créneau local. L'ancien champ `timezoneOffset` (heures entières) n'est plus lu que comme dernier recours.
+
+Quêtes du jour : `daily_{templateId}_{yyyy-MM-dd}` (jour local), créées par `dailyRollover` (00:00–03:00 local) et à la création du profil, expirées au prochain minuit local, supprimées 14 jours après expiration.
 
 ---
 
@@ -471,30 +475,34 @@ match /users/{uid}/{sub=**} { allow read: if isOwner(uid); }   // jeu : lecture 
 Prérequis : Flutter stable, Dart 3, Node LTS, Firebase CLI, FlutterFire CLI, Xcode (iOS), Android Studio.
 
 ```bash
-# Configuration Firebase (une fois par environnement)
-flutterfire configure --project=sipho-dev
+# Configuration Firebase (une fois par environnement) — écrit lib/core/firebase/firebase_options_<env>.dart
+cd app
+flutterfire configure --project=sipho-f5a01 --out=lib/core/firebase/firebase_options_dev.dart      # dev
+flutterfire configure --project=sipho-staging --out=lib/core/firebase/firebase_options_staging.dart # staging
+flutterfire configure --project=sipho-prod --out=lib/core/firebase/firebase_options_prod.dart       # prod
+# Android : télécharger google-services.json de chaque projet dans android/app/src/{dev,staging,prod}/
 
 # App
-cd app
 flutter pub get
 dart run build_runner build --delete-conflicting-outputs
 flutter run --flavor dev -t lib/main_dev.dart
+flutter run --flavor staging -t lib/main_staging.dart
+flutter build appbundle --flavor prod -t lib/main.dart
 
 # Functions
 cd functions && npm ci && npm run build
 
-# Émulateurs (développement local et tests)
-firebase emulators:start --only auth,firestore,functions,storage
-
 # Tests
-cd app && flutter test && flutter test integration_test
-cd functions && npm test           # inclut les tests des règles de sécurité
+cd app && flutter analyze && flutter test
+cd functions && npm test               # tests unitaires (sans émulateur)
+cd functions && npm run test:emulator  # règles Firestore + gamification (démarre l'émulateur Firestore, Java requis)
+cd functions && npm run test:all
 
 # Contenus (packs pays, leçons, templates)
-cd content && npm run import -- --project=sipho-dev
+cd content && npm run import -- --project=sipho-f5a01
 ```
 
-Flavors : `dev`, `staging`, `prod` (un projet Firebase chacun).
+Flavors : `dev` (`sipho-f5a01`), `staging` (`sipho-staging`), `prod` (`sipho-prod`) — un projet Firebase chacun. Les fichiers `firebase_options_staging.dart` / `firebase_options_prod.dart` contiennent des valeurs `REPLACE_ME` tant que `flutterfire configure` n'a pas été lancé : l'app refuse alors de démarrer (`assertFirebaseConfigured`) au lieu d'écrire dans le projet de dev. Déploiement : `firebase deploy --project <alias>` (`.firebaserc` : `dev`, `staging`, `prod`).
 
 ---
 

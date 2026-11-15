@@ -1,34 +1,30 @@
-// PLACEHOLDER — replace with actual generated options from FlutterFire CLI
-// Run: flutterfire configure --project=sipho-dev
+// Firebase options for the DEV flavor (`lib/main_dev.dart`).
+//
+// Today the dev flavor uses the only Firebase project that exists (`sipho-f5a01`). Staging and
+// production have their own files (firebase_options_staging.dart / firebase_options_prod.dart)
+// and must never point at this project; `assertFirebaseConfigured` enforces it at startup.
+//
+// Client API keys are identifiers, not secrets: access is enforced by Firestore rules + App Check.
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
-    if (kIsWeb) return web;
+    if (kIsWeb) {
+      throw UnsupportedError('Web is not configured for Sipho.');
+    }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
         return ios;
-      case TargetPlatform.macOS:
-        return macos;
       default:
         throw UnsupportedError(
           'DefaultFirebaseOptions are not supported for this platform.',
         );
     }
   }
-
-  // REPLACE with actual values after flutterfire configure
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'REPLACE_ME',
-    appId: 'REPLACE_ME',
-    messagingSenderId: 'REPLACE_ME',
-    projectId: 'sipho-dev',
-    storageBucket: 'sipho-dev.appspot.com',
-  );
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyC_M1cL3IQr1kvW5lUFnSF0DbBPQWArlhY',
@@ -44,15 +40,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '303740226831',
     projectId: 'sipho-f5a01',
     storageBucket: 'sipho-f5a01.firebasestorage.app',
-    iosBundleId: 'com.cargonomade.sipho',
-  );
-
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyByD_vZ0lPWcOYF96-rT07UcHWsG47w4vQ',
-    appId: '1:303740226831:ios:a34848cb0a23cd8e69827a',
-    messagingSenderId: '303740226831',
-    projectId: 'sipho-f5a01',
-    storageBucket: 'sipho-f5a01.firebasestorage.app',
+    iosClientId:
+        '303740226831-pcttvf5iu8bkemhhnn42thfbsv0f19jq.apps.googleusercontent.com',
     iosBundleId: 'com.cargonomade.sipho',
   );
 }

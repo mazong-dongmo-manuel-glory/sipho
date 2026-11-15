@@ -5,6 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:sipho/core/firebase/firebase_providers.dart';
+import 'package:sipho/core/time/device_timezone.dart';
 import 'package:sipho/features/auth/domain/user_model.dart';
 
 part 'auth_repository.g.dart';
@@ -139,6 +140,7 @@ class AuthRepository {
         deviceLocale.languageCode.toLowerCase().startsWith('fr') ? 'fr' : 'en';
     final region = deviceLocale.countryCode?.toUpperCase();
     final country = (region != null && region.length == 2) ? region : 'CA';
+    final timezone = await readDeviceTimezone();
 
     if (!existing.exists) {
       await doc.set({
@@ -148,8 +150,8 @@ class AuthRepository {
         'countryCode': country,
         'currency': 'CAD',
         'locale': language,
-        'timezone': DateTime.now().timeZoneName,
-        'timezoneOffset': DateTime.now().timeZoneOffset.inHours,
+        // IANA id + offset in minutes (not whole hours): see device_timezone.dart.
+        ...timezone.toCreateFields(),
         'onboardingDone': false,
         'monthlyIncomeCents': 0,
         'createdAt': FieldValue.serverTimestamp(),
@@ -169,10 +171,11 @@ class AuthRepository {
     if (data['countryCode'] == null) updates['countryCode'] = country;
     if (data['currency'] == null) updates['currency'] = 'CAD';
     if (data['locale'] == null) updates['locale'] = language;
-    if (data['timezone'] == null) {
-      updates['timezone'] = DateTime.now().timeZoneName;
+    // Refreshed on every launch so a daylight-saving change or a trip is picked up.
+    updates.addAll(timezone.toProfileFields());
+    if (data['timezone'] == null && timezone.id == null) {
+      updates['timezone'] = kUnknownTimezone;
     }
-    updates['timezoneOffset'] = DateTime.now().timeZoneOffset.inHours;
     if (data['onboardingDone'] == null) updates['onboardingDone'] = false;
     await doc.update(updates);
   }
@@ -185,17 +188,6 @@ class AuthRepository {
     await ensureProfile(user);
     await _firestore.collection('users').doc(user.uid).update({
       'monthlyIncomeCents': cents,
-    });
-  }
-
-  Future<void> completeLesson(String lessonId) async {
-    final user = _auth.currentUser;
-    if (user == null) {
-      throw StateError('Not signed in');
-    }
-    await ensureProfile(user);
-    await _firestore.collection('users').doc(user.uid).update({
-      'completedLessonIds': FieldValue.arrayUnion([lessonId]),
     });
   }
 

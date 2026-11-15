@@ -1,6 +1,7 @@
 import { xpToLevel, xpToNextLevel } from "../shared/xpConfig";
 import { computeNextStreak, normalizeGameState } from "../shared/gameState";
 import {
+  ALLOWED_LESSON_IDS,
   CompleteLessonInputSchema,
   ParseReceiptInputSchema,
   TransactionInputSchema,
@@ -84,6 +85,17 @@ describe("Server security & gamification logic", () => {
         date: "2026-11-13",
       }).success
     ).toBe(false);
+  });
+
+  test("completeLesson only accepts catalog lesson ids (fake ids earn nothing)", () => {
+    const base = { score: 100, durationSeconds: 30 };
+    expect(CompleteLessonInputSchema.safeParse({ ...base, lessonId: "fake_lesson_1" }).success).toBe(
+      false
+    );
+    expect(CompleteLessonInputSchema.safeParse({ ...base, lessonId: "track_spending" }).success).toBe(
+      true
+    );
+    expect(ALLOWED_LESSON_IDS).toEqual(["emergency_fund", "needs_wants", "track_spending"]);
   });
 
   test("callGeminiJson uses active Gemini 3.5+ models, omits temperature, and skips thought parts", async () => {

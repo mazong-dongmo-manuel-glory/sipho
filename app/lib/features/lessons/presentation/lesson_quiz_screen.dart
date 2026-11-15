@@ -9,7 +9,6 @@ import 'package:sipho/core/animations/lottie_widget.dart';
 import 'package:sipho/core/firebase/firebase_providers.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
-import 'package:sipho/features/auth/data/auth_repository.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
 import 'package:sipho/features/insights/presentation/spend_snapshot_builder.dart';
 import 'package:sipho/features/lessons/data/lesson_ai_tutor_service.dart';
@@ -60,11 +59,14 @@ class _LessonQuizScreenState extends ConsumerState<LessonQuizScreen> {
         'score': 100,
         'durationSeconds': elapsedSeconds,
       });
-    } catch (_) {
-      try {
-        await ref.read(authRepositoryProvider).completeLesson(lesson.id);
-      } catch (error) {
-        debugPrint('Lesson save skipped: $error');
+    } catch (error) {
+      // No client-side fallback: lesson progress and XP are written by the `completeLesson`
+      // Cloud Function only (Firestore rules refuse client writes to completedLessonIds).
+      debugPrint('Lesson save failed: $error');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).lessonSaveError)),
+        );
       }
     }
     if (mounted) setState(() => _saving = false);

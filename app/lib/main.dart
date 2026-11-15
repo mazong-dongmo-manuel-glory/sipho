@@ -1,6 +1,6 @@
-// Flutter entry point — PRODUCTION
+// Flutter entry point — PRODUCTION (Firebase project: sipho-prod)
 import 'package:sipho/bootstrap.dart';
-import 'package:sipho/core/firebase/firebase_options_dev.dart'
+import 'package:sipho/core/firebase/firebase_options_prod.dart'
     as firebase_options;
 
 void main() =>
