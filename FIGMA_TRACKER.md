@@ -2,51 +2,88 @@
 
 > Suivi de l'avancement des maquettes Figma et de l'implémentation des écrans.
 
-**Fichier Figma :** [Sipho — Design](https://www.figma.com/design/nsdpHR62Ct0mjq1cgVGkwl/Untitled?node-id=2-29018)  
-**Dernière mise à jour :** 2026-11-12
+**Fichier Figma :** [Sipho — Design](https://www.figma.com/design/nsdpHR62Ct0mjq1cgVGkwl/Untitled) (clé `nsdpHR62Ct0mjq1cgVGkwl`, page « Page 1 ». Le fichier s'appelle encore « Untitled » : à renommer.)
+**Dernière mise à jour :** 2026-11-15 (relecture du fichier réel : 35 frames iPhone 15 de 393 × 852 + 1 frame « Sipho · Bibliothèque locale »)
+
+> Ancien lien du tracker (`node-id=2-29018`) : un nœud de 200 × 200 px, pas un écran. Ne pas l'utiliser.
 
 ---
 
 ## 📱 Écrans — Statut
 
-> Légendes : ⬜ Non commencé · 🖌️ Maquetté · ✅ Validé · 💻 Implémenté
+> Légendes : ⬜ Non commencé · 🖌️ Maquetté · ✅ Validé par Manuel · 💻 Implémenté dans l'app
+> « Validé » reste ⬜ partout : la validation n'a pas encore été faite. Les écrans accueil, socle, apprendre et ligue ont été relus le 2026-11-15 (cohérents avec les tokens) ; les autres n'ont pas été relus.
+> « Implémenté » = une route / un écran équivalent existe dans l'app, sans comparaison pixel à pixel.
 
-| # | Écran | Maquetté | Validé | Implémenté | Notes |
+| # | Frame Figma (id) | Maquetté | Validé | Implémenté | Notes |
 |---|---|:---:|:---:|:---:|---|
-| 1 | Splash (démarrage) | ⬜ | ⬜ | ⬜ | Fond vert profond, Sipho dans son nid |
-| 2 | Bienvenue & Connexion | ⬜ | ⬜ | ⬜ | Apple + Google Sign-in |
-| 3a | Onboarding — Question 1 (Prénom) | ⬜ | ⬜ | ⬜ | Bulle dialogue Sipho |
-| 3b | Onboarding — Question 2 (Objectif) | ⬜ | ⬜ | ⬜ | Cartes sélectionnables |
-| 3c | Onboarding — Question 3 (Revenu) | ⬜ | ⬜ | ⬜ | Clavier numérique |
-| 4 | Construction du nid (dépenses fixes) | ⬜ | ⬜ | ⬜ | Style Tinder swipe |
-| 5 | Détail d'une dépense fixe | ⬜ | ⬜ | ⬜ | Clavier géant, prélévement |
-| 6 | Célébration fin d'onboarding | ⬜ | ⬜ | ⬜ | Confettis, +50 XP, badge |
-| 7 | Pré-permission notifications | ⬜ | ⬜ | ⬜ | Sipho avec cloche |
-| 8a | Accueil — Mode clair | ⬜ | ⬜ | ⬜ | Jauge circulaire, quêtes, carte éco |
-| 8b | Accueil — Mode sombre | ⬜ | ⬜ | ⬜ | Version dark de l'accueil |
-| 9 | Ajout express d'une dépense | ⬜ | ⬜ | ⬜ | Bottom sheet, clavier, catégories |
-| 10 | Micro-récompense après ajout | ⬜ | ⬜ | ⬜ | Animation +5 XP, toast |
-| 11a | Scan de facture — Caméra | ⬜ | ⬜ | ⬜ | Rayon laser jaune |
-| 11b | Scan de facture — Validation | ⬜ | ⬜ | ⬜ | Champs pré-remplis, surligné incertain |
-| 12 | Dépenses du mois | ⬜ | ⬜ | ⬜ | Onglets, liste groupée par jour |
-| 13 | Mon socle (dépenses fixes) | ⬜ | ⬜ | ⬜ | Nid, mini-calendrier, statuts |
-| 14 | Graphiques & Budgets | ⬜ | ⬜ | ⬜ | Anneau, barres, jauges horizontales |
-| 15 | Apprendre — Chemin de leçons | ⬜ | ⬜ | ⬜ | Chemin sinueux style Duolingo |
-| 16 | Leçon interactive | ⬜ | ⬜ | ⬜ | Question + 4 choix, barre progression |
-| 17 | Résultat de leçon | ⬜ | ⬜ | ⬜ | +20 XP, Sipho fier |
-| 18 | Classement (ligues) | ⬜ | ⬜ | ⬜ | Tableau ligue Or, podium, podium |
-| 19 | Profil utilisateur | ⬜ | ⬜ | ⬜ | Avatar, stats, badges, paramètres |
-| 20 | Paramètres | ⬜ | ⬜ | ⬜ | Notifs, langue, devise, compte |
-| 21 | Récap mensuel | ⬜ | ⬜ | ⬜ | Rapport gamifié, Sipho danse |
+| 1 | 01 · Démarrage (`2:28911`) | 🖌️ | ⬜ | 💻 | `/splash` |
+| 2 | 02 · Bienvenue (`2:28913`) | 🖌️ | ⬜ | 💻 | `/login` |
+| 3a | 03a · Ton prénom (`2:28915`) | 🖌️ | ⬜ | 💻 | `onboarding_name_step` |
+| 3b | 03b · Ton pays (`2:28917`) | 🖌️ | ⬜ | 💻 | Région et « Utiliser ma position » : pas dans l'app |
+| 3c | 03c · Ton objectif (`2:28919`) | 🖌️ | ⬜ | 💻 | `onboarding_goal_step` ; pas d'écran revenu (voir TRACKER) |
+| 4 | 04 · Construisons ton nid (`2:28921`) | 🖌️ | ⬜ | 💻 | `/fixed-expenses/swipe` |
+| 5 | 05 · Dépense fixe (`2:28923`) | 🖌️ | ⬜ | 💻 | `/fixed-expenses/amount` |
+| 6 | 06 · Nid terminé (`2:28925`) | 🖌️ | ⬜ | 💻 | Badge « Bâtisseur » annoncé mais non attribué par le serveur |
+| 7 | 07 · Notifications (`2:28927`) | 🖌️ | ⬜ | 💻 | `/onboarding/notifications` |
+| 8a | 08 · Accueil clair (`2:28929`) | 🖌️ | ⬜ | 💻 | Relu |
+| 8b | 08 · Accueil sombre (`2:28931`) | 🖌️ | ⬜ | 💻 | Thème sombre suit le système (`ThemeMode.system`) |
+| 9 | 09 · Ajout express (`2:28933`) | 🖌️ | ⬜ | 💻 | `/expenses/add` ; saisie multi-devises à finir |
+| 10 | 10 · Micro-récompense (`2:28935`) | 🖌️ | ⬜ | 💻 | Sons / vibrations branchés |
+| 11a | 11a · Scanner (`2:28937`) | 🖌️ | ⬜ | 💻 | `/expenses/scan` |
+| 11b | 11b · Vérifier le ticket (`2:28939`) | 🖌️ | ⬜ | 💻 | `/expenses/validate` |
+| 12 | 12 · Dépenses du mois (`2:28941`) | 🖌️ | ⬜ | 💻 | `/expenses` |
+| 13 | 13 · Mon socle (`2:28943`) | 🖌️ | ⬜ | 💻 | Relu ; `/fixed-expenses` |
+| 14 | 14 · Graphiques et budgets (`2:28945`) | 🖌️ | ⬜ | 💻 | `/charts`, `/budget` |
+| 15 | 15 · Chemin de leçons (`2:28947`) | 🖌️ | ⬜ | 💻 | Relu ; l'app a 2 unités (la maquette en montre une + « Unité 3 : CELI » verrouillée) |
+| 16 | 16 · Quiz / Bonne réponse (`2:28949`, `2:28951`) | 🖌️ | ⬜ | 💻 | Une seule question par leçon dans l'app |
+| 17 | 17 · Leçon terminée (`2:28953`) | 🖌️ | ⬜ | 🟡 | `/lesson-done` existe mais valeurs en dur, non branché sur `completeLesson` |
+| 18 | 18 · Série prolongée (`2:28955`) | 🖌️ | ⬜ | 💻 | `/streak` |
+| 19 | 19 · Cadeau fermé / ouvert (`2:28957`, `2:28959`) | 🖌️ | ⬜ | 🟡 | `/chest` : contenu affiché en dur, pas la vraie récompense |
+| 20 | 20 · Ligue Or (`2:28961`) | 🖌️ | ⬜ | 💻 | Relu ; onglet « Mon pays » : « Bientôt disponible » |
+| 21 | 21 · Profil (`2:28963`) | 🖌️ | ⬜ | 💻 | Section « Mes objectifs » : à vérifier |
+| 22 | 22 · Boutique (`2:28965`) | 🖌️ | ⬜ | 💻 | Achats réels (ADR-013) ; objets non portés par Sipho (Rive) |
+| 23 | 23 · Conseil de Sipho (`2:28967`) | 🖌️ | ⬜ | 🟡 | Conseils IA : service présent, écran à confirmer (V2) |
+| 24 | 24a / 24b / 24c · Récap (`2:28969`, `2:28971`, `2:28973`) | 🖌️ | ⬜ | 💻 | `/recap` |
+| 25 | 25 · Réglages (`2:28975`) | 🖌️ | ⬜ | 💻 | `/settings`, `/notification-settings` |
 
-**Total : 25 écrans (21 principaux + 4 variantes)**
+**Total : 35 frames** (25 écrans du brief + variantes) — tous maquettés.
+
+### Écrans de l'app absents de Figma (à maquetter)
+- Onglet **Amis** du classement : code ami, demandes, liste.
+- **Contacts** : consentement, comparaison par empreintes, invitation SMS / e-mail.
+- **Vérification de numéro** (SMS).
+- Détail d'un **badge** ; états de la boutique (Possédé / Pas assez de graines / Stock plein).
+- **Saisie multi-devises**, **localisation à la demande**, **objectifs d'épargne**, **Premium** (V2).
+- Étapes d'onboarding manquantes selon le README : région, étape de vie, revenu.
 
 ---
 
 ## 🧩 Composants de la bibliothèque
 
+> Figma : 🖌️ présent dans la frame « Sipho · Bibliothèque locale » (relue le 2026-11-15) · ⬜ absent. Ce sont des éléments de la frame, pas encore de vrais composants Figma avec variantes : à vérifier.
+> Flutter : 💻 widget partagé dans `app/lib/core/widgets` · 🟡 existe mais propre à une feature · ⬜ pas de widget dédié.
+
 | # | Composant | Statut Figma | Statut Flutter | Notes |
 |---|---|:---:|:---:|---|
+| 1 | `SiphoButton3D` | 🖌️ | 💻 | Primaire, secondaire, désactivé, danger |
+| 2 | `GameBar` | 🖌️ | 💻 | Pastilles flamme / graines / niveau |
+| 3 | `SiphoBubble` | 🖌️ | 💻 | Bulle dialogue mascotte |
+| 4 | `GaugeCircular` | 🖌️ | 💻 | Jauge reste à vivre |
+| 5 | `GaugeHorizontal` | 🖌️ | 💻 | Vert / jaune / rouge |
+| 6 | `AmountKeypad` | 🖌️ | 💻 | Clavier numérique géant |
+| 7 | `BottomNav` | 🖌️ | 💻 | 5 onglets, 5 états actifs |
+| 8 | `CategoryChip` | 🖌️ | ⬜ | 12 catégories ; pas de widget partagé |
+| 9 | `ExpenseCard` | 🖌️ | ⬜ | Ligne de transaction |
+| 10 | `FixedExpenseCard` | 🖌️ | 🟡 | Dans `fixed_expenses/presentation` |
+| 11 | `QuestRow` | 🖌️ | 🟡 | `QuestCard` dans `home/presentation` |
+| 12 | `EcoCard` | 🖌️ | 🟡 | `EconomyCard` dans `home/presentation` |
+| 13 | `LeagueRow` | 🖌️ | 🟡 | Dans `leaderboard/presentation` |
+| 14 | `BadgeWidget` | ⬜ | 🟡 | Absent de la bibliothèque Figma ; grille de badges dans le profil |
+| 15 | `XpToast` | 🖌️ | ⬜ | Toast « Bien joué ! 2/3 pour ta quête » ; pas de widget partagé |
+| 16 | `SiphoAvatar` | 🖌️ | 🟡 | 8 poses dessinées dans Figma ; l'app utilise des SVG (`SiphoArt`), pas Rive |
+
+---|---|:---:|:---:|---|
 | 1 | `SiphoButton3D` | ⬜ | ⬜ | Bouton relief style Duolingo |
 | 2 | `GameBar` | ⬜ | ⬜ | Barre 🔥 XP / graines / niveau |
 | 3 | `SiphoBubble` | ⬜ | ⬜ | Bulle dialogue mascotte |

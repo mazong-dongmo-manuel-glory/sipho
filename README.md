@@ -197,7 +197,7 @@ Déclencheur (notification Sipho) → action courte (≤ 90 s) → récompense (
 - **Séries** : 1 action utile/jour (ou « aucune dépense aujourd'hui » confirmé). Paliers 3, 7, 14, 30, 50, 100, 200, 365. **Gel** (max 2 en stock), **réparation** sous 24 h, séries entre amis (V2). Jour calculé dans le `timezone` de l'utilisateur.
 - **Graines d'or** (non achetables en argent réel au MVP) + **boutique** (accessoires de Sipho, décorations du nid, thèmes, gels).
 - **Cadeaux de Sipho** (bronze/argent/or) au contenu aléatoire. **Jamais achetables en argent réel.**
-- **Ligues** (V2) : 10 niveaux, groupes de 30, classement sur l'XP hebdo **uniquement**, top 7 promus, 5 derniers relégués, fin dimanche 20 h. Ligues mondiales + filtres pays/ville.
+- **Ligues** : 10 niveaux (bronze → diamant), groupes de 30, classement sur l'XP gagnée pendant la semaine **uniquement**, top 7 promus (avec de l'XP), 5 derniers relégués (groupes ≥ 15 joueurs). Semaine **commune à tous** : dimanche 20 h UTC → dimanche 20 h UTC. Ligues mondiales + filtres pays/ville.
 - **Quêtes** : quotidiennes (3), hebdo, mensuelles (badge animé), IA, entre amis, rattrapage.
 - **Social** (V2) : profil public sans montants, encouragements, défis 1v1, parrainage via App Links / Universal Links + code (**Firebase Dynamic Links est arrêté : ne pas l'utiliser**).
 - **Récap mensuel** style « Wrapped », partageable sans montants sensibles par défaut.
@@ -281,7 +281,7 @@ Contraste AA, texte dynamique, `Semantics` partout, couleur jamais seule porteus
 | IA | **Firebase AI Logic** (`firebase_ai`) + Gemini (famille Flash, nom du modèle dans Remote Config) |
 | Fichiers | Cloud Storage |
 | Push | FCM + `flutter_local_notifications` |
-| Sécurité | App Check (App Attest / Play Integrity) |
+| Sécurité | App Check (Play Integrity / App Attest), Firebase Auth, limites par utilisateur, règles Firestore |
 | Config | Remote Config + A/B Testing |
 | Qualité | Crashlytics, Performance, Analytics |
 | Web | Firebase Hosting (vitrine, parrainage, fichiers App Links / AASA) |
@@ -295,7 +295,7 @@ dependencies:
   cloud_firestore, firebase_storage, cloud_functions
   firebase_messaging, flutter_local_notifications
   firebase_ai
-  firebase_app_check, firebase_remote_config
+  firebase_remote_config
   firebase_analytics, firebase_crashlytics, firebase_performance
   flutter_riverpod, riverpod_annotation, go_router
   freezed_annotation, json_annotation
@@ -371,7 +371,9 @@ Chaque feature : **data** (repositories Firestore, DTO), **domain** (modèles `f
 | `users/{uid}/notifState/state` | prefs{}, preferredHour, sentToday, lastSentAt, inactivityStage | Client (prefs) / Functions |
 | `publicProfiles/{uid}` | pseudo, avatar, level, streak, league, badges — **aucun montant** | Functions |
 | `friendships/{pairId}` | users[], status, sharedStreak | Functions |
-| `leagues/{week_tier_group}` | tier, week, members[{uid, weeklyXp}] (≤ 30), endsAt | Functions |
+| `leagues/{id}` | week (`yyyy-MM-dd` du dimanche 20 h UTC), tier, memberCount (≤ 30), open, processed, endsAt | Functions |
+| `leagues/{id}/members/{uid}` | pseudo, avatar, level, weeklyXp (XP gagnée dans ce groupe), rank/result (à la clôture) — **aucun montant** | Functions |
+| `users/{uid}/league/current` · `lastResult` | groupe de la semaine · résultat de la semaine précédente (rang, promotion/relégation) | Functions |
 | `referrals/{code}` | ownerUid, uses[], rewardsGranted | Functions |
 | `countries/{code}` | pack pays | Admin |
 | `economy/{code}` | indicators{… avec source et date}, summary{fr,en}, dailyCards[], updatedAt | Functions |
@@ -379,11 +381,11 @@ Chaque feature : **data** (repositories Firestore, DTO), **domain** (modèles `f
 | `lessons/{id}` | unit, order, title{fr,en}, steps[], version, countries[] | Admin |
 | `questTemplates/{id}` · `notifTemplates/{id}` | templates | Admin |
 
-Index composites : transactions(date desc, category), quests(status, expiresAt), devices(updatedAt) ; collection group : quests(status, expireWarningSent, expiresAt), alerts(pushed, type, createdAt).
+Index composites : transactions(date desc, category), quests(status, expiresAt) (les index à un seul champ, comme `devices.updatedAt`, sont automatiques et ne doivent pas être déclarés) ; collection group : quests(status, expireWarningSent, expiresAt), alerts(pushed, type, createdAt) ; leagues(processed, endsAt).
 
 Fuseau horaire : le client écrit l'id IANA (`timezone`, ex. `Asia/Kolkata`) et le décalage courant en **minutes** (`utcOffsetMinutes`, ex. 330) à chaque lancement. Le serveur résout le jour local avec l'id IANA (heure d'été exacte) et n'utilise `utcOffsetMinutes` que pour présélectionner les utilisateurs d'un créneau local. L'ancien champ `timezoneOffset` (heures entières) n'est plus lu que comme dernier recours.
 
-Quêtes du jour : `daily_{templateId}_{yyyy-MM-dd}` (jour local), créées par `dailyRollover` (00:00–03:00 local) et à la création du profil, expirées au prochain minuit local, supprimées 14 jours après expiration.
+Quêtes du jour : `daily_{templateId}_{yyyy-MM-dd}` (jour local), créées par `dailyRollover` (00:00–03:00 local), à la création du profil et à la demande par `refreshDailyQuests`, expirées au prochain minuit local, supprimées 14 jours après expiration.
 
 ---
 
@@ -394,12 +396,21 @@ Quêtes du jour : `daily_{templateId}_{yyyy-MM-dd}` (jour local), créées par `
 | `onUserCreate` | Auth trigger | Crée game/state, notifState, profil public, quêtes initiales |
 | `onTransactionWrite` | Firestore trigger | Agrégats du mois, quêtes, alertes budget, XP (avec limites) |
 | `markFixedPaid` | Callable | Coche une dépense fixe + XP |
-| `completeLesson` | Callable | Valide le score, XP, graines, série |
+| `buyShopItem` | Callable | Dépense des graines : prix, un seul exemplaire des objets, stock de gels plafonné (ADR-013) |
+| `onGameBadgeCheck` | Trigger Firestore | Attribue les badges dès que l'état de jeu change (ADR-012) |
+| `completeLesson` | Callable | Valide le score, XP, graines, série ; refuse une leçon verrouillée ; bonus de fin d'unité une fois (ADR-011) |
 | `parseReceipt` | Callable (option) | Scan côté serveur si besoin de contrôle |
 | `generateMonth` | Scheduler | Crée le mois, reporte les fixes, prépare le récap |
 | `dailyRollover` | Scheduler (horaire) | Fin de journée locale : séries, gels, quêtes |
+| `refreshDailyQuests` | Callable | Crée les quêtes du jour manquantes (idempotent) |
+| `confirmNoSpend` | Callable | « Aucune dépense aujourd'hui » : série + éligibilité « journée sous budget » |
+| `getInviteCode` | Callable | Code d'invitation / code ami de l'utilisateur (créé à la demande, stable) |
+| `sendFriendRequest` · `respondFriendRequest` · `removeFriend` | Callable | Demandes d'ami par code ; accepter / refuser ; retirer (écritures serveur uniquement) |
+| `setContactDiscovery` · `findContacts` · `sendContactFriendRequest` | Callable | Retrouver ses amis dans ses contacts (empreintes SHA-256 d'e-mails et de numéros vérifiés, opt-in réciproque) et leur envoyer une demande (ADR-010) |
 | `notifyScheduler` | Scheduler (15 min) | Rappels personnalisés, plafond, escalade |
-| `leagueWeekly` | Scheduler | Groupes, promotions, relégations, cadeaux |
+| `joinLeague` | Callable | Inscrit le joueur dans le groupe de sa ligue pour la semaine (idempotent) |
+| `onGameXpChange` | Trigger `users/{uid}/game/state` | Convertit tout gain d'XP en points de ligue (un seul point d'entrée pour toutes les sources d'XP) |
+| `leagueWeekly` | Scheduler (toutes les heures) | Clôt les groupes terminés : classement, top 7 promus, 5 derniers relégués (groupes ≥ 15), remise à zéro |
 | `weeklyInsights` | Scheduler | Contexte agrégé → Gemini → conseils + quêtes |
 | `economyFetch` · `economySummaries` · `fxRates` · `economyAlerts` | Scheduler / trigger | Données économiques et change |
 | `referralRedeem` | Callable + trigger | Parrainage validé après 7 jours |
@@ -441,17 +452,17 @@ Garde-fous : citer uniquement les produits/règles du pack pays ; sinon principe
 Sortie : `[{ title, body, suggestedQuest: { type, target, rewardXp } }]`.
 
 ### 12.3 Coûts
-Quotas par utilisateur/jour vérifiés avant appel, App Check obligatoire, compression d'image, alertes de facturation GCP.
+Quotas par utilisateur/jour vérifiés avant appel, compression d'image, alertes de facturation GCP.
 
 ---
 
 ## 13. Sécurité et conformité
 
-- Authentification obligatoire ; **App Check** sur Firestore, Storage, Functions, AI Logic.
+- Authentification obligatoire ; **App Check** sur Functions et AI Logic ; limites par utilisateur et règles Firestore.
 - Le client ne peut **jamais** écrire : XP, niveau, séries, graines, quêtes, ligues, `plan`, transactions `source: bank`.
 - Storage : `receipts/{uid}/{id}.jpg`, propriétaire seulement, ≤ 5 Mo, `image/*` ou `application/pdf`.
 - Jetons bancaires uniquement côté serveur (Secret Manager).
-- 3 projets Firebase : `sipho-dev`, `sipho-staging`, `sipho-prod`.
+- 3 projets Firebase : `sipho-f5a01` (dev), `sipho-staging`, `sipho-prod` (ces deux derniers restent à créer).
 - Aucune donnée personnelle (montant, marchand, nom) dans les logs/Crashlytics.
 - Conformité : RGPD, UK GDPR, Loi 25 + LPRPDE, lois US par État (CCPA…), lois africaines de protection des données ; régulateurs financiers par pays (positionnement **éducatif**) ; Sign in with Apple ; suppression de compte in-app ; Data safety (Play) et Privacy labels (Apple) ; âge minimum recommandé 16 ans (à valider).
 
@@ -480,14 +491,15 @@ cd app
 flutterfire configure --project=sipho-f5a01 --out=lib/core/firebase/firebase_options_dev.dart      # dev
 flutterfire configure --project=sipho-staging --out=lib/core/firebase/firebase_options_staging.dart # staging
 flutterfire configure --project=sipho-prod --out=lib/core/firebase/firebase_options_prod.dart       # prod
-# Android : télécharger google-services.json de chaque projet dans android/app/src/{dev,staging,prod}/
+# Android : télécharger le google-services.json du projet dev dans android/app/ (pas de flavors)
 
 # App
 flutter pub get
 dart run build_runner build --delete-conflicting-outputs
-flutter run --flavor dev -t lib/main_dev.dart
-flutter run --flavor staging -t lib/main_staging.dart
-flutter build appbundle --flavor prod -t lib/main.dart
+flutter run --dart-define=APP_CHECK_DEBUG_TOKEN=<uuid-du-jeton-debug>   # Android et iOS, sans flavor : un build debug vise dev, un build release vise prod. Le jeton debug App Check est un secret (dépôt public) : ne jamais l'écrire dans le code (voir ADR-005)
+flutter run -t lib/main_staging.dart   # staging (explicite)
+flutter build appbundle           # release : prod
+flutter run --dart-define=APP_CHECK_REAL=true   # appareil physique : teste Play Integrity / App Attest en debug
 
 # Functions
 cd functions && npm ci && npm run build
@@ -502,7 +514,7 @@ cd functions && npm run test:all
 cd content && npm run import -- --project=sipho-f5a01
 ```
 
-Flavors : `dev` (`sipho-f5a01`), `staging` (`sipho-staging`), `prod` (`sipho-prod`) — un projet Firebase chacun. Les fichiers `firebase_options_staging.dart` / `firebase_options_prod.dart` contiennent des valeurs `REPLACE_ME` tant que `flutterfire configure` n'a pas été lancé : l'app refuse alors de démarrer (`assertFirebaseConfigured`) au lieu d'écrire dans le projet de dev. Déploiement : `firebase deploy --project <alias>` (`.firebaserc` : `dev`, `staging`, `prod`).
+Environnements : `dev` (`sipho-f5a01`), `staging` (`sipho-staging`), `prod` (`sipho-prod`) — un projet Firebase chacun, choisis côté Dart (`main.dart` / `main_dev.dart` / `main_staging.dart`). Il n'y a plus de flavors Android ni de schémas Xcode (ADR-005). Les fichiers `firebase_options_staging.dart` / `firebase_options_prod.dart` contiennent des valeurs `REPLACE_ME` tant que `flutterfire configure` n'a pas été lancé : l'app refuse alors de démarrer (`assertFirebaseConfigured`) au lieu d'écrire dans le projet de dev. Déploiement : `firebase deploy --project <alias>` (`.firebaserc` : `dev`, `staging`, `prod`).
 
 ---
 
