@@ -561,10 +561,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get notifFixedBody => 'La veille d\'une facture du socle';
 
   @override
-  String get notifTipsTitle => 'Conseils';
+  String get notifTipsTitle => 'Conseils personnalisés';
 
   @override
-  String get notifTipsBody => 'Quand une analyse de tes totaux est prête';
+  String get notifTipsBody =>
+      'Un conseil de Sipho (IA) adapté à tes leçons et à ton budget, au plus tous les 3 jours. Seuls des totaux sont analysés, jamais ton nom.';
 
   @override
   String get notifEconomyTitle => 'Économie';

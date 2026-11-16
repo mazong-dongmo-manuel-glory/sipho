@@ -21,6 +21,7 @@ export { generateMonth } from './stats/generateMonth';
 
 // Notifications
 export { notifyScheduler } from './notifications/notifyScheduler';
+export { adviceNotifier } from './notifications/adviceNotifier';
 
 // AI
 export { parseReceipt } from './ai/parseReceipt';

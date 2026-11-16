@@ -287,6 +287,33 @@ Le chemin de leçons n'était qu'une liste de 3 leçons : le verrouillage n'exis
 
 ---
 
+## ADR-014 — Conseils financiers personnalisés par notification (IA encadrée)
+
+**Date :** 2026-11-15  
+**Statut :** ✅ ACCEPTÉE
+
+### Contexte
+Les notifications étaient des modèles fixes (série, échéance, budget). Les conseils IA existaient (`weeklyInsights`, `generateInsight`) mais restaient dans l'app, sans notification, et ne tenaient pas compte des résultats des leçons.
+
+### Décision
+- **Les règles décident, l'IA rédige.** `shared/advice.ts` (pur, testé) choisit le sujet à partir des données réelles : budget dépassé > leçon mal réussie > catégorie dominante (≥ 40 %) > aucune dépense notée depuis 7 jours > prochaine leçon > objectif > général. Chaque sujet a un délai avant de revenir (3 à 14 jours) ; si tout a été dit récemment, rien n'est envoyé.
+- **S'adapter aux anciennes réponses** : `completeLesson` enregistre `lastScore` à côté de `bestScore` dans `lessonProgress`. Une leçon dont le dernier score est < 80 est « à revoir » ; la rejouer avec un bon score la retire de la liste.
+- **Garde-fous sur l'IA** : le prompt ne contient que des faits agrégés (centimes arrondis en unités, pourcentages, sujet de la leçon, objectif parmi 4 valeurs connues) : jamais de nom, d'uid ni de texte libre. La réponse est refusée si le JSON est invalide, si elle dépasse 45 / 140 caractères, si elle cite un nombre absent des faits, ou si elle parle de placement, crédit, impôt ou crypto. Dans ces cas (ou si l'IA est indisponible, sans clé ou hors quota) un **modèle FR/EN construit avec les mêmes faits** est envoyé : l'apprenant reçoit toujours un message juste.
+- **Cadence et consentement** : uniquement si `notifPrefs.tips` est activé (opt-in), onboarding terminé, fenêtre 12 h–14 h locale, hors heures calmes, au plus 1 conseil tous les 3 jours, et le plafond de 2 notifications d'engagement par jour s'applique.
+- **Traçabilité** : `users/{uid}/adviceHistory` (sujet, texte, source `ai`/`template`, jour) sert aux délais et à varier la formulation ; le même texte est écrit dans `insights/advice_{jour}` pour que la carte coach de l'app affiche ce que la notification annonce.
+- Les utilitaires d'envoi (heures calmes, fenêtre locale, plafond, FCM) sont sortis de `notifyScheduler.ts` vers `notifications/delivery.ts`.
+
+### À trancher / limites connues
+- Le score d'une leçon indique qu'elle est mal comprise, pas quelle question a posé problème (le serveur ne reçoit pas le détail des réponses).
+- Pas de test A/B de formulation ni de mesure d'ouverture (`notif_opened`) encore.
+- Le conseil `budget_over` suppose un revenu mensuel renseigné ; sans revenu, il n'est jamais choisi (l'étape revenu de l'onboarding reste à faire).
+- Un appel IA par utilisateur éligible et par envoi : à surveiller côté quota.
+
+### Conséquences
+- Ajouter une leçon demande aussi d'ajouter son sujet dans `LESSON_TOPICS` (le compilateur l'impose).
+
+---
+
 ## ADR-012 — Badges attribués par le serveur
 
 **Date :** 2026-11-15  

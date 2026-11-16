@@ -147,6 +147,7 @@
 ## 🔥 Prochaines actions
 
 1. **Sons** : écouter les 10 sons provisoires sur appareil (iOS silencieux, musique, vibrations) et signaler ceux à remplacer 🎨
+1c. ✅ **Conseils financiers personnalisés par notification** (`adviceNotifier`, ADR-014) : sujet choisi par règles selon budget, dépenses, objectif et leçons mal réussies ; IA qui rédige avec garde-fous et modèle de repli ; à déployer avec `GEMINI_API_KEY` (sinon modèles de texte)
 1b. ✅ **Leçons et parcours « à la Duolingo »** : chaque leçon est une suite d'étapes (à lire → question → à lire → vrai/faux → question) puis une page « À retenir » ; le parcours serpente avec nœuds 3D (étoile / jouer / cadenas), bulle « À toi de jouer », Sipho à côté, bannière d'unité (sous-titre, progression), cadeau de fin d'unité, fiche de leçon (objectif, durée, étapes, récompense), quêtes repliables
 1a. ✅ **Écran de fin de leçon** branché sur `completeLesson` (XP, précision, temps, bonus d'unité, niveau) ; précision réelle : une réponse juste après une erreur n'est plus une leçon « parfaite » (score 100 / 50 / 33…)
 1b. ✅ **Écran cadeau** : affiche la vraie récompense de `claimQuest` (graines, XP, niveau) ; plus de « gel de série » inventé

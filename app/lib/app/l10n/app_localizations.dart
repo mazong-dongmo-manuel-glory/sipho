@@ -1104,13 +1104,13 @@ abstract class AppLocalizations {
   /// No description provided for @notifTipsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Tips'**
+  /// **'Personalised tips'**
   String get notifTipsTitle;
 
   /// No description provided for @notifTipsBody.
   ///
   /// In en, this message translates to:
-  /// **'When an analysis of your totals is ready'**
+  /// **'A tip from Sipho (AI) tailored to your lessons and budget, at most every 3 days. Only totals are analysed, never your name.'**
   String get notifTipsBody;
 
   /// No description provided for @notifEconomyTitle.

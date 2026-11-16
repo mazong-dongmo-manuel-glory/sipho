@@ -217,10 +217,11 @@ Déclencheur (notification Sipho) → action courte (≤ 90 s) → récompense (
 | `recap` | 1er du mois | « Ton récap d'octobre est prêt. » | MVP |
 | `social` | Ami te dépasse, défi | « Amina vient de te dépasser en ligue Or. » | V2 |
 | `league_end` | Dimanche 18 h | « Tu es 8e, la promotion est à 1 place ! » | V2 |
-| `insight` | Conseil hebdo | « J'ai repéré un truc qui peut te faire économiser 30 $. » | V2 |
+| `insight` | Conseil personnalisé (IA), au plus tous les 3 jours, ~12 h locale, si « Conseils » est activé | « Les restos pèsent 45 % de ton mois. Ça te va ? » | MVP |
 | `economy` | Taux / change | « La banque centrale a baissé son taux : voici ce que ça change. » | V2 |
 
 **Règles :** max **2 notifications d'engagement/jour** ; heure personnalisée (~30 min avant l'ouverture habituelle) ; heures calmes 21 h 30 – 8 h ; escalade puis **pause** (J+1 → J+3 → J+7 → J+14 « je mets les rappels en pause » → 1/mois) ; 10–20 variantes bilingues par type, pas de répétition en 7 jours ; A/B tests via Remote Config ; préférences par type ; deep link `data.route`.
+**Conseils personnalisés (`adviceNotifier`) :** le sujet est choisi par des règles serveur (budget dépassé > leçon mal réussie > catégorie dominante > aucune dépense notée > prochaine leçon > objectif > général), avec un délai avant de reparler du même sujet ; l'IA ne fait que rédiger à partir de totaux agrégés (aucun nom, aucun texte libre), son texte est refusé s'il cite un chiffre absent des faits ou parle de placement, crédit ou impôt, et un modèle de texte prend alors le relais (ADR-014).
 **Canaux Android :** `streak, budget, social, tips, recap, economy`.
 
 ---

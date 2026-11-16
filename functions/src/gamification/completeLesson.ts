@@ -179,6 +179,9 @@ export const completeLesson = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
             ? (existingProgressSnap.data()?.bestScore as number)
             : 0
         ),
+        // Latest attempt, next to the best one: the advice notifications read it to see which
+        // lessons the learner has not mastered yet.
+        lastScore: score,
         attempts: FieldValue.increment(1),
         lastDurationSeconds: durationSeconds,
         completedAt: FieldValue.serverTimestamp(),

@@ -557,10 +557,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifFixedBody => 'The day before a bill in your base';
 
   @override
-  String get notifTipsTitle => 'Tips';
+  String get notifTipsTitle => 'Personalised tips';
 
   @override
-  String get notifTipsBody => 'When an analysis of your totals is ready';
+  String get notifTipsBody =>
+      'A tip from Sipho (AI) tailored to your lessons and budget, at most every 3 days. Only totals are analysed, never your name.';
 
   @override
   String get notifEconomyTitle => 'Economy';

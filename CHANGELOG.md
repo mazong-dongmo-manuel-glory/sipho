@@ -9,6 +9,18 @@ et ce projet adhère au [Versionnage Sémantique](https://semver.org/lang/fr/).
 
 ## [Unreleased] - 2026-11-12
 
+### Ajouté — Conseils financiers personnalisés par notification (ADR-014)
+- Nouvelle fonction planifiée `adviceNotifier` : un conseil de Sipho (IA) adapté au profil financier de l'apprenant **et à ses résultats de leçons**, vers 12 h (heure locale), au plus tous les 3 jours, seulement si « Conseils » est activé. Le sujet est choisi par des règles (budget dépassé, leçon mal réussie, catégorie dominante, suivi des dépenses, prochaine leçon, objectif) avec des délais pour ne pas se répéter ; l'IA ne fait que rédiger.
+- Garde-fous : faits agrégés uniquement (aucun nom ni texte libre), réponse refusée si elle invente un chiffre, dépasse la longueur d'un push ou parle de placement / crédit / impôt ; un modèle FR/EN prend alors le relais, donc le message reste juste même sans IA.
+- `completeLesson` garde `lastScore` (dernière tentative) en plus de `bestScore` : une leçon rejouée avec un bon score n'est plus considérée comme faible.
+- Le conseil poussé est aussi écrit dans `insights` : l'ouverture de la notification mène à la carte coach correspondante.
+- Réglage « Conseils personnalisés » : texte clarifié (IA, leçons et budget, fréquence, totaux seulement).
+- Tests : `advice.test.ts` (48 tests : règles, priorité, délais, garde-fous, modèles, repli) et `advice.emulator.test.ts` (11 tests sur Firestore : préférences, fenêtre horaire, intervalle, plafond quotidien, adaptation aux leçons et au budget, aucune donnée personnelle dans le prompt).
+
+### Modifié
+- Utilitaires d'envoi déplacés de `notifyScheduler.ts` vers `notifications/delivery.ts` (sans changement de comportement).
+- `npm run test:emulator` tourne maintenant en série (`--runInBand`) : les fichiers partagent un émulateur et se vidaient mutuellement la base.
+
 ### Ajouté — Leçons structurées et parcours « à la Duolingo »
 - **Leçons à étapes** : une leçon n'est plus une seule question mais 5 étapes (pages à lire avec points clés, questions à choix, vrai/faux) suivies d'une page « À retenir » (3 points). Six leçons réécrites en FR/EN, sans règle propre à un pays. Nouveau lecteur `LessonPlayerScreen` (barre de progression, vérifier / réessayer, tuteur IA sur la question en cours, confirmation avant de quitter, bouton retour système compris). Remplace `LessonQuizScreen`.
 - **Parcours** (onglet Apprendre) d'après la maquette 15 : nœuds ronds 3D qui serpentent, bulle « À toi de jouer » (animation coupée si les animations sont réduites), Sipho à côté de la leçon à jouer, bannière d'unité avec sous-titre et progression, cadeau de fin d'unité, défilement automatique vers la leçon en cours. Un appui ouvre une **fiche de leçon** (objectif, durée, nombre d'étapes, XP) ; une leçon verrouillée explique pourquoi ; une leçon finie se rejoue sans promesse de récompense.
