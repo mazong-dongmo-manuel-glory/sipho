@@ -9,6 +9,12 @@ et ce projet adhère au [Versionnage Sémantique](https://semver.org/lang/fr/).
 
 ## [Unreleased] - 2026-11-12
 
+### Corrigé — Impossible de terminer une leçon (`UNAUTHENTICATED`)
+- Cause : Cloud Run (Functions Gen2) refusait l'appel à `completeLesson` **avant** le code Firebase (`The request was not authorized to invoke this service`). L'app voyait `firebase_functions/unauthenticated` alors que l'utilisateur était bien connecté.
+- Correctif serveur : redéploiement des callables sur `sipho-f5a01` pour rétablir l'invoker public (Auth Firebase reste vérifiée dans la fonction).
+- Correctif app : `FirebaseFunctions` forcé en `us-central1` ; rafraîchissement du jeton Auth avant `completeLesson` ; messages d'erreur distincts (session expirée / refusée / connexion).
+
+
 ### Ajouté — Conseils financiers personnalisés par notification (ADR-014)
 - Nouvelle fonction planifiée `adviceNotifier` : un conseil de Sipho (IA) adapté au profil financier de l'apprenant **et à ses résultats de leçons**, vers 12 h (heure locale), au plus tous les 3 jours, seulement si « Conseils » est activé. Le sujet est choisi par des règles (budget dépassé, leçon mal réussie, catégorie dominante, suivi des dépenses, prochaine leçon, objectif) avec des délais pour ne pas se répéter ; l'IA ne fait que rédiger.
 - Garde-fous : faits agrégés uniquement (aucun nom ni texte libre), réponse refusée si elle invente un chiffre, dépasse la longueur d'un push ou parle de placement / crédit / impôt ; un modèle FR/EN prend alors le relais, donc le message reste juste même sans IA.

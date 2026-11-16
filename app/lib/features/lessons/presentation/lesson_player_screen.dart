@@ -37,7 +37,7 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
   int? _selected;
   bool _checked = false;
   bool _saving = false;
-  bool _saveFailed = false;
+  LessonSaveFailureKind? _saveFailure;
   bool _askingTutor = false;
   LessonTutorReply? _tutorReply;
 
@@ -79,7 +79,7 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
     if (_saving) return;
     setState(() {
       _saving = true;
-      _saveFailed = false;
+      _saveFailure = null;
     });
     final seconds = DateTime.now().difference(_startedAt).inSeconds;
     try {
@@ -92,14 +92,21 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
       if (!mounted) return;
       // Replace the player: "back" from the celebration returns to the path.
       context.pushReplacement('/lesson-done', extra: result);
-    } catch (error) {
+    } on LessonSaveException catch (error) {
       // No client-side fallback: progress and XP are written by the `completeLesson` Cloud
       // Function only (Firestore rules refuse client writes to completedLessonIds).
       debugPrint('Lesson save failed: $error');
       if (!mounted) return;
       setState(() {
         _saving = false;
-        _saveFailed = true;
+        _saveFailure = error.kind;
+      });
+    } catch (error) {
+      debugPrint('Lesson save failed: $error');
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _saveFailure = LessonSaveFailureKind.unknown;
       });
     }
   }
@@ -274,9 +281,15 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (_saveFailed) ...[
+          if (_saveFailure != null) ...[
             Text(
-              l10n.lessonSaveError,
+              switch (_saveFailure!) {
+                LessonSaveFailureKind.signedOut => l10n.lessonSaveErrorAuth,
+                LessonSaveFailureKind.refused => l10n.lessonSaveErrorRefused,
+                LessonSaveFailureKind.network ||
+                LessonSaveFailureKind.unknown =>
+                  l10n.lessonSaveError,
+              },
               style: const TextStyle(
                 fontFamily: 'Nunito',
                 fontSize: 14,
@@ -287,7 +300,7 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
             const SizedBox(height: 8),
           ],
           button(
-            _saveFailed ? l10n.quizTryAgain : l10n.lessonRecapFinish,
+            _saveFailure != null ? l10n.quizTryAgain : l10n.lessonRecapFinish,
             _finish,
             loading: _saving,
           ),

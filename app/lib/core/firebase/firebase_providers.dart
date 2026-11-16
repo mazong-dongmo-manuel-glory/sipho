@@ -20,9 +20,11 @@ FirebaseFirestore firestore(FirestoreRef ref) => FirebaseFirestore.instance;
 FirebaseStorage firebaseStorage(FirebaseStorageRef ref) =>
     FirebaseStorage.instance;
 
+/// Same region as every Cloud Function (`us-central1`). The default is that region today, but
+/// an explicit value keeps callables working if the SDK ever changes its fallback.
 @riverpod
 FirebaseFunctions firebaseFunctions(FirebaseFunctionsRef ref) =>
-    FirebaseFunctions.instance;
+    FirebaseFunctions.instanceFor(region: 'us-central1');
 
 @riverpod
 FirebaseMessaging firebaseMessaging(FirebaseMessagingRef ref) =>

@@ -1878,6 +1878,14 @@ class AppLocalizationsFr extends AppLocalizations {
       'Connexion réseau indisponible pour contacter Sipho IA.';
 
   @override
+  String get lessonSaveErrorAuth =>
+      'Ta session a expiré. Reconnecte-toi, puis réessaie.';
+
+  @override
+  String get lessonSaveErrorRefused =>
+      'Cette leçon n\'a pas pu être validée (elle est peut-être encore verrouillée).';
+
+  @override
   String get lessonSaveError =>
       'Ta progression n\'a pas pu être enregistrée. Vérifie ta connexion et réessaie.';
 

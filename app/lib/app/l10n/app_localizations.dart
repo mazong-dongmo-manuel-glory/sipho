@@ -3495,6 +3495,18 @@ abstract class AppLocalizations {
   /// **'Network connection unavailable to reach Sipho AI.'**
   String get aiErrorNetwork;
 
+  /// No description provided for @lessonSaveErrorAuth.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session expired. Sign in again, then try again.'**
+  String get lessonSaveErrorAuth;
+
+  /// No description provided for @lessonSaveErrorRefused.
+  ///
+  /// In en, this message translates to:
+  /// **'This lesson could not be validated (it may still be locked).'**
+  String get lessonSaveErrorRefused;
+
   /// No description provided for @lessonSaveError.
   ///
   /// In en, this message translates to:

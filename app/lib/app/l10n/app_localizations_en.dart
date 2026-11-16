@@ -1867,6 +1867,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Network connection unavailable to reach Sipho AI.';
 
   @override
+  String get lessonSaveErrorAuth =>
+      'Your session expired. Sign in again, then try again.';
+
+  @override
+  String get lessonSaveErrorRefused =>
+      'This lesson could not be validated (it may still be locked).';
+
+  @override
   String get lessonSaveError =>
       'Your progress couldn\'t be saved. Check your connection and try again.';
 

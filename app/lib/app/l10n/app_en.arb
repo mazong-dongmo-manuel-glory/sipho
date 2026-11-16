@@ -770,6 +770,8 @@
   "aiErrorQuota": "AI quota temporarily reached. Please try again in a few minutes.",
   "aiErrorCredits": "The AI has no credit left on this Firebase project. Top up in AI Studio (ai.studio/projects), then try again.",
   "aiErrorNetwork": "Network connection unavailable to reach Sipho AI.",
+  "lessonSaveErrorAuth": "Your session expired. Sign in again, then try again.",
+  "lessonSaveErrorRefused": "This lesson could not be validated (it may still be locked).",
   "lessonSaveError": "Your progress couldn't be saved. Check your connection and try again.",
   "fixedMarkPaidError": "Couldn't mark this bill as paid. Try again."
 }
