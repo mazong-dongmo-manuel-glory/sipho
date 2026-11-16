@@ -18,6 +18,7 @@ import 'package:sipho/features/finance/presentation/finance_providers.dart';
 import 'package:sipho/features/insights/presentation/spend_snapshot_builder.dart';
 import 'package:sipho/features/lessons/data/lesson_ai_tutor_service.dart';
 import 'package:sipho/features/lessons/domain/lesson_catalog.dart';
+import 'package:sipho/features/lessons/domain/lesson_result.dart';
 
 class LessonQuizScreen extends ConsumerStatefulWidget {
   const LessonQuizScreen({super.key, this.lessonId});
@@ -37,6 +38,10 @@ class _LessonQuizScreenState extends ConsumerState<LessonQuizScreen> {
   // Set when this completion finished the unit (the server pays the bonus).
   int? _unitBonusXp;
   int _unitBonusSeeds = 0;
+  // Wrong answers before the right one: they lower the accuracy and the score sent to the server.
+  int _misses = 0;
+  // What the server paid, once `completeLesson` succeeded; shown on the end-of-lesson screen.
+  LessonResult? _result;
   late final DateTime _startedAt = DateTime.now();
 
   CatalogLesson get _lesson {
@@ -49,7 +54,10 @@ class _LessonQuizScreenState extends ConsumerState<LessonQuizScreen> {
   Future<void> _check(CatalogLesson lesson) async {
     final correct = lesson.choices[_selected].correct;
     if (!correct) {
-      setState(() => _checked = true);
+      setState(() {
+        _checked = true;
+        _misses++;
+      });
       unawaited(ref.read(feedbackServiceProvider).play(SiphoCue.lessonWrong));
       return;
     }
@@ -60,20 +68,29 @@ class _LessonQuizScreenState extends ConsumerState<LessonQuizScreen> {
     unawaited(ref.read(feedbackServiceProvider).play(SiphoCue.lessonCorrect));
     final elapsedSeconds =
         DateTime.now().difference(_startedAt).inSeconds.clamp(2, 3600);
+    final score = lessonScoreForMisses(_misses);
     try {
       final result = await ref
           .read(firebaseFunctionsProvider)
           .httpsCallable('completeLesson')
           .call<Map<String, dynamic>>({
         'lessonId': lesson.id,
-        'score': 100,
+        'score': score,
         'durationSeconds': elapsedSeconds,
       });
       final data = result.data;
-      if (data['unitCompleted'] != null && mounted) {
+      final lessonResult = LessonResult.fromCallable(
+        data,
+        accuracy: score,
+        durationSeconds: elapsedSeconds,
+      );
+      if (mounted) {
         setState(() {
-          _unitBonusXp = (data['unitBonusXp'] as num?)?.toInt() ?? 0;
-          _unitBonusSeeds = (data['unitBonusSeeds'] as num?)?.toInt() ?? 0;
+          _result = lessonResult;
+          if (lessonResult.finishedUnit) {
+            _unitBonusXp = lessonResult.unitBonusXp;
+            _unitBonusSeeds = lessonResult.unitBonusSeeds;
+          }
         });
       }
     } catch (error) {
@@ -326,7 +343,15 @@ class _LessonQuizScreenState extends ConsumerState<LessonQuizScreen> {
                           '🎓 ${l10n.lessonUnitCompleted(_unitBonusXp!, _unitBonusSeeds)}',
                   action: l10n.continueBtn.toUpperCase(),
                   loading: _saving,
-                  onPressed: () => context.pop(),
+                  onPressed: () {
+                    final result = _result;
+                    if (result == null) {
+                      context.pop();
+                    } else {
+                      // Replace the quiz: "back" from the celebration returns to the path.
+                      context.pushReplacement('/lesson-done', extra: result);
+                    }
+                  },
                 )
               else if (_checked)
                 _ResultBanner(

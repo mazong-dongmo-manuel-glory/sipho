@@ -1923,6 +1923,24 @@ abstract class AppLocalizations {
   /// **'Well done, {name}!'**
   String lessonDoneBravo(String name);
 
+  /// No description provided for @lessonDoneBravoAnon.
+  ///
+  /// In en, this message translates to:
+  /// **'Well done!'**
+  String get lessonDoneBravoAnon;
+
+  /// No description provided for @lessonDoneLevelUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Level {level} reached!'**
+  String lessonDoneLevelUp(int level);
+
+  /// No description provided for @lessonDoneReplay.
+  ///
+  /// In en, this message translates to:
+  /// **'Lesson already completed: a little more practice.'**
+  String get lessonDoneReplay;
+
   /// No description provided for @lessonXp.
   ///
   /// In en, this message translates to:
@@ -2001,17 +2019,29 @@ abstract class AppLocalizations {
   /// **'Every small effort counts.'**
   String get giftEffort;
 
-  /// No description provided for @giftSeeds.
+  /// No description provided for @giftSeedsAmount.
   ///
   /// In en, this message translates to:
-  /// **'+50 gold seeds'**
-  String get giftSeeds;
+  /// **'+{count} gold seeds'**
+  String giftSeedsAmount(int count);
 
-  /// No description provided for @giftFreeze.
+  /// No description provided for @giftXpAmount.
   ///
   /// In en, this message translates to:
-  /// **'Streak freeze ×1'**
-  String get giftFreeze;
+  /// **'+{xp} XP'**
+  String giftXpAmount(int xp);
+
+  /// No description provided for @giftLevelUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Level up!'**
+  String get giftLevelUp;
+
+  /// No description provided for @giftNothingNew.
+  ///
+  /// In en, this message translates to:
+  /// **'This gift has already been opened.'**
+  String get giftNothingNew;
 
   /// No description provided for @giftThanks.
   ///

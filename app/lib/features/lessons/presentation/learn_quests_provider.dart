@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sipho/core/firebase/firebase_providers.dart';
 import 'package:sipho/features/auth/presentation/auth_provider.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
+import 'package:sipho/features/gamification/domain/quest_reward.dart';
 import 'package:sipho/features/insights/data/insight_service.dart';
 import 'package:sipho/features/lessons/domain/learn_quests.dart';
 
@@ -117,20 +118,22 @@ class QuestClaimController extends Notifier<String?> {
   @override
   String? build() => null;
 
-  Future<bool> claim(String serverQuestId) async {
-    if (serverQuestId == 'local_ai_coach') return false;
-    if (state != null) return false;
+  /// Claims a completed quest. Returns what the server paid, or null when the claim failed (or
+  /// another claim is already running).
+  Future<QuestReward?> claim(String serverQuestId) async {
+    if (serverQuestId == 'local_ai_coach') return null;
+    if (state != null) return null;
     state = serverQuestId;
     try {
-      await ref
+      final result = await ref
           .read(firebaseFunctionsProvider)
           .httpsCallable('claimQuest')
           .call<Map<String, dynamic>>({'questId': serverQuestId});
       state = null;
-      return true;
+      return QuestReward.fromCallable(result.data);
     } catch (_) {
       state = null;
-      return false;
+      return null;
     }
   }
 }

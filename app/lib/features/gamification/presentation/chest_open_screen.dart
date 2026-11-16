@@ -15,9 +15,14 @@ import 'package:sipho/core/feedback/feedback_service.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
 import 'package:sipho/features/gamification/data/game_state_repository.dart';
+import 'package:sipho/features/gamification/domain/quest_reward.dart';
 
 class ChestOpenScreen extends ConsumerStatefulWidget {
-  const ChestOpenScreen({super.key});
+  /// [reward] is what the server actually paid for the claimed quest; null when the screen is
+  /// reached without a claim (then no amount is announced).
+  const ChestOpenScreen({super.key, this.reward});
+
+  final QuestReward? reward;
 
   @override
   ConsumerState<ChestOpenScreen> createState() => _ChestOpenScreenState();
@@ -110,37 +115,7 @@ class _ChestOpenScreenState extends ConsumerState<ChestOpenScreen> {
                 ),
               ),
               if (_open)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        l10n.giftSeeds,
-                        style: const TextStyle(
-                          fontFamily: 'Nunito',
-                          fontSize: 25,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.warnBrown,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '❄  ${l10n.giftFreeze}',
-                        style: const TextStyle(
-                          fontFamily: 'Nunito',
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.primaryDark,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
+                _RewardCard(reward: widget.reward, l10n: l10n)
               else ...[
                 Text(
                   l10n.giftTap,
@@ -180,6 +155,55 @@ class _ChestOpenScreenState extends ConsumerState<ChestOpenScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// The amounts the server really paid. Nothing is shown for an amount that is 0.
+class _RewardCard extends StatelessWidget {
+  const _RewardCard({required this.reward, required this.l10n});
+
+  final QuestReward? reward;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final reward = this.reward;
+    final lines = <(String, double, Color)>[
+      if (reward != null && reward.gemsGained > 0)
+        (l10n.giftSeedsAmount(reward.gemsGained), 25, AppColors.warnBrown),
+      if (reward != null && reward.xpGained > 0)
+        (l10n.giftXpAmount(reward.xpGained), 18, AppColors.primaryDark),
+      if (reward != null && reward.levelUp)
+        (l10n.giftLevelUp, 16, AppColors.primary),
+      if (reward != null && reward.alreadyClaimed)
+        (l10n.giftNothingNew, 16, AppColors.textSecondary),
+    ];
+    if (lines.isEmpty) return const SizedBox.shrink();
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 18),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          for (var i = 0; i < lines.length; i++) ...[
+            if (i > 0) const SizedBox(height: 8),
+            Text(
+              lines[i].$1,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: lines[i].$2,
+                fontWeight: i == 0 ? FontWeight.w900 : FontWeight.w800,
+                color: lines[i].$3,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

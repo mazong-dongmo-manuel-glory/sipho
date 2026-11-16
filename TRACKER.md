@@ -7,7 +7,7 @@
 | **Statut** | 🔄 MVP fonctionnel — finitions (sons, Rive, contenu, staging/prod) puis bêta |
 | **Démarrage** | 12 novembre 2026 |
 | **Dernière mise à jour** | 15 novembre 2026 |
-| **Santé du code** | `flutter analyze` propre · 243 tests Flutter · 110 tests Functions (hors émulateur) — mesuré le 15 novembre |
+| **Santé du code** | `flutter analyze` propre · 263 tests Flutter · 110 tests Functions (hors émulateur) — mesuré le 15 novembre |
 
 > Ce suivi a été remis à jour d'après l'état réel du code (il indiquait encore « Phase 1 à venir »).
 > Légende : ✅ fait · 🟡 partiel · ⬜ à faire · 🎨 dépend d'assets créatifs (hors code)
@@ -54,7 +54,7 @@
 ### Phase 0 — Cadrage & Design
 - [x] README / spec complète
 - [x] Brief Figma (FIGMA.md)
-- [x] Maquettes Figma **réalisées** : 35 frames (25 écrans du brief + variantes) et une bibliothèque de composants ; reste leur **validation** et la mise à niveau pour les écrans ajoutés depuis (amis/contacts, multi-devises, objectifs) — voir FIGMA_TRACKER.md
+- [x] Maquettes Figma **réalisées** : 33 frames (25 écrans du brief + variantes) et une bibliothèque de composants ; reste leur **validation** et la mise à niveau pour les écrans ajoutés depuis (amis/contacts, multi-devises, objectifs) — voir FIGMA_TRACKER.md
 - [x] ✨ Lottie : registre + préchargement + tests ; trophée (ligue) et éclats (cadeau) ajoutés. Reste : podium, validation de quête, montée de niveau, animations de designer
 - [ ] 🎨 Mascotte Sipho — illustration finale + animations Rive (8 émotions). État : illustrations **SVG** en place, `app/assets/rive/` vide
 - [ ] 🎨 Sons (10 sons). État : `app/assets/sounds/` vide
@@ -75,7 +75,7 @@
 
 ### Phase 2 — Cœur finances
 - [x] Onboarding conversationnel (nom, pays, objectif, nid)
-- [ ] Onboarding : le README §3.1 prévoit aussi région, étape de vie et revenu mensuel (fourchette) ; le code ne les collecte pas encore (le revenu démarre à 0 et ne se règle que depuis le profil, alors qu'il alimente « reste à vivre » et la règle « sous budget » : un nouvel utilisateur n'a donc pas ces deux fonctions tant qu'il ne l'a pas saisi) — à trancher : ajouter ou retirer du README
+- [ ] Onboarding : le README §3.1 prévoit aussi l'étape de vie et le revenu mensuel (fourchette) ; la région et la devise sont collectées, mais ni l'étape de vie ni le revenu (le revenu démarre à 0 et ne se règle que depuis le profil, alors qu'il alimente « reste à vivre » et la règle « sous budget » : un nouvel utilisateur n'a donc pas ces deux fonctions tant qu'il ne l'a pas saisi) — à trancher : ajouter ou retirer du README
 - [x] Mon socle — dépenses fixes (cartes à glisser, montant, liste, « Payé ✓ »)
 - [x] Dépenses variables — saisie express
 - [x] Agrégats Cloud Functions (`onTransactionWrite`, `generateMonth`)
@@ -147,8 +147,9 @@
 ## 🔥 Prochaines actions
 
 1. **Sons** : écouter les 10 sons provisoires sur appareil (iOS silencieux, musique, vibrations) et signaler ceux à remplacer 🎨
-1a. **Écran de fin de leçon** (`/lesson-done`) : maquette jamais atteinte (prénom, XP et durée en dur) ; le quiz revient à l'onglet Apprendre. À brancher sur la réponse de `completeLesson` ou à retirer
-1b. **Écran cadeau** : le contenu affiché (« graines », « gel de série ×1 ») est écrit en dur, il ne reflète pas la vraie récompense de `claimQuest`
+1a. ✅ **Écran de fin de leçon** branché sur `completeLesson` (XP, précision, temps, bonus d'unité, niveau) ; précision réelle : une réponse juste après une erreur n'est plus une leçon « parfaite » (score 100 / 50 / 33…)
+1b. ✅ **Écran cadeau** : affiche la vraie récompense de `claimQuest` (graines, XP, niveau) ; plus de « gel de série » inventé
+1c. **Revenu mensuel à l'onboarding** (voir Phase 2) puis écarts de la relecture Figma : voir `FIGMA_TRACKER.md` (liste priorisée)
 2. **Quêtes** : vérifier sur appareil la carte « sous budget » et le bouton « Aucune dépense » ; lancer `npm run test:emulator` (Java requis) pour valider les nouveaux tests de quêtes
 3. **Contenu** : rédiger les leçons restantes (unité 3, plusieurs questions par leçon) (`content/lessons/`) et les packs CI / SN
 4. **Environnements** : créer `sipho-staging` / `sipho-prod`, `flutterfire configure`, schemes iOS

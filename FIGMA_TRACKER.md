@@ -3,7 +3,7 @@
 > Suivi de l'avancement des maquettes Figma et de l'implémentation des écrans.
 
 **Fichier Figma :** [Sipho — Design](https://www.figma.com/design/nsdpHR62Ct0mjq1cgVGkwl/Untitled) (clé `nsdpHR62Ct0mjq1cgVGkwl`, page « Page 1 ». Le fichier s'appelle encore « Untitled » : à renommer.)
-**Dernière mise à jour :** 2026-11-15 (relecture du fichier réel : 35 frames iPhone 15 de 393 × 852 + 1 frame « Sipho · Bibliothèque locale »)
+**Dernière mise à jour :** 2026-11-15 (relecture du fichier réel : 33 frames iPhone 15 de 393 × 852 + 1 frame « Sipho · Bibliothèque locale »)
 
 > Ancien lien du tracker (`node-id=2-29018`) : un nœud de 200 × 200 px, pas un écran. Ne pas l'utiliser.
 
@@ -12,7 +12,7 @@
 ## 📱 Écrans — Statut
 
 > Légendes : ⬜ Non commencé · 🖌️ Maquetté · ✅ Validé par Manuel · 💻 Implémenté dans l'app
-> « Validé » reste ⬜ partout : la validation n'a pas encore été faite. Les écrans accueil, socle, apprendre et ligue ont été relus le 2026-11-15 (cohérents avec les tokens) ; les autres n'ont pas été relus.
+> « Validé » reste ⬜ partout : la validation par Manuel n'a pas encore été faite. Les 33 frames ont été relues visuellement le 2026-11-15 : toutes sont cohérentes avec les tokens (palette, Nunito, boutons 3D, mascotte).
 > « Implémenté » = une route / un écran équivalent existe dans l'app, sans comparaison pixel à pixel.
 
 | # | Frame Figma (id) | Maquetté | Validé | Implémenté | Notes |
@@ -20,7 +20,7 @@
 | 1 | 01 · Démarrage (`2:28911`) | 🖌️ | ⬜ | 💻 | `/splash` |
 | 2 | 02 · Bienvenue (`2:28913`) | 🖌️ | ⬜ | 💻 | `/login` |
 | 3a | 03a · Ton prénom (`2:28915`) | 🖌️ | ⬜ | 💻 | `onboarding_name_step` |
-| 3b | 03b · Ton pays (`2:28917`) | 🖌️ | ⬜ | 💻 | Région et « Utiliser ma position » : pas dans l'app |
+| 3b | 03b · Ton pays (`2:28917`) | 🖌️ | ⬜ | 🟡 | Pays, région et devise présents ; « Utiliser ma position » absent (`geolocator` non utilisé) |
 | 3c | 03c · Ton objectif (`2:28919`) | 🖌️ | ⬜ | 💻 | `onboarding_goal_step` ; pas d'écran revenu (voir TRACKER) |
 | 4 | 04 · Construisons ton nid (`2:28921`) | 🖌️ | ⬜ | 💻 | `/fixed-expenses/swipe` |
 | 5 | 05 · Dépense fixe (`2:28923`) | 🖌️ | ⬜ | 💻 | `/fixed-expenses/amount` |
@@ -32,22 +32,34 @@
 | 10 | 10 · Micro-récompense (`2:28935`) | 🖌️ | ⬜ | 💻 | Sons / vibrations branchés |
 | 11a | 11a · Scanner (`2:28937`) | 🖌️ | ⬜ | 💻 | `/expenses/scan` |
 | 11b | 11b · Vérifier le ticket (`2:28939`) | 🖌️ | ⬜ | 💻 | `/expenses/validate` |
-| 12 | 12 · Dépenses du mois (`2:28941`) | 🖌️ | ⬜ | 💻 | `/expenses` |
+| 12 | 12 · Dépenses du mois (`2:28941`) | 🖌️ | ⬜ | 🟡 | `/expenses` ; ni étiquette « 📷 scanné » ni ligne en devise étrangère (« 25,00 € → 36,80 $ ») dans la liste |
 | 13 | 13 · Mon socle (`2:28943`) | 🖌️ | ⬜ | 💻 | Relu ; `/fixed-expenses` |
 | 14 | 14 · Graphiques et budgets (`2:28945`) | 🖌️ | ⬜ | 💻 | `/charts`, `/budget` |
 | 15 | 15 · Chemin de leçons (`2:28947`) | 🖌️ | ⬜ | 💻 | Relu ; l'app a 2 unités (la maquette en montre une + « Unité 3 : CELI » verrouillée) |
 | 16 | 16 · Quiz / Bonne réponse (`2:28949`, `2:28951`) | 🖌️ | ⬜ | 💻 | Une seule question par leçon dans l'app |
-| 17 | 17 · Leçon terminée (`2:28953`) | 🖌️ | ⬜ | 🟡 | `/lesson-done` existe mais valeurs en dur, non branché sur `completeLesson` |
+| 17 | 17 · Leçon terminée (`2:28953`) | 🖌️ | ⬜ | 💻 | `/lesson-done` branché sur la réponse de `completeLesson` (XP, précision, temps, bonus) depuis le 2026-11-15 |
 | 18 | 18 · Série prolongée (`2:28955`) | 🖌️ | ⬜ | 💻 | `/streak` |
-| 19 | 19 · Cadeau fermé / ouvert (`2:28957`, `2:28959`) | 🖌️ | ⬜ | 🟡 | `/chest` : contenu affiché en dur, pas la vraie récompense |
+| 19 | 19 · Cadeau fermé / ouvert (`2:28957`, `2:28959`) | 🖌️ | ⬜ | 💻 | `/chest` affiche la vraie récompense de `claimQuest` ; la maquette montre « Gel de série ×1 », que le serveur n'attribue pas : écart de contenu à trancher |
 | 20 | 20 · Ligue Or (`2:28961`) | 🖌️ | ⬜ | 💻 | Relu ; onglet « Mon pays » : « Bientôt disponible » |
-| 21 | 21 · Profil (`2:28963`) | 🖌️ | ⬜ | 💻 | Section « Mes objectifs » : à vérifier |
+| 21 | 21 · Profil (`2:28963`) | 🖌️ | ⬜ | 🟡 | Section « Mes objectifs » **absente** (la chaîne existe, aucun écran ni donnée `goals`) |
 | 22 | 22 · Boutique (`2:28965`) | 🖌️ | ⬜ | 💻 | Achats réels (ADR-013) ; objets non portés par Sipho (Rive) |
 | 23 | 23 · Conseil de Sipho (`2:28967`) | 🖌️ | ⬜ | 🟡 | Conseils IA : service présent, écran à confirmer (V2) |
 | 24 | 24a / 24b / 24c · Récap (`2:28969`, `2:28971`, `2:28973`) | 🖌️ | ⬜ | 💻 | `/recap` |
 | 25 | 25 · Réglages (`2:28975`) | 🖌️ | ⬜ | 💻 | `/settings`, `/notification-settings` |
 
-**Total : 35 frames** (25 écrans du brief + variantes) — tous maquettés.
+**Total : 33 frames** (25 écrans du brief + variantes) — tous maquettés.
+
+### Écarts constatés à la relecture du 2026-11-15 (code à écrire)
+| Priorité | Écart | Détail |
+|---|---|---|
+| ✅ fait | Fin de leçon et cadeau en dur | Branchés sur les vraies réponses serveur (voir CHANGELOG) |
+| 1 | Revenu mensuel absent de l'onboarding | Sans lui, « Reste à vivre » et « sous budget » ne fonctionnent pas pour un nouvel utilisateur |
+| 2 | Liste des dépenses | Étiquette « scanné » et ligne en devise étrangère (montant d'origine → montant converti) |
+| 3 | Mes objectifs (profil) | Collection `goals`, barre de progression, création et dépôt |
+| 4 | Saisie multi-devises | Choix de la devise dans l'ajout express + conversion `fx/latest` |
+| 5 | « Utiliser ma position » | Géoloc approximative à la demande, libellés seulement (README §4.1) |
+| 6 | Cadeau : « Gel de série » | Le serveur n'attribue pas de gel via `claimQuest` ; décider d'en ajouter ou de retirer la ligne de la maquette |
+| 7 | Onglet « Mon pays » de la ligue | Affiche « Bientôt disponible » |
 
 ### Écrans de l'app absents de Figma (à maquetter)
 - Onglet **Amis** du classement : code ami, demandes, liste.
@@ -55,7 +67,7 @@
 - **Vérification de numéro** (SMS).
 - Détail d'un **badge** ; états de la boutique (Possédé / Pas assez de graines / Stock plein).
 - **Saisie multi-devises**, **localisation à la demande**, **objectifs d'épargne**, **Premium** (V2).
-- Étapes d'onboarding manquantes selon le README : région, étape de vie, revenu.
+- Étapes d'onboarding manquantes selon le README : étape de vie et revenu (la région est déjà collectée).
 
 ---
 

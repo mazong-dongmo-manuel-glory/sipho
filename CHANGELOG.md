@@ -9,6 +9,14 @@ et ce projet adhère au [Versionnage Sémantique](https://semver.org/lang/fr/).
 
 ## [Unreleased] - 2026-11-12
 
+### Modifié — Fin de leçon et cadeau branchés sur le serveur
+- Écran de fin de leçon (`/lesson-done`) : il affiche maintenant les vrais XP, graines, précision et temps de la leçon, le prénom réel (avant : « Amina », 30 XP, 100 %, 2:14 écrits en dur), le bonus d'unité et le passage de niveau. Le quiz y mène après une leçon validée ; sans résultat, la route renvoie vers l'onglet Apprendre.
+- Écran cadeau (`/chest`) : il affiche ce que `claimQuest` a réellement attribué (graines, XP, niveau). Avant : « +50 graines d'or » et « Gel de série ×1 » écrits en dur, alors que le serveur n'accorde pas de gel. Sans récompense connue, le cadeau s'ouvre sans annoncer de montant.
+- **Précision réelle** : le quiz envoyait toujours `score: 100`, donc rejouer jusqu'à trouver la bonne réponse rapportait la leçon « parfaite ». Le score vaut maintenant 100 / 50 / 33… selon les erreurs (réponses justes sur réponses données) ; seule une réussie du premier coup est parfaite.
+- Nouveaux modèles de domaine `LessonResult` et `QuestReward` (lecture tolérante d'une réponse inattendue : nombre manquant ou mal typé = 0, sans exception).
+- Chaînes FR/EN : `giftSeedsAmount`, `giftXpAmount`, `giftLevelUp`, `giftNothingNew`, `lessonDoneBravoAnon`, `lessonDoneLevelUp`, `lessonDoneReplay` (retrait de `giftSeeds` et `giftFreeze`).
+- Tests : `lesson_result_test.dart` (20 tests : score, durée, lecture des réponses, deux écrans).
+
 ### Ajouté — Boutique de graines (achats réels)
 - Callable `buyShopItem` (ADR-013) : le serveur fixe le prix, vérifie le solde dans une transaction, applique « un seul exemplaire » aux objets et le **plafond de 2 gels de série** ; refus expliqués (`already-owned`, `max-stock`, `insufficient-seeds`). Premier usage des graines, qui ne se dépensaient nulle part.
 - Écran Boutique : solde, série et niveau **réels** (avant : 12 / 340 / niveau 7 écrits en dur), états Acheter / Possédé / Pas assez de graines / Stock plein, stock de gels affiché, un achat à la fois, son à l'achat.

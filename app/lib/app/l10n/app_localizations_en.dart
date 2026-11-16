@@ -1009,6 +1009,18 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get lessonDoneBravoAnon => 'Well done!';
+
+  @override
+  String lessonDoneLevelUp(int level) {
+    return 'Level $level reached!';
+  }
+
+  @override
+  String get lessonDoneReplay =>
+      'Lesson already completed: a little more practice.';
+
+  @override
   String get lessonXp => 'XP earned';
 
   @override
@@ -1048,10 +1060,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get giftEffort => 'Every small effort counts.';
 
   @override
-  String get giftSeeds => '+50 gold seeds';
+  String giftSeedsAmount(int count) {
+    return '+$count gold seeds';
+  }
 
   @override
-  String get giftFreeze => 'Streak freeze ×1';
+  String giftXpAmount(int xp) {
+    return '+$xp XP';
+  }
+
+  @override
+  String get giftLevelUp => 'Level up!';
+
+  @override
+  String get giftNothingNew => 'This gift has already been opened.';
 
   @override
   String get giftThanks => 'THANKS, SIPHO!';

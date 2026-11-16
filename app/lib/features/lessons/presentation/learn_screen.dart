@@ -237,15 +237,15 @@ class LearnScreen extends ConsumerWidget {
                     quest.serverQuestId != null,
                 onAction: () async {
                   if (quest.claimableOnServer && quest.serverQuestId != null) {
-                    final ok = await ref
+                    final reward = await ref
                         .read(questClaimControllerProvider.notifier)
                         .claim(quest.serverQuestId!);
                     if (!context.mounted) return;
-                    if (ok) {
+                    if (reward != null) {
                       unawaited(ref
                           .read(feedbackServiceProvider)
                           .play(SiphoCue.questClaimed));
-                      await context.push('/chest');
+                      await context.push('/chest', extra: reward);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text(l10n.learnQuestClaimError)),

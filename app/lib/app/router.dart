@@ -17,10 +17,12 @@ import 'package:sipho/features/fixed_expenses/domain/fixed_expense_draft.dart';
 import 'package:sipho/features/fixed_expenses/presentation/fixed_amount_screen.dart';
 import 'package:sipho/features/fixed_expenses/presentation/fixed_expense_swipe_screen.dart';
 import 'package:sipho/features/fixed_expenses/presentation/fixed_expenses_list_screen.dart';
+import 'package:sipho/features/gamification/domain/quest_reward.dart';
 import 'package:sipho/features/gamification/presentation/chest_open_screen.dart';
 import 'package:sipho/features/gamification/presentation/streak_screen.dart';
 import 'package:sipho/features/home/presentation/home_screen.dart';
 import 'package:sipho/features/leaderboard/presentation/leaderboard_screen.dart';
+import 'package:sipho/features/lessons/domain/lesson_result.dart';
 import 'package:sipho/features/lessons/presentation/learn_screen.dart';
 import 'package:sipho/features/lessons/presentation/lesson_done_screen.dart';
 import 'package:sipho/features/lessons/presentation/lesson_quiz_screen.dart';
@@ -146,12 +148,20 @@ GoRouter router(RouterRef ref) {
       ),
       GoRoute(
         path: '/lesson-done',
-        builder: (_, __) => const LessonDoneScreen(),
+        // The screen has nothing to show without the server's result (passed as `extra`).
+        redirect: (_, state) => state.extra is LessonResult ? null : '/learn',
+        builder: (_, state) =>
+            LessonDoneScreen(result: state.extra! as LessonResult),
       ),
       GoRoute(path: '/streak', builder: (_, __) => const StreakScreen()),
       GoRoute(
         path: '/chest',
-        builder: (_, __) => const ChestOpenScreen(),
+        // Opened from a quest claim (`extra` = its reward). Without it the gift still opens but
+        // announces no amount, rather than inventing one.
+        builder: (_, state) => ChestOpenScreen(
+          reward:
+              state.extra is QuestReward ? state.extra! as QuestReward : null,
+        ),
       ),
       GoRoute(
         path: '/settings',
