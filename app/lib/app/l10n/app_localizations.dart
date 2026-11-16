@@ -1758,7 +1758,7 @@ abstract class AppLocalizations {
   /// No description provided for @learnTitle.
   ///
   /// In en, this message translates to:
-  /// **'Learn'**
+  /// **'Learn, one small step at a time'**
   String get learnTitle;
 
   /// No description provided for @learnYourTurn.
@@ -1922,6 +1922,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Well done, {name}!'**
   String lessonDoneBravo(String name);
+
+  /// No description provided for @learnStart.
+  ///
+  /// In en, this message translates to:
+  /// **'START'**
+  String get learnStart;
+
+  /// No description provided for @learnReplay.
+  ///
+  /// In en, this message translates to:
+  /// **'REPLAY'**
+  String get learnReplay;
+
+  /// No description provided for @learnLessonMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String learnLessonMinutes(int minutes);
+
+  /// No description provided for @learnLessonSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 step} other{{count} steps}}'**
+  String learnLessonSteps(int count);
+
+  /// No description provided for @learnLessonReward.
+  ///
+  /// In en, this message translates to:
+  /// **'up to +{xp} XP'**
+  String learnLessonReward(int xp);
+
+  /// No description provided for @learnLessonObjective.
+  ///
+  /// In en, this message translates to:
+  /// **'What you will learn'**
+  String get learnLessonObjective;
+
+  /// No description provided for @learnLessonDoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Already completed: replay to practice.'**
+  String get learnLessonDoneHint;
+
+  /// No description provided for @learnUnitGiftLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit-end gift'**
+  String get learnUnitGiftLabel;
+
+  /// No description provided for @learnYouAreHere.
+  ///
+  /// In en, this message translates to:
+  /// **'You are here'**
+  String get learnYouAreHere;
+
+  /// No description provided for @lessonKickerRead.
+  ///
+  /// In en, this message translates to:
+  /// **'DISCOVER'**
+  String get lessonKickerRead;
+
+  /// No description provided for @lessonKickerQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'QUESTION'**
+  String get lessonKickerQuestion;
+
+  /// No description provided for @lessonKickerTrueFalse.
+  ///
+  /// In en, this message translates to:
+  /// **'TRUE OR FALSE?'**
+  String get lessonKickerTrueFalse;
+
+  /// No description provided for @lessonTrue.
+  ///
+  /// In en, this message translates to:
+  /// **'True'**
+  String get lessonTrue;
+
+  /// No description provided for @lessonFalse.
+  ///
+  /// In en, this message translates to:
+  /// **'False'**
+  String get lessonFalse;
+
+  /// No description provided for @lessonRecapTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'To remember'**
+  String get lessonRecapTitle;
+
+  /// No description provided for @lessonRecapFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'FINISH'**
+  String get lessonRecapFinish;
+
+  /// No description provided for @lessonLeaveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave the lesson?'**
+  String get lessonLeaveTitle;
+
+  /// No description provided for @lessonLeaveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your progress in this lesson will be lost.'**
+  String get lessonLeaveBody;
+
+  /// No description provided for @lessonLeaveStay.
+  ///
+  /// In en, this message translates to:
+  /// **'STAY'**
+  String get lessonLeaveStay;
+
+  /// No description provided for @lessonLeaveQuit.
+  ///
+  /// In en, this message translates to:
+  /// **'LEAVE'**
+  String get lessonLeaveQuit;
+
+  /// No description provided for @learnLockedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish the previous lesson first to unlock this one.'**
+  String get learnLockedHint;
+
+  /// No description provided for @learnLessonPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'Lesson {number} of {total}'**
+  String learnLessonPosition(int number, int total);
+
+  /// No description provided for @learnClose.
+  ///
+  /// In en, this message translates to:
+  /// **'CLOSE'**
+  String get learnClose;
 
   /// No description provided for @lessonDoneBravoAnon.
   ///

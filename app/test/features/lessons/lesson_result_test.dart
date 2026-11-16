@@ -47,25 +47,32 @@ Map<String, dynamic> _response({
     };
 
 void main() {
-  group('lessonScoreForMisses', () {
-    test('a first-try success is perfect, every miss lowers the score', () {
-      expect(lessonScoreForMisses(0), 100);
-      expect(lessonScoreForMisses(1), 50);
-      expect(lessonScoreForMisses(2), 33);
-      expect(lessonScoreForMisses(3), 25);
+  group('lessonScore', () {
+    test('a lesson without a miss is perfect', () {
+      expect(lessonScore(questions: 3, misses: 0), 100);
+      expect(lessonScore(questions: 0, misses: 4), 100);
+    });
+
+    test('every miss lowers the score: right answers over answers given', () {
+      expect(lessonScore(questions: 3, misses: 1), 75);
+      expect(lessonScore(questions: 3, misses: 3), 50);
+      expect(lessonScore(questions: 2, misses: 2), 50);
+      expect(lessonScore(questions: 1, misses: 3), 25);
     });
 
     test('never leaves the 0-100 range the server accepts', () {
-      expect(lessonScoreForMisses(-5), 100);
+      expect(lessonScore(questions: 3, misses: -5), 100);
       for (var misses = 0; misses < 500; misses++) {
-        final score = lessonScoreForMisses(misses);
-        expect(score, inInclusiveRange(0, 100));
+        expect(lessonScore(questions: 3, misses: misses),
+            inInclusiveRange(0, 100));
       }
     });
 
     test('retrying until right is no longer a perfect lesson', () {
       // The server pays the "perfect" XP only for exactly 100.
-      expect(lessonScoreForMisses(1), isNot(100));
+      expect(lessonScore(questions: 3, misses: 1), isNot(100));
+      // Even many questions and a single miss stay below 100.
+      expect(lessonScore(questions: 40, misses: 1), isNot(100));
     });
   });
 

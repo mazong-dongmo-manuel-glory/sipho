@@ -278,7 +278,7 @@ Le chemin de leçons n'était qu'une liste de 3 leçons : le verrouillage n'exis
 - **Contenu** : unité 1 « Les bases du budget » (3 leçons), unité 2 « Épargner, un pas après l'autre » (3 leçons, nouvelles). L'unité 3 (CELI) reste annoncée « verrouillée ».
 
 ### À trancher / limites connues
-- Les leçons n'ont qu'une question chacune (l'écran de leçon n'a pas d'étapes multiples).
+- ~~Les leçons n'ont qu'une question chacune~~ — levé le 2026-11-15 : une leçon est une suite d'étapes (`InfoStep`, `QuizStep`, `TrueFalseStep`) + 3 points à retenir. Le serveur ne voit toujours que `{lessonId, score, durationSeconds}` : le contenu pédagogique reste côté app, la parité ne porte que sur les ids, l'ordre des unités et les bonus. Le score est `100 × questions / (questions + erreurs)`.
 - Le bonus est le même pour toutes les unités ; il peut devenir un champ par unité.
 - Ajouter une leçon à une unité déjà terminée par un joueur ne redonne pas de bonus (la leçon suivante s'ouvre seulement après elle).
 

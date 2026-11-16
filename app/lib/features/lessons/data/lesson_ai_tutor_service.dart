@@ -18,6 +18,7 @@ class LessonTutorReply {
 
 String buildLessonTutorPrompt({
   required CatalogLesson lesson,
+  String? question,
   required String selectedAnswer,
   required bool answeredCorrectly,
   required SpendSnapshot snapshot,
@@ -39,7 +40,7 @@ STRICT GUARDRAILS:
 - Keep it educational, encouraging, and concise (2 short sentences max per field).
 
 Lesson title: ${lesson.title(snapshot.locale)}
-Question: ${lesson.question(snapshot.locale)}
+Question: ${question ?? lesson.question(snapshot.locale)}
 Core explanation: ${lesson.explanation(snapshot.locale)}
 User's chosen answer: $selectedAnswer (${answeredCorrectly ? "correct" : "incorrect"})
 
@@ -97,14 +98,17 @@ class LessonAiTutorService {
         },
       );
 
+  /// [question] is the step the learner just answered (defaults to the lesson's first question).
   Future<LessonTutorReply> explainForUser({
     required CatalogLesson lesson,
+    String? question,
     required String selectedAnswer,
     required bool answeredCorrectly,
     required SpendSnapshot snapshot,
   }) async {
     final prompt = buildLessonTutorPrompt(
       lesson: lesson,
+      question: question,
       selectedAnswer: selectedAnswer,
       answeredCorrectly: answeredCorrectly,
       snapshot: snapshot,

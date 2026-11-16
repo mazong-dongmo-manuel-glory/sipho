@@ -913,7 +913,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chartsSummary => '12% less than last month 🎉';
 
   @override
-  String get learnTitle => 'Learn';
+  String get learnTitle => 'Learn, one small step at a time';
 
   @override
   String get learnYourTurn => 'YOUR TURN';
@@ -1007,6 +1007,90 @@ class AppLocalizationsEn extends AppLocalizations {
   String lessonDoneBravo(String name) {
     return 'Well done, $name!';
   }
+
+  @override
+  String get learnStart => 'START';
+
+  @override
+  String get learnReplay => 'REPLAY';
+
+  @override
+  String learnLessonMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String learnLessonSteps(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count steps',
+      one: '1 step',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String learnLessonReward(int xp) {
+    return 'up to +$xp XP';
+  }
+
+  @override
+  String get learnLessonObjective => 'What you will learn';
+
+  @override
+  String get learnLessonDoneHint => 'Already completed: replay to practice.';
+
+  @override
+  String get learnUnitGiftLabel => 'Unit-end gift';
+
+  @override
+  String get learnYouAreHere => 'You are here';
+
+  @override
+  String get lessonKickerRead => 'DISCOVER';
+
+  @override
+  String get lessonKickerQuestion => 'QUESTION';
+
+  @override
+  String get lessonKickerTrueFalse => 'TRUE OR FALSE?';
+
+  @override
+  String get lessonTrue => 'True';
+
+  @override
+  String get lessonFalse => 'False';
+
+  @override
+  String get lessonRecapTitle => 'To remember';
+
+  @override
+  String get lessonRecapFinish => 'FINISH';
+
+  @override
+  String get lessonLeaveTitle => 'Leave the lesson?';
+
+  @override
+  String get lessonLeaveBody => 'Your progress in this lesson will be lost.';
+
+  @override
+  String get lessonLeaveStay => 'STAY';
+
+  @override
+  String get lessonLeaveQuit => 'LEAVE';
+
+  @override
+  String get learnLockedHint =>
+      'Finish the previous lesson first to unlock this one.';
+
+  @override
+  String learnLessonPosition(int number, int total) {
+    return 'Lesson $number of $total';
+  }
+
+  @override
+  String get learnClose => 'CLOSE';
 
   @override
   String get lessonDoneBravoAnon => 'Well done!';

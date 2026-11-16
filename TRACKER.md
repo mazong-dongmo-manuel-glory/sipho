@@ -7,7 +7,7 @@
 | **Statut** | 🔄 MVP fonctionnel — finitions (sons, Rive, contenu, staging/prod) puis bêta |
 | **Démarrage** | 12 novembre 2026 |
 | **Dernière mise à jour** | 15 novembre 2026 |
-| **Santé du code** | `flutter analyze` propre · 263 tests Flutter · 110 tests Functions (hors émulateur) — mesuré le 15 novembre |
+| **Santé du code** | `flutter analyze` propre · 294 tests Flutter · 110 tests Functions (hors émulateur) — mesuré le 15 novembre |
 
 > Ce suivi a été remis à jour d'après l'état réel du code (il indiquait encore « Phase 1 à venir »).
 > Légende : ✅ fait · 🟡 partiel · ⬜ à faire · 🎨 dépend d'assets créatifs (hors code)
@@ -147,11 +147,12 @@
 ## 🔥 Prochaines actions
 
 1. **Sons** : écouter les 10 sons provisoires sur appareil (iOS silencieux, musique, vibrations) et signaler ceux à remplacer 🎨
+1b. ✅ **Leçons et parcours « à la Duolingo »** : chaque leçon est une suite d'étapes (à lire → question → à lire → vrai/faux → question) puis une page « À retenir » ; le parcours serpente avec nœuds 3D (étoile / jouer / cadenas), bulle « À toi de jouer », Sipho à côté, bannière d'unité (sous-titre, progression), cadeau de fin d'unité, fiche de leçon (objectif, durée, étapes, récompense), quêtes repliables
 1a. ✅ **Écran de fin de leçon** branché sur `completeLesson` (XP, précision, temps, bonus d'unité, niveau) ; précision réelle : une réponse juste après une erreur n'est plus une leçon « parfaite » (score 100 / 50 / 33…)
 1b. ✅ **Écran cadeau** : affiche la vraie récompense de `claimQuest` (graines, XP, niveau) ; plus de « gel de série » inventé
 1c. **Revenu mensuel à l'onboarding** (voir Phase 2) puis écarts de la relecture Figma : voir `FIGMA_TRACKER.md` (liste priorisée)
 2. **Quêtes** : vérifier sur appareil la carte « sous budget » et le bouton « Aucune dépense » ; lancer `npm run test:emulator` (Java requis) pour valider les nouveaux tests de quêtes
-3. **Contenu** : rédiger les leçons restantes (unité 3, plusieurs questions par leçon) (`content/lessons/`) et les packs CI / SN
+3. **Contenu** : rédiger les leçons restantes (unité 3, la structure à étapes est en place : 6 leçons de 5 étapes dans `lesson_catalog.dart`) (`content/lessons/`) et les packs CI / SN
 4. **Environnements** : créer `sipho-staging` / `sipho-prod`, `flutterfire configure`, schemes iOS
 5. **Multi-devises** : finaliser la saisie avec conversion (`fx/latest`)
 6. **Vérifier** quotas de scan, notifications sur appareil

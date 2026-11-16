@@ -9,6 +9,17 @@ et ce projet adhère au [Versionnage Sémantique](https://semver.org/lang/fr/).
 
 ## [Unreleased] - 2026-11-12
 
+### Ajouté — Leçons structurées et parcours « à la Duolingo »
+- **Leçons à étapes** : une leçon n'est plus une seule question mais 5 étapes (pages à lire avec points clés, questions à choix, vrai/faux) suivies d'une page « À retenir » (3 points). Six leçons réécrites en FR/EN, sans règle propre à un pays. Nouveau lecteur `LessonPlayerScreen` (barre de progression, vérifier / réessayer, tuteur IA sur la question en cours, confirmation avant de quitter, bouton retour système compris). Remplace `LessonQuizScreen`.
+- **Parcours** (onglet Apprendre) d'après la maquette 15 : nœuds ronds 3D qui serpentent, bulle « À toi de jouer » (animation coupée si les animations sont réduites), Sipho à côté de la leçon à jouer, bannière d'unité avec sous-titre et progression, cadeau de fin d'unité, défilement automatique vers la leçon en cours. Un appui ouvre une **fiche de leçon** (objectif, durée, nombre d'étapes, XP) ; une leçon verrouillée explique pourquoi ; une leçon finie se rejoue sans promesse de récompense.
+- Les quêtes passent dans `LearnQuestsSection`, repliée par défaut sauf si une récompense est à récupérer.
+- Dépôt `LessonCompletionRepository` (appel `completeLesson`, remplaçable dans les tests) ; en cas d'échec réseau l'apprenant reste sur la page finale avec « Réessayer ».
+- **Score** : `lessonScore(questions, misses)` remplace `lessonScoreForMisses` ; la précision tient compte du nombre de questions (3 questions, 1 erreur = 75 %).
+- Tests : contenu (une seule bonne réponse, FR/EN complets, réponses non devinables, parité `kLessonMaxXp` avec `xpConfig.ts`), session, lecteur (parcours complet, erreur puis réessai, échec d'enregistrement, quitter), parcours (états, fiche, verrou, rejeu, cadeau).
+
+### Corrigé
+- `learnTitle` était défini deux fois dans les fichiers ARB : le second (« Apprendre ») écrasait le titre de la maquette (« Apprendre, à petits pas »). Doublon supprimé (la navigation utilise `navLearn`).
+
 ### Modifié — Fin de leçon et cadeau branchés sur le serveur
 - Écran de fin de leçon (`/lesson-done`) : il affiche maintenant les vrais XP, graines, précision et temps de la leçon, le prénom réel (avant : « Amina », 30 XP, 100 %, 2:14 écrits en dur), le bonus d'unité et le passage de niveau. Le quiz y mène après une leçon validée ; sans résultat, la route renvoie vers l'onglet Apprendre.
 - Écran cadeau (`/chest`) : il affiche ce que `claimQuest` a réellement attribué (graines, XP, niveau). Avant : « +50 graines d'or » et « Gel de série ×1 » écrits en dur, alors que le serveur n'accorde pas de gel. Sans récompense connue, le cadeau s'ouvre sans annoncer de montant.

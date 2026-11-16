@@ -25,7 +25,7 @@ import 'package:sipho/features/leaderboard/presentation/leaderboard_screen.dart'
 import 'package:sipho/features/lessons/domain/lesson_result.dart';
 import 'package:sipho/features/lessons/presentation/learn_screen.dart';
 import 'package:sipho/features/lessons/presentation/lesson_done_screen.dart';
-import 'package:sipho/features/lessons/presentation/lesson_quiz_screen.dart';
+import 'package:sipho/features/lessons/presentation/lesson_player_screen.dart';
 import 'package:sipho/features/notifications/presentation/notification_settings_screen.dart';
 import 'package:sipho/features/onboarding/presentation/nest_ready_screen.dart';
 import 'package:sipho/features/onboarding/presentation/nest_screen.dart';
@@ -144,7 +144,7 @@ GoRouter router(RouterRef ref) {
       GoRoute(
         path: '/lesson/:id',
         builder: (_, state) =>
-            LessonQuizScreen(lessonId: state.pathParameters['id']!),
+            LessonPlayerScreen(lessonId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/lesson-done',

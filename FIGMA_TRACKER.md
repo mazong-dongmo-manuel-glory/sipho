@@ -35,8 +35,8 @@
 | 12 | 12 · Dépenses du mois (`2:28941`) | 🖌️ | ⬜ | 🟡 | `/expenses` ; ni étiquette « 📷 scanné » ni ligne en devise étrangère (« 25,00 € → 36,80 $ ») dans la liste |
 | 13 | 13 · Mon socle (`2:28943`) | 🖌️ | ⬜ | 💻 | Relu ; `/fixed-expenses` |
 | 14 | 14 · Graphiques et budgets (`2:28945`) | 🖌️ | ⬜ | 💻 | `/charts`, `/budget` |
-| 15 | 15 · Chemin de leçons (`2:28947`) | 🖌️ | ⬜ | 💻 | Relu ; l'app a 2 unités (la maquette en montre une + « Unité 3 : CELI » verrouillée) |
-| 16 | 16 · Quiz / Bonne réponse (`2:28949`, `2:28951`) | 🖌️ | ⬜ | 💻 | Une seule question par leçon dans l'app |
+| 15 | 15 · Chemin de leçons (`2:28947`) | 🖌️ | ⬜ | 💻 | Implémenté le 2026-11-15 : nœuds 3D qui serpentent, bulle « À toi de jouer », Sipho, bannières d'unité, fiche de leçon ; l'app a 2 unités + « Unité 3 : CELI » verrouillée |
+| 16 | 16 · Quiz / Bonne réponse (`2:28949`, `2:28951`) | 🖌️ | ⬜ | 💻 | Leçons à étapes (lire / question / vrai-faux / à retenir) depuis le 2026-11-15 ; la maquette ne montre que l'écran de question |
 | 17 | 17 · Leçon terminée (`2:28953`) | 🖌️ | ⬜ | 💻 | `/lesson-done` branché sur la réponse de `completeLesson` (XP, précision, temps, bonus) depuis le 2026-11-15 |
 | 18 | 18 · Série prolongée (`2:28955`) | 🖌️ | ⬜ | 💻 | `/streak` |
 | 19 | 19 · Cadeau fermé / ouvert (`2:28957`, `2:28959`) | 🖌️ | ⬜ | 💻 | `/chest` affiche la vraie récompense de `claimQuest` ; la maquette montre « Gel de série ×1 », que le serveur n'attribue pas : écart de contenu à trancher |

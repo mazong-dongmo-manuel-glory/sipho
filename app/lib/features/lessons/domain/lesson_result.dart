@@ -59,7 +59,7 @@ class LessonResult {
   /// True when the server had already paid this lesson (replay or repeated call).
   final bool alreadyCompleted;
 
-  /// 0–100, see [lessonScoreForMisses].
+  /// 0–100, see [lessonScore].
   final int accuracy;
   final int durationSeconds;
 
@@ -71,14 +71,15 @@ class LessonResult {
   bool get finishedUnit => unitCompleted != null;
 }
 
-/// Score sent to the server for a lesson answered correctly after [misses] wrong answers.
+/// Score sent to the server for a lesson with [questions] answered steps and [misses] wrong
+/// answers along the way.
 ///
-/// Accuracy is correct answers over answers given: a first-try success is a perfect 100 (the
-/// server pays the "perfect" XP), every miss lowers it. Retrying until right therefore no
-/// longer earns the perfect-lesson reward.
-int lessonScoreForMisses(int misses) {
-  if (misses <= 0) return 100;
-  return (100 / (misses + 1)).round();
+/// Accuracy is right answers over answers given: every question ends up right (the learner
+/// retries until it is), each miss adds a wrong answer. A lesson with no miss is a perfect 100
+/// (the server pays the "perfect" XP); retrying until right no longer earns it.
+int lessonScore({required int questions, required int misses}) {
+  if (questions <= 0 || misses <= 0) return 100;
+  return (100 * questions / (questions + misses)).round();
 }
 
 /// `m:ss`, e.g. 134 seconds → `2:14`.
