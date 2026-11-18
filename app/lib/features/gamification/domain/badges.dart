@@ -14,9 +14,11 @@ class BadgeDef {
 
 /// In display order. Ids match the server's `BADGE_RULES` (a test checks it).
 const List<BadgeDef> kBadges = [
+  BadgeDef('builder', Icons.home_work),
   BadgeDef('first_lesson', Icons.workspace_premium),
   BadgeDef('unit_1', Icons.school),
   BadgeDef('unit_2', Icons.savings),
+  BadgeDef('unit_3', Icons.shield),
   BadgeDef('streak_7', Icons.local_fire_department),
   BadgeDef('streak_30', Icons.whatshot),
   BadgeDef('level_5', Icons.trending_up),
@@ -27,12 +29,16 @@ const List<BadgeDef> kBadges = [
 /// Name of a badge. An id this app does not know (a newer server) is shown as is.
 String badgeTitle(AppLocalizations l10n, String id) {
   switch (id) {
+    case 'builder':
+      return l10n.badgeBuilder;
     case 'first_lesson':
       return l10n.badgeFirstLesson;
     case 'unit_1':
       return l10n.badgeUnit1;
     case 'unit_2':
       return l10n.badgeUnit2;
+    case 'unit_3':
+      return l10n.badgeUnit3;
     case 'streak_7':
       return l10n.badgeStreak7;
     case 'streak_30':
@@ -51,12 +57,16 @@ String badgeTitle(AppLocalizations l10n, String id) {
 /// How to earn a badge.
 String badgeHint(AppLocalizations l10n, String id) {
   switch (id) {
+    case 'builder':
+      return l10n.badgeBuilderHint;
     case 'first_lesson':
       return l10n.badgeFirstLessonHint;
     case 'unit_1':
       return l10n.badgeUnit1Hint;
     case 'unit_2':
       return l10n.badgeUnit2Hint;
+    case 'unit_3':
+      return l10n.badgeUnit3Hint;
     case 'streak_7':
       return l10n.badgeStreak7Hint;
     case 'streak_30':

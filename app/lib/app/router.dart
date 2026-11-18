@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sipho/core/widgets/bottom_nav.dart';
 import 'package:sipho/features/auth/presentation/auth_provider.dart';
 import 'package:sipho/features/auth/presentation/login_screen.dart';
@@ -37,10 +37,7 @@ import 'package:sipho/features/profile/presentation/shop_screen.dart';
 import 'package:sipho/features/recap/presentation/monthly_recap_screen.dart';
 import 'package:sipho/features/settings/presentation/settings_screen.dart';
 
-part 'router.g.dart';
-
-@riverpod
-GoRouter router(RouterRef ref) {
+final routerProvider = Provider<GoRouter>((ref) {
   // Recreating GoRouter resets the stack. Auth and profile updates only
   // re-run the redirect, so the name and country step stay on screen.
   final refresh = ValueNotifier<int>(0);
@@ -177,4 +174,4 @@ GoRouter router(RouterRef ref) {
       ),
     ],
   );
-}
+});

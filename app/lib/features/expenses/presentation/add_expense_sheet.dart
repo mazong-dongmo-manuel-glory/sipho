@@ -20,6 +20,7 @@ import 'package:sipho/features/expenses/data/transaction_repository.dart';
 import 'package:sipho/features/expenses/domain/expense_category.dart';
 import 'package:sipho/features/expenses/domain/transaction.dart';
 import 'package:sipho/features/expenses/presentation/expense_category_label.dart';
+import 'package:sipho/features/finance/data/fx_rates_repository.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
 
 class AddExpenseSheet extends ConsumerStatefulWidget {
@@ -33,6 +34,9 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
   String _digits = '';
   int _selected = 6;
   bool _saving = false;
+  String? _txCurrency;
+
+  static const _currencies = ['CAD', 'USD', 'EUR', 'XAF', 'XOF', 'GBP'];
 
   void _tap(String key) {
     setState(() {
@@ -57,8 +61,24 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
     final uid = ref.read(authStateProvider).valueOrNull?.uid;
     if (cents <= 0 || uid == null || _saving) return;
 
-    final currency =
+    final mainCurrency =
         ref.read(userFinanceProvider).valueOrNull?.currency ?? 'CAD';
+    final currency = _txCurrency ?? mainCurrency;
+    final fx = ref.read(fxRatesProvider).valueOrNull;
+    final rate = fx?.rateTo(from: currency, to: mainCurrency);
+    final mainCents = fx?.convertCents(
+          amountCents: cents,
+          from: currency,
+          to: mainCurrency,
+        ) ??
+        (currency == mainCurrency ? cents : null);
+    if (mainCents == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.expenseFxUnavailable)),
+      );
+      return;
+    }
     final category = kQuickExpenseCategories[_selected];
     setState(() => _saving = true);
     try {
@@ -68,7 +88,8 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
               id: '',
               amountCents: cents,
               currency: currency,
-              amountMainCents: cents,
+              amountMainCents: mainCents,
+              fxRate: rate,
               category: category.id,
               date: LocalDay.now().isoDate,
               source: 'manual',
@@ -109,8 +130,9 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     const categories = kQuickExpenseCategories;
-    final currency =
+    final mainCurrency =
         ref.watch(userFinanceProvider).valueOrNull?.currency ?? 'CAD';
+    final currency = _txCurrency ?? mainCurrency;
     final shown = _digits.isEmpty ? '0' : _digits;
     final symbol = MoneyFormatter.currencySymbol(currency);
     final cents = AmountInput.parseCents(_digits);
@@ -204,6 +226,44 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                       ],
                     ),
                     const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Text(
+                          l10n.expenseCurrencyLabel,
+                          style: const TextStyle(
+                            fontFamily: 'Nunito',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        DropdownButton<String>(
+                          value: currency,
+                          underline: const SizedBox.shrink(),
+                          items: [
+                            for (final code in {
+                              mainCurrency,
+                              ..._currencies,
+                            })
+                              DropdownMenuItem(
+                                value: code,
+                                child: Text(
+                                  code,
+                                  style: const TextStyle(
+                                    fontFamily: 'Nunito',
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                          ],
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setState(() => _txCurrency = value);
+                          },
+                        ),
+                      ],
+                    ),
                     Text(
                       '$shown $symbol',
                       style: const TextStyle(

@@ -9,6 +9,7 @@ export { markFixedPaid } from './gamification/markFixedPaid';
 export { claimQuest } from './gamification/claimQuest';
 export { refreshDailyQuests } from './gamification/refreshDailyQuests';
 export { confirmNoSpend } from './gamification/confirmNoSpend';
+export { repairStreak } from './gamification/repairStreak';
 export { dailyRollover } from './gamification/dailyRollover';
 export { joinLeague, onGameXpChange, leagueWeekly } from './gamification/league';
 export { onGameBadgeCheck } from './gamification/badges';

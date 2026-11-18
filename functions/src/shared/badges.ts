@@ -16,6 +16,8 @@ export interface BadgeInput {
   bestStreak: number;
   leagueId: string;
   completedLessonIds: ReadonlySet<string>;
+  /** Nest finished (onboarding). Awards the "builder" badge. */
+  onboardingDone?: boolean;
 }
 
 interface BadgeRule {
@@ -30,6 +32,7 @@ const UNIT_BADGES: BadgeRule[] = LESSON_UNITS.map((unit) => ({
 
 /** In display order. */
 export const BADGE_RULES: readonly BadgeRule[] = [
+  { id: "builder", earned: (i) => i.onboardingDone === true },
   { id: "first_lesson", earned: (i) => i.completedLessonIds.size >= 1 },
   ...UNIT_BADGES,
   { id: "streak_7", earned: (i) => i.bestStreak >= 7 },

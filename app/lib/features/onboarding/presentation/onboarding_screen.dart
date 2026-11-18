@@ -5,11 +5,14 @@ import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_radius.dart';
 import 'package:sipho/app/theme/app_spacing.dart';
+import 'package:sipho/core/money/amount_input.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
 import 'package:sipho/features/auth/data/auth_repository.dart';
 import 'package:sipho/features/onboarding/presentation/onboarding_country_step.dart';
 import 'package:sipho/features/onboarding/presentation/onboarding_goal_step.dart';
+import 'package:sipho/features/onboarding/presentation/onboarding_income_step.dart';
+import 'package:sipho/features/onboarding/presentation/onboarding_life_stage_step.dart';
 import 'package:sipho/features/onboarding/presentation/onboarding_name_step.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -26,18 +29,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   String _currency = 'CAD';
   String _region = 'Québec';
   String _goal = 'save_for_project';
+  String _lifeStage = 'first_job';
+  String _incomeDigits = '';
   bool _saving = false;
 
-  static const _totalSteps = 3;
+  /// name → country → life stage → goal → income (README §3.1).
+  static const _totalSteps = 5;
 
-  Future<void> _nextStep() async {
-    if (_currentStep == 0 && _name.trim().isEmpty) return;
-    if (_currentStep < _totalSteps - 1) {
-      setState(() => _currentStep++);
-      return;
-    }
+  Future<void> _finish({required bool skipIncome}) async {
     if (_saving) return;
     setState(() => _saving = true);
+    final incomeCents =
+        skipIncome ? 0 : AmountInput.parseCents(_incomeDigits);
     try {
       await ref.read(authRepositoryProvider).saveOnboardingProfile(
             displayName: _name.trim(),
@@ -45,6 +48,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             currency: _currency,
             region: _region,
             goal: _goal,
+            lifeStage: _lifeStage,
+            monthlyIncomeCents: incomeCents,
           );
       if (!mounted) return;
       context.go('/onboarding/nest', extra: _name.trim());
@@ -59,6 +64,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
   }
 
+  Future<void> _nextStep() async {
+    if (_currentStep == 0 && _name.trim().isEmpty) return;
+    if (_currentStep < _totalSteps - 1) {
+      setState(() => _currentStep++);
+      return;
+    }
+    await _finish(skipIncome: false);
+  }
+
   void _back() {
     if (_currentStep == 0) return;
     setState(() => _currentStep--);
@@ -70,14 +84,19 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final heading = switch (_currentStep) {
       0 => l10n.onboardingNameHeading,
       1 => l10n.onboardingCountryHeading,
-      _ => l10n.onboardingGoalHeading,
+      2 => l10n.onboardingLifeHeading,
+      3 => l10n.onboardingGoalHeading,
+      _ => l10n.onboardingIncomeHeading,
     };
     final lead = switch (_currentStep) {
       0 => l10n.onboardingNameLead,
       1 => l10n.onboardingCountryLead,
-      _ => l10n.onboardingGoalLead,
+      2 => l10n.onboardingLifeLead,
+      3 => l10n.onboardingGoalLead,
+      _ => l10n.onboardingIncomeLead,
     };
-    final button = _currentStep == 2
+    final onIncome = _currentStep == 4;
+    final button = onIncome
         ? l10n.onboardingBuildNest
         : l10n.continueBtn.toUpperCase();
 
@@ -121,9 +140,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         });
                       },
                     ),
+                    OnboardingLifeStageStep(
+                      selected: _lifeStage,
+                      onSelected: (stage) =>
+                          setState(() => _lifeStage = stage),
+                    ),
                     OnboardingGoalStep(
                       selectedGoal: _goal,
                       onGoalSelected: (goal) => setState(() => _goal = goal),
+                    ),
+                    OnboardingIncomeStep(
+                      currency: _currency,
+                      digits: _incomeDigits,
+                      onDigitsChanged: (value) =>
+                          setState(() => _incomeDigits = value),
                     ),
                   ],
                 ),
@@ -138,7 +168,24 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 height: 52,
                 borderRadius: figmaButtonRadius,
               ),
-              const SizedBox(height: 28),
+              if (onIncome) ...[
+                const SizedBox(height: 10),
+                TextButton(
+                  onPressed: _saving
+                      ? null
+                      : () => _finish(skipIncome: true),
+                  child: Text(
+                    l10n.onboardingIncomeSkip,
+                    style: const TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
             ],
           ),
         ),

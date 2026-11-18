@@ -1,0 +1,6 @@
+targets:
+  $default:
+    builders:
+      # Temporary: riverpod_generator crashes on SDK 3.13 / analyzer 3.9 mismatch.
+      riverpod_generator:riverpod_generator:
+        enabled: false

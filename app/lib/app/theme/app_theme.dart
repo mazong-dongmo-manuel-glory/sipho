@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_radius.dart';
 import 'package:sipho/app/theme/app_text_styles.dart';
@@ -10,6 +11,26 @@ class AppTheme {
 
   static ThemeData get light => _buildTheme(Brightness.light);
   static ThemeData get dark => _buildTheme(Brightness.dark);
+
+  /// Status / nav bar overlay. Most Sipho screens paint the cream brand surface
+  /// even when the OS is in dark mode, so status icons stay dark for contrast.
+  static SystemUiOverlayStyle overlayFor(Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
+    return SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      // iOS: brightness of the *background* behind the status bar.
+      statusBarBrightness: Brightness.light,
+      // Android: brightness of the status icons themselves.
+      statusBarIconBrightness: Brightness.dark,
+      systemStatusBarContrastEnforced: false,
+      systemNavigationBarColor:
+          isDark ? AppColors.nightNav : AppColors.surface,
+      systemNavigationBarIconBrightness:
+          isDark ? Brightness.light : Brightness.dark,
+      systemNavigationBarDividerColor: Colors.transparent,
+      systemNavigationBarContrastEnforced: false,
+    );
+  }
 
   static ThemeData _buildTheme(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
@@ -49,6 +70,7 @@ class AppTheme {
             isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
         elevation: 0,
         scrolledUnderElevation: 0,
+        systemOverlayStyle: overlayFor(brightness),
         titleTextStyle: AppTextStyles.h2.copyWith(
           color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
         ),
@@ -136,6 +158,20 @@ class AppTheme {
         color: AppColors.border,
         thickness: 1,
         space: 1,
+      ),
+
+      // ── Dialog ────────────────────────────────────────────────────────────
+      // textTheme hardcodes light ink; without this, dark AlertDialogs get
+      // dark-on-dark title/body (e.g. "Leave the lesson?").
+      dialogTheme: DialogThemeData(
+        backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: AppTextStyles.h3.copyWith(
+          color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
+        ),
+        contentTextStyle: AppTextStyles.body.copyWith(
+          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+        ),
       ),
 
       // ── Text ──────────────────────────────────────────────────────────────

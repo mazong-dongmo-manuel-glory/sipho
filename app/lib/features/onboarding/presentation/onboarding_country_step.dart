@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
+import 'package:sipho/features/onboarding/data/location_service.dart';
 
-class OnboardingCountryStep extends StatelessWidget {
+class OnboardingCountryStep extends StatefulWidget {
   const OnboardingCountryStep({
     super.key,
     required this.selectedCountry,
@@ -28,18 +29,50 @@ class OnboardingCountryStep extends StatelessWidget {
   ];
 
   @override
+  State<OnboardingCountryStep> createState() => _OnboardingCountryStepState();
+}
+
+class _OnboardingCountryStepState extends State<OnboardingCountryStep> {
+  bool _locating = false;
+
+  Future<void> _useLocation() async {
+    if (_locating) return;
+    final l10n = AppLocalizations.of(context);
+    setState(() => _locating = true);
+    final labels = await LocationService().resolveApproximateLocation();
+    if (!mounted) return;
+    setState(() => _locating = false);
+    if (labels == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.onboardingLocationDenied)),
+      );
+      return;
+    }
+    widget.onCountrySelected(
+      labels.countryCode,
+      labels.currency,
+      labels.region,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final selected = countries.firstWhere((c) => c.$1 == selectedCountry);
+    final known = OnboardingCountryStep.countries
+        .where((c) => c.$1 == widget.selectedCountry);
+    final displayName = known.isEmpty
+        ? widget.selectedCountry
+        : known.first.$2;
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        for (final country in countries) ...[
+        for (final country in OnboardingCountryStep.countries) ...[
           _CountryRow(
             flag: country.$3,
             name: country.$2,
-            selected: country.$1 == selectedCountry,
-            onTap: () => onCountrySelected(country.$1, country.$4, country.$5),
+            selected: country.$1 == widget.selectedCountry,
+            onTap: () =>
+                widget.onCountrySelected(country.$1, country.$4, country.$5),
           ),
           const SizedBox(height: 7),
         ],
@@ -54,22 +87,55 @@ class OnboardingCountryStep extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Text(region, style: _field),
-              const Spacer(),
-              Text('\$ $currency', style: _field),
+              Expanded(
+                child: Text(
+                  widget.region,
+                  overflow: TextOverflow.ellipsis,
+                  style: _field,
+                ),
+              ),
+              Text('\$ ${widget.currency}', style: _field),
             ],
           ),
         ),
         const SizedBox(height: 18),
-        Text(
-          '⌖  ${l10n.onboardingUseLocation}',
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontFamily: 'Nunito',
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-            height: 1.2,
-            color: AppColors.primary,
+        InkWell(
+          onTap: _locating ? null : _useLocation,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: _locating
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        l10n.onboardingLocating,
+                        style: const TextStyle(
+                          fontFamily: 'Nunito',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  )
+                : Text(
+                    '⌖  ${l10n.onboardingUseLocation}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      height: 1.2,
+                      color: AppColors.primary,
+                    ),
+                  ),
           ),
         ),
         const SizedBox(height: 16),
@@ -79,7 +145,7 @@ class OnboardingCountryStep extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                l10n.onboardingNestRoot(selected.$2),
+                l10n.onboardingNestRoot(displayName),
                 style: const TextStyle(
                   fontFamily: 'Nunito',
                   fontSize: 13,

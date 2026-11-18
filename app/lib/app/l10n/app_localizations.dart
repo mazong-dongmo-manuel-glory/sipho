@@ -218,6 +218,12 @@ abstract class AppLocalizations {
   /// **'By continuing, you accept our terms\nand our privacy policy.'**
   String get welcomeLegal;
 
+  /// Settings row that opens the public privacy policy URL
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy policy'**
+  String get settingsPrivacyPolicy;
+
   /// No description provided for @logoutBtn.
   ///
   /// In en, this message translates to:
@@ -331,6 +337,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'We\'ll get there, one small step at a time!'**
   String get onboardingGoalCheer;
+
+  /// No description provided for @onboardingLifeHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Where are you in life?'**
+  String get onboardingLifeHeading;
+
+  /// No description provided for @onboardingLifeLead.
+  ///
+  /// In en, this message translates to:
+  /// **'We adapt tips and lessons to your stage.'**
+  String get onboardingLifeLead;
+
+  /// No description provided for @onboardingLifeStudent.
+  ///
+  /// In en, this message translates to:
+  /// **'Student'**
+  String get onboardingLifeStudent;
+
+  /// No description provided for @onboardingLifeFirstJob.
+  ///
+  /// In en, this message translates to:
+  /// **'First job'**
+  String get onboardingLifeFirstJob;
+
+  /// No description provided for @onboardingLifeFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Family life'**
+  String get onboardingLifeFamily;
+
+  /// No description provided for @onboardingLifePreRetirement.
+  ///
+  /// In en, this message translates to:
+  /// **'Pre-retirement'**
+  String get onboardingLifePreRetirement;
+
+  /// No description provided for @onboardingLifeRetired.
+  ///
+  /// In en, this message translates to:
+  /// **'Retired'**
+  String get onboardingLifeRetired;
+
+  /// No description provided for @onboardingIncomeHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Your monthly income'**
+  String get onboardingIncomeHeading;
+
+  /// No description provided for @onboardingIncomeLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional — unlocks “left to spend” and under-budget quests.'**
+  String get onboardingIncomeLead;
+
+  /// No description provided for @onboardingIncomeBubble.
+  ///
+  /// In en, this message translates to:
+  /// **'A rough number is enough. You can refine it later in your profile.'**
+  String get onboardingIncomeBubble;
+
+  /// No description provided for @onboardingIncomeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Net income per month · you can skip'**
+  String get onboardingIncomeHint;
+
+  /// No description provided for @onboardingIncomeSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'LL SET THIS LATER'**
+  String get onboardingIncomeSkip;
 
   /// No description provided for @onboardingBuildNest.
   ///
@@ -2517,6 +2595,30 @@ abstract class AppLocalizations {
   /// **'Move up to the Silver league.'**
   String get badgeLeagueSilverHint;
 
+  /// No description provided for @badgeBuilder.
+  ///
+  /// In en, this message translates to:
+  /// **'Nest builder'**
+  String get badgeBuilder;
+
+  /// No description provided for @badgeBuilderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish building your nest (onboarding).'**
+  String get badgeBuilderHint;
+
+  /// No description provided for @badgeUnit3.
+  ///
+  /// In en, this message translates to:
+  /// **'Money-smart'**
+  String get badgeUnit3;
+
+  /// No description provided for @badgeUnit3Hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish unit 3.'**
+  String get badgeUnit3Hint;
+
   /// No description provided for @badgeEarnedLabel.
   ///
   /// In en, this message translates to:
@@ -2528,6 +2630,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'To earn'**
   String get badgeLockedLabel;
+
+  /// No description provided for @learnQuestCompleteLesson.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete a lesson'**
+  String get learnQuestCompleteLesson;
+
+  /// No description provided for @learnQuestCompleteLessonSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer the quiz right to unlock the next step'**
+  String get learnQuestCompleteLessonSub;
+
+  /// No description provided for @learnQuestFinishUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish the unit ({count} lessons)'**
+  String learnQuestFinishUnit(int count);
+
+  /// No description provided for @learnQuestFinishUnitSub.
+  ///
+  /// In en, this message translates to:
+  /// **'{unitTitle} · {bonusXp} XP bonus at the end'**
+  String learnQuestFinishUnitSub(String unitTitle, int bonusXp);
+
+  /// No description provided for @learnQuestBuildFoundation.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up your monthly base'**
+  String get learnQuestBuildFoundation;
+
+  /// No description provided for @learnQuestBuildFoundationSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Set your income and at least 1 fixed bill'**
+  String get learnQuestBuildFoundationSub;
+
+  /// No description provided for @learnQuestTrackThree.
+  ///
+  /// In en, this message translates to:
+  /// **'Log 3 expenses this month'**
+  String get learnQuestTrackThree;
+
+  /// No description provided for @learnQuestTrackThreeSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Put the spending tracking lesson into practice'**
+  String get learnQuestTrackThreeSub;
+
+  /// No description provided for @learnQuestLessonChallenge.
+  ///
+  /// In en, this message translates to:
+  /// **'Lesson challenge'**
+  String get learnQuestLessonChallenge;
+
+  /// No description provided for @learnQuestTrackingChallenge.
+  ///
+  /// In en, this message translates to:
+  /// **'Tracking challenge'**
+  String get learnQuestTrackingChallenge;
+
+  /// No description provided for @learnQuestPersonalized.
+  ///
+  /// In en, this message translates to:
+  /// **'Personalized Sipho challenge'**
+  String get learnQuestPersonalized;
+
+  /// No description provided for @onboardingLocating.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding your location…'**
+  String get onboardingLocating;
+
+  /// No description provided for @onboardingLocationDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission denied. Pick your country instead.'**
+  String get onboardingLocationDenied;
+
+  /// No description provided for @onboardingLocationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t read your location. Pick your country instead.'**
+  String get onboardingLocationError;
+
+  /// No description provided for @streakMilestonesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak milestones'**
+  String get streakMilestonesTitle;
+
+  /// No description provided for @streakMilestoneReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Reached!'**
+  String get streakMilestoneReached;
+
+  /// No description provided for @streakRepairTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Repair your streak?'**
+  String get streakRepairTitle;
+
+  /// No description provided for @streakRepairBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You missed yesterday. Repair within 24 h using 1 freeze.'**
+  String get streakRepairBody;
+
+  /// No description provided for @streakRepairCta.
+  ///
+  /// In en, this message translates to:
+  /// **'REPAIR STREAK'**
+  String get streakRepairCta;
+
+  /// No description provided for @streakRepairDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak repaired!'**
+  String get streakRepairDone;
+
+  /// No description provided for @streakRepairError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t repair the streak.'**
+  String get streakRepairError;
+
+  /// No description provided for @streakRepairNoFreeze.
+  ///
+  /// In en, this message translates to:
+  /// **'You need a streak freeze (shop).'**
+  String get streakRepairNoFreeze;
+
+  /// No description provided for @expenseCurrencyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get expenseCurrencyLabel;
+
+  /// No description provided for @expenseFxUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Exchange rate unavailable for that currency. Try again later or use your main currency.'**
+  String get expenseFxUnavailable;
+
+  /// No description provided for @scanQuotaLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} scans left today'**
+  String scanQuotaLeft(int count);
 
   /// No description provided for @profileGoals.
   ///

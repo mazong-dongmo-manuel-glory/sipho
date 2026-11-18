@@ -159,7 +159,33 @@ def gift_sparkles():
     return composition('gift_sparkles', 240, 240, frames, layers)
 
 
+def level_up():
+    """Level up: a gold star pops with an overshoot while a mint ring expands (one shot)."""
+    frames = 54
+    star_scale = anim([
+        (0, [0, 0, 100]), (12, [118, 118, 100]), (20, [94, 94, 100]), (28, [100, 100, 100])])
+    star_rot = anim([(0, -25), (14, 8), (24, -3), (30, 0)])
+    layers = [
+        layer(1, 'Ring', [group([ellipse(0, 0, 70, 70), stroke(MINT, 5)], 'Ring')],
+              ks([90, 90], anim([(0, [30, 30, 100]), (28, [160, 160, 100])]), 0,
+                 anim([(0, 90), (28, 0)])), frames),
+        layer(2, 'Spark C', [group([star(8, 2.5), fill(GOLD_LIGHT)])],
+              ks([148, 48], anim([(18, [0, 0, 100]), (28, [110, 110, 100]), (40, [0, 0, 100])]),
+                 anim([(18, 0), (40, 100)])), frames),
+        layer(3, 'Spark B', [group([star(7, 2), fill(MINT)])],
+              ks([34, 56], anim([(14, [0, 0, 100]), (24, [100, 100, 100]), (36, [0, 0, 100])]),
+                 anim([(14, 0), (36, -90)])), frames),
+        layer(4, 'Spark A', [group([star(9, 3), fill(GOLD)])],
+              ks([142, 132], anim([(10, [0, 0, 100]), (20, [110, 110, 100]), (34, [0, 0, 100])]),
+                 anim([(10, 0), (34, 80)])), frames),
+        layer(5, 'Star', [group([star(28, 12, points=5), fill(GOLD)])],
+              ks([90, 90], star_scale, star_rot), frames),
+    ]
+    return composition('level_up', 180, 180, frames, layers)
+
+
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)
     write('trophy_shine.json', trophy_shine())
     write('gift_sparkles.json', gift_sparkles())
+    write('level_up.json', level_up())

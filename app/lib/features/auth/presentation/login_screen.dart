@@ -6,8 +6,10 @@ import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_radius.dart';
 import 'package:sipho/app/theme/app_spacing.dart';
 import 'package:sipho/app/theme/app_text_styles.dart';
+import 'package:sipho/core/legal/sipho_legal.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
 import 'package:sipho/features/auth/presentation/auth_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Gaps from the 393×852 Figma frame, below the system status bar.
 const _wordmarkTopGap = 19.0;
@@ -132,10 +134,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           borderRadius: buttonRadius,
                         ),
                         const SizedBox(height: _buttonsToLegal),
-                        Text(
-                          l10n.welcomeLegal,
-                          style: AppTextStyles.welcomeLegal,
-                          textAlign: TextAlign.center,
+                        GestureDetector(
+                          onTap: () {
+                            launchUrl(
+                              Uri.parse(kSiphoPrivacyPolicyUrl),
+                              mode: LaunchMode.externalApplication,
+                            );
+                          },
+                          child: Text(
+                            l10n.welcomeLegal,
+                            style: AppTextStyles.welcomeLegal.copyWith(
+                              decoration: TextDecoration.underline,
+                              decorationColor: AppColors.primary,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                         const SizedBox(height: _legalBottomGap),
                       ],

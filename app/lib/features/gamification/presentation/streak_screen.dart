@@ -10,7 +10,9 @@ import 'package:sipho/core/animations/sipho_lotties.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
 import 'package:sipho/features/gamification/data/game_state_repository.dart';
+import 'package:sipho/features/gamification/domain/streak_milestones.dart';
 import 'package:sipho/features/gamification/domain/streak_week.dart';
+import 'package:sipho/features/gamification/presentation/streak_repair_controller.dart';
 
 class StreakScreen extends ConsumerWidget {
   const StreakScreen({super.key});
@@ -28,9 +30,17 @@ class StreakScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final game = ref.watch(gameStateStreamProvider).valueOrNull;
-    final streakDays = game?.streak.current ?? 0;
+    final streak = game?.streak;
+    final streakDays = streak?.current ?? 0;
+    final best = streak?.best ?? streakDays;
+    final repairing = ref.watch(streakRepairControllerProvider);
+    final offerRepair = canOfferStreakRepair(
+      brokenAt: streak?.brokenAt,
+      brokenCurrent: streak?.brokenCurrent ?? 0,
+      freezes: streak?.freezes ?? 0,
+    );
     final marks = streakWeekMarks(
-      lastActiveDay: game?.streak.lastActiveDay,
+      lastActiveDay: streak?.lastActiveDay,
       current: streakDays,
       today: DateTime.now(),
     );
@@ -43,7 +53,7 @@ class StreakScreen extends ConsumerWidget {
               const EdgeInsets.symmetric(horizontal: AppSpacing.pagePadding),
           child: Column(
             children: [
-              const SizedBox(height: 36),
+              const SizedBox(height: 24),
               Text(
                 l10n.streakKicker,
                 style: const TextStyle(
@@ -53,17 +63,17 @@ class StreakScreen extends ConsumerWidget {
                   color: AppColors.terracotta,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               const LottieWidget(
                 assetPath: SiphoLotties.streakFire,
-                width: 190,
-                height: 180,
+                width: 140,
+                height: 130,
               ),
               Text(
                 '$streakDays',
                 style: const TextStyle(
                   fontFamily: 'Nunito',
-                  fontSize: 76,
+                  fontSize: 64,
                   fontWeight: FontWeight.w900,
                   height: 1,
                   color: AppColors.terracotta,
@@ -73,14 +83,14 @@ class StreakScreen extends ConsumerWidget {
                 l10n.streakDays,
                 style: const TextStyle(
                   fontFamily: 'Nunito',
-                  fontSize: 28,
+                  fontSize: 24,
                   fontWeight: FontWeight.w900,
                   color: AppColors.primaryDark,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Container(
-                height: 82,
+                height: 72,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
@@ -104,8 +114,8 @@ class StreakScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 6),
                             Container(
-                              width: 29,
-                              height: 29,
+                              width: 26,
+                              height: 26,
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
                                 color: marks[i]
@@ -118,7 +128,7 @@ class StreakScreen extends ConsumerWidget {
                                       '✓',
                                       style: TextStyle(
                                         fontFamily: 'Nunito',
-                                        fontSize: 15,
+                                        fontSize: 14,
                                         fontWeight: FontWeight.w900,
                                         color: AppColors.flameCheck,
                                       ),
@@ -131,17 +141,127 @@ class StreakScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              if (offerRepair) ...[
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.terracotta),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        l10n.streakRepairTitle,
+                        style: const TextStyle(
+                          fontFamily: 'Nunito',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.primaryDark,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        l10n.streakRepairBody,
+                        style: const TextStyle(
+                          fontFamily: 'Nunito',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SiphoButton3D(
+                        label: l10n.streakRepairCta,
+                        isLoading: repairing,
+                        onPressed: () async {
+                          final ok = await ref
+                              .read(streakRepairControllerProvider.notifier)
+                              .repair();
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                ok
+                                    ? l10n.streakRepairDone
+                                    : (streak?.freezes ?? 0) < 1
+                                        ? l10n.streakRepairNoFreeze
+                                        : l10n.streakRepairError,
+                              ),
+                            ),
+                          );
+                        },
+                        color: AppColors.terracotta,
+                        shadowColor: AppColors.primaryDark,
+                        height: 44,
+                        borderRadius: figmaButtonRadius,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 14),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  l10n.streakMilestonesTitle,
+                  style: const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primaryDark,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 44,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: kStreakMilestones.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final m = kStreakMilestones[index];
+                    final reached = streakMilestoneReached(best, m);
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: reached ? AppColors.mint : AppColors.surface,
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: reached ? AppColors.primary : AppColors.border,
+                        ),
+                      ),
+                      child: Text(
+                        reached ? '$m · ${l10n.streakMilestoneReached}' : '$m',
+                        style: TextStyle(
+                          fontFamily: 'Nunito',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: reached
+                              ? AppColors.primaryDark
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const Spacer(),
               Row(
                 children: [
-                  const SiphoArt.proud(frame: 87),
+                  const SiphoArt.proud(frame: 72),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       l10n.streakThanks,
                       style: const TextStyle(
                         fontFamily: 'Nunito',
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.w800,
                         color: AppColors.primaryDark,
                       ),
@@ -149,7 +269,7 @@ class StreakScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              const Spacer(),
+              const SizedBox(height: 12),
               SiphoButton3D(
                 label: l10n.continueBtn.toUpperCase(),
                 onPressed: () => context.go('/learn'),
@@ -158,7 +278,7 @@ class StreakScreen extends ConsumerWidget {
                 height: 52,
                 borderRadius: figmaButtonRadius,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
             ],
           ),
         ),

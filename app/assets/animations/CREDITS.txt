@@ -1,0 +1,21 @@
+Sipho Lottie animations
+=======================
+
+Hand-built (tool/lottie/generate.py) — Sipho brand colours
+----------------------------------------------------------
+trophy_shine.json, gift_sparkles.json, level_up.json
+confetti_celebration.json, xp_coins.json, streak_fire.json, scan_laser.json
+(older shape-layer placeholders; replace in place for a designer pass)
+
+IconScout free downloads (Digital License — attribute the author)
+----------------------------------------------------------------
+quest_complete.json
+  Source: Free Success Animation by Fantastdesigner
+  https://iconscout.com/free-lottie-animation/free-success-animation_4503216
+
+podium.json
+  Source: Free Basic Trophy Animation by Eduard Angelo
+  https://iconscout.com/free-lottie-animation/free-basic-trophy-animation_3350292
+
+Attribution (required by IconScout Digital License): show a credit near
+the content that uses these assets (e.g. this file + in-app About if shown).

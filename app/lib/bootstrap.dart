@@ -44,6 +44,8 @@ Future<void> bootstrap(FirebaseOptions options,
       try {
         await FirebaseRemoteConfig.instance.setDefaults(const <String, dynamic>{
           'ai_model': defaultAiModel,
+          // Mirrors SCAN_QUOTA_PER_DAY on parseReceipt (server remains the source of truth).
+          'scan_quota_per_day': 5,
         });
         unawaited(
           FirebaseRemoteConfig.instance

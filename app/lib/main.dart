@@ -5,10 +5,9 @@
 //   flutter run --flavor dev
 //   flutter run --flavor staging
 //   flutter build appbundle --flavor prod
-// Without a flavor (or with an unknown one) a RELEASE build is PRODUCTION (sipho-prod). A DEBUG
-// build without a flavor uses DEV instead: iOS has a single Xcode scheme and no flavors, so a plain
-// `flutter run` there must never point a developer at production. `main_dev.dart` and
-// `main_staging.dart` remain as explicit per-environment entry points (used by CI).
+// Without a flavor (or with an unknown one) a RELEASE build uses the `prod` entry and a DEBUG
+// build uses `dev`. Both currently share the same Firebase project (`sipho-f5a01`).
+// `main_dev.dart` and `main_staging.dart` remain as explicit entry points (used by CI).
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/services.dart' show appFlavor;
 import 'package:sipho/bootstrap.dart';

@@ -1,0 +1,8 @@
+# Upload keystore certificate fingerprints (safe to share with Play / Firebase Console).
+# Keystore file and passwords stay in upload-keystore.jks + key.properties (gitignored).
+alias=upload
+SHA1=FC:2C:5A:0E:04:CD:76:83:69:91:31:4E:CC:F2:E6:87:F9:48:E4:EB
+SHA256=F7:A9:AE:29:74:96:1F:E6:25:81:D9:05:55:0C:14:DA:F8:A9:FB:8D:BB:78:37:30:68:16:B1:6D:72:36:99:77
+AAB=app/build/sipho-0.1.0+1-prod.aab
+package=com.cargonomade.sipho
+firebase=sipho-f5a01

@@ -1,12 +1,10 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sipho/core/firebase/firebase_providers.dart';
 
-part 'analytics_service.g.dart';
-
-@riverpod
-AnalyticsService analyticsService(AnalyticsServiceRef ref) =>
-    AnalyticsService(ref.watch(firebaseAnalyticsProvider));
+final analyticsServiceProvider = Provider<AnalyticsService>(
+  (ref) => AnalyticsService(ref.watch(firebaseAnalyticsProvider)),
+);
 
 class AnalyticsService {
   AnalyticsService(this._analytics);

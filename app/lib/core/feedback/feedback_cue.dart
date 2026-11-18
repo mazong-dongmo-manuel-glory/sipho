@@ -25,6 +25,9 @@ enum SiphoCue {
 
   /// The server rewarded a day under budget (with at least one expense tracked).
   budgetDay,
+
+  /// Monthly remaining budget went negative (or a category blew past 90 %).
+  budgetAlert,
 }
 
 class CueEffect {
@@ -88,5 +91,11 @@ CueEffect cueEffect(SiphoCue cue) {
       );
     case SiphoCue.budgetDay:
       return const CueEffect(sound: SiphoSound.coins, haptic: HapticKind.light);
+    case SiphoCue.budgetAlert:
+      return const CueEffect(
+        sound: SiphoSound.uhOh,
+        haptic: HapticKind.medium,
+        voice: SiphoSound.siphoWorried,
+      );
   }
 }

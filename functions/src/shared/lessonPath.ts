@@ -18,6 +18,10 @@ export const LESSON_UNITS = [
     id: "unit_2",
     lessons: ["savings_goal", "pay_yourself_first", "small_amounts"],
   },
+  {
+    id: "unit_3",
+    lessons: ["debt_basics", "inflation_101", "spotting_scams"],
+  },
 ] as const;
 
 export type LessonUnitId = (typeof LESSON_UNITS)[number]["id"];

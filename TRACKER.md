@@ -6,7 +6,7 @@
 |---|---|
 | **Statut** | 🔄 MVP fonctionnel — finitions (sons, Rive, contenu, staging/prod) puis bêta |
 | **Démarrage** | 12 novembre 2026 |
-| **Dernière mise à jour** | 15 novembre 2026 |
+| **Dernière mise à jour** | 17 novembre 2026 |
 | **Santé du code** | `flutter analyze` propre · 294 tests Flutter · 110 tests Functions (hors émulateur) — mesuré le 15 novembre |
 
 > Ce suivi a été remis à jour d'après l'état réel du code (il indiquait encore « Phase 1 à venir »).
@@ -21,7 +21,7 @@
 | Mobile | Flutter 3.47+ / Dart 3.3+ |
 | State management | Riverpod 2 |
 | Navigation | go_router 14 |
-| Modèles | freezed + json_serializable |
+| Modèles | Dart plain (freezed / riverpod_generator temporairement désactivés — mismatch analyzer SDK 3.13) |
 | Backend | Firebase (Auth, Firestore, Functions TypeScript, Storage, Messaging, Remote Config) |
 | IA | Firebase AI Logic (Gemini) |
 | Animations | Rive 0.13, Lottie 3 |
@@ -39,8 +39,8 @@
 | 0 | Cadrage & Design | 🟡 | Maquettes validées, mascotte Rive, sons, leçons 🎨 |
 | 1 | Fondations | 🟡 | Firebase staging/prod, iOS schemes |
 | 2 | Cœur finances | ✅ | — |
-| 2b | International & économie | 🟡 | Multi-devises dans la saisie, localisation à la demande, packs pays supplémentaires |
-| 3 | Scan IA | ✅ | Quotas à confirmer, jeu de factures de test |
+| 2b | International & économie | 🟡 | Feed FX live (`FX_FEED_URL`) à brancher en staging/prod ; packs pays encore partiels |
+| 3 | Scan IA | ✅ | Jeu de factures de test ; quotas serveur + RC en place |
 | 4 | Gamification | 🟡 | Rive, quête « sous budget », sons définitifs |
 | 5 | Notifications | 🟡 | Vérifier les 10 types et le plafond/escalade sur appareil |
 | 6 | Bêta & Lancement | ⬜ | TestFlight / Play, stores, conformité |
@@ -55,10 +55,10 @@
 - [x] README / spec complète
 - [x] Brief Figma (FIGMA.md)
 - [x] Maquettes Figma **réalisées** : 33 frames (25 écrans du brief + variantes) et une bibliothèque de composants ; reste leur **validation** et la mise à niveau pour les écrans ajoutés depuis (amis/contacts, multi-devises, objectifs) — voir FIGMA_TRACKER.md
-- [x] ✨ Lottie : registre + préchargement + tests ; trophée (ligue) et éclats (cadeau) ajoutés. Reste : podium, validation de quête, montée de niveau, animations de designer
+- [x] ✨ Lottie : registre + préchargement + tests ; trophée, éclats, **podium** (IconScout), **quête** (IconScout check), **montée de niveau** (générée) ; crédits dans `assets/animations/CREDITS.txt`
 - [ ] 🎨 Mascotte Sipho — illustration finale + animations Rive (8 émotions). État : illustrations **SVG** en place, `app/assets/rive/` vide
 - [ ] 🎨 Sons (10 sons). État : `app/assets/sounds/` vide
-- [ ] 🟡 10 leçons rédigées. État : 6 leçons en 2 unités dans l'app (`lesson_catalog.dart`, chemin côté serveur dans `shared/lessonPath.ts`) ; le JSON `content/lessons/unit_1_budget_basics.json` n'est pas lu par l'app
+- [x] 🟡 9 leçons en 3 unités dans l'app (`lesson_catalog.dart` ↔ `shared/lessonPath.ts` : unit_3 = dette, inflation, arnaques) ; le JSON `content/lessons/` n'est pas lu par l'app (catalogue embarqué)
 
 ### Phase 1 — Fondations
 - [x] Environnements dev / staging / prod choisis côté Dart (`main.dart`, `main_dev.dart`, `main_staging.dart`) ; **plus de flavors Android** (retirés le 2026-11-14, ADR-005)
@@ -75,7 +75,7 @@
 
 ### Phase 2 — Cœur finances
 - [x] Onboarding conversationnel (nom, pays, objectif, nid)
-- [ ] Onboarding : le README §3.1 prévoit aussi l'étape de vie et le revenu mensuel (fourchette) ; la région et la devise sont collectées, mais ni l'étape de vie ni le revenu (le revenu démarre à 0 et ne se règle que depuis le profil, alors qu'il alimente « reste à vivre » et la règle « sous budget » : un nouvel utilisateur n'a donc pas ces deux fonctions tant qu'il ne l'a pas saisi) — à trancher : ajouter ou retirer du README
+- [x] Onboarding : étape de vie (`lifeStage`) + revenu mensuel optionnel (`monthlyIncomeCents`, skip possible) — débloque reste à vivre / sous budget dès le nid
 - [x] Mon socle — dépenses fixes (cartes à glisser, montant, liste, « Payé ✓ »)
 - [x] Dépenses variables — saisie express
 - [x] Agrégats Cloud Functions (`onTransactionWrite`, `generateMonth`)
@@ -83,22 +83,22 @@
 - [x] Graphiques fl_chart (anneau, barres)
 
 ### Phase 2b — International & économie
-- [x] Packs pays Firestore (CA, FR, CM, générique) — **CI, SN à ajouter**
-- [ ] 🟡 Multi-devises : `currency` / `amountMainCents` / `fxRates` côté données et Functions ; saisie multi-devise à finaliser
+- [x] Packs pays Firestore (CA, FR, CM, CI, SN, générique) — import via `content/scripts/import.ts`
+- [x] Multi-devises : saisie express (sélecteur) + `amountMainCents` / `fxRate` + lecture `fx/latest` ; `fxRates` écrit le doc seulement si `FX_FEED_URL` répond
 - [x] Formats montants / dates localisés
 - [x] Indicateurs économiques (`economyFetch`, `economyAlerts`, `economySummaries`)
 - [x] Écran économie (cartes du jour)
-- [ ] Localisation à la demande (`geolocator` déclaré, non utilisé)
+- [x] Localisation à la demande (onboarding « Utiliser ma position » → labels pays/région uniquement, pas de GPS stocké)
 
 ### Phase 3 — Scan IA
 - [x] Caméra + compression image
 - [x] Gemini — extraction ticket (`receipt_parser`, `parseReceipt`)
 - [x] Écran de validation
-- [ ] Quotas scan (Remote Config) — à confirmer
+- [x] Quotas scan : serveur `SCAN_QUOTA_PER_DAY` (défaut 5) + Remote Config `scan_quota_per_day` affiché sur l'écran scan
 
 ### Phase 4 — Gamification
 - [x] XP serveur + limites par jour (Cloud Functions)
-- [x] Séries + gels (consommation automatique, achat en boutique, plafond 2). ⬜ Réparation sous 24 h et paliers de série (3, 7, 14, 30…) non faits
+- [x] Séries + gels (consommation automatique, achat en boutique, plafond 2) + réparation sous 24 h (`repairStreak`) + paliers (3, 7, 14, 30…)
 - [x] Graines d'or ; boutique à achats réels côté serveur (`buyShopItem`, ADR-013). Reste : les objets achetés ne sont pas encore portés par Sipho 🎨
 - [x] Cadeaux de Sipho (écran d'ouverture)
 - [x] Quêtes du jour serveur, réclamation (`claimQuest`), quêtes IA
@@ -107,10 +107,10 @@
 - [x] Vibrations + sons **branchés** (`core/feedback/`) : dépense, « Payé ✓ », scan, quiz, quête réclamée, cadeau, niveau, ligue, série ; réglages Sons / Vibrations / Voix actifs
 - [x] 10 sons **provisoires** CC0 (Kenney) dans `app/assets/sounds/` (93 Ko au total), régénérables avec `app/tool/build_sounds.py`, crédits dans `CREDITS.txt`. À écouter sur appareil ; pour un son final, déposer un fichier du même nom
 - [ ] 🎨 Sons finaux à l'identité kalimba / kora (signature `level_up`) et voix de Sipho (`sipho_happy`, `sipho_proud`, `sipho_worried`, absentes : ignorées sans erreur)
-- [ ] `uh_oh` (alerte budget) : fichier prévu mais aucun déclencheur côté client pour l'instant
+- [x] `uh_oh` (alerte budget) : `SiphoCue.budgetAlert` joué une fois par session quand le reste à vivre passe sous 0
 - [ ] Vérifier sur appareil : mode silencieux iOS, musique en cours non coupée, vibrations
 - [x] Chemin de leçons par unités : verrouillage **serveur** + bonus de fin d'unité (30 XP, 10 graines, une fois) + unité 2 (ADR-011)
-- [x] Badges attribués par le serveur (8) + affichage dans le profil + son (ADR-012). Reste : badge « Bâtisseur » d'onboarding, badges quêtes / amis / budget, son dédié
+- [x] Badges attribués par le serveur + affichage profil + son (ADR-012), dont badge « Bâtisseur » à la fin d'onboarding. Reste : badges quêtes / amis / budget, son dédié
 - [x] Récap mensuel
 - [x] Quêtes du jour : `log_expenses` (3 dépenses) + `daily_lesson` (1 micro-leçon, 20 XP) ; `refreshDailyQuests` comble les trous (rollover pas encore passé, nouveau modèle déployé en cours de journée) ; les lignes de l'accueil mènent à l'action
 - [x] Règles des quêtes écrites : `DECISIONS.md` ADR-009
@@ -151,13 +151,13 @@
 1b. ✅ **Leçons et parcours « à la Duolingo »** : chaque leçon est une suite d'étapes (à lire → question → à lire → vrai/faux → question) puis une page « À retenir » ; le parcours serpente avec nœuds 3D (étoile / jouer / cadenas), bulle « À toi de jouer », Sipho à côté, bannière d'unité (sous-titre, progression), cadeau de fin d'unité, fiche de leçon (objectif, durée, étapes, récompense), quêtes repliables
 1a. ✅ **Écran de fin de leçon** branché sur `completeLesson` (XP, précision, temps, bonus d'unité, niveau) ; précision réelle : une réponse juste après une erreur n'est plus une leçon « parfaite » (score 100 / 50 / 33…)
 1b. ✅ **Écran cadeau** : affiche la vraie récompense de `claimQuest` (graines, XP, niveau) ; plus de « gel de série » inventé
-1c. **Revenu mensuel à l'onboarding** (voir Phase 2) puis écarts de la relecture Figma : voir `FIGMA_TRACKER.md` (liste priorisée)
+1c. ✅ **Revenu mensuel + étape de vie à l'onboarding** ; écarts Figma restants : voir `FIGMA_TRACKER.md`
 2. **Quêtes** : vérifier sur appareil la carte « sous budget » et le bouton « Aucune dépense » ; lancer `npm run test:emulator` (Java requis) pour valider les nouveaux tests de quêtes
-3. **Contenu** : rédiger les leçons restantes (unité 3, la structure à étapes est en place : 6 leçons de 5 étapes dans `lesson_catalog.dart`) (`content/lessons/`) et les packs CI / SN
-4. **Environnements** : créer `sipho-staging` / `sipho-prod`, `flutterfire configure`, schemes iOS
-5. **Multi-devises** : finaliser la saisie avec conversion (`fx/latest`)
-6. **Vérifier** quotas de scan, notifications sur appareil
-7. **Localisation du code** : plusieurs textes FR/EN restent en dur dans `lessons/domain/learn_quests.dart` (règle 6 du README)
+3. **Environnements** : créer `sipho-staging` / `sipho-prod`, `flutterfire configure`, schemes iOS
+4. **FX** : configurer `FX_FEED_URL` (ex. Frankfurter) pour peupler `fx/latest` en staging/prod
+5. **Vérifier** sur appareil : localisation onboarding, scan quotas, réparation de série, notifications
+6. **Contenu** : enrichir packs CI/SN (niveau `full`) et éventuellement lire `content/lessons/` au lieu du catalogue embarqué
+7. **Parrainage** : récompense différée 7 jours (ADR-010) toujours ouverte
 
 ---
 

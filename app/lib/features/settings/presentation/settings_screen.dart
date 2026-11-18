@@ -10,11 +10,13 @@ import 'package:sipho/app/theme/app_spacing.dart';
 import 'package:sipho/core/feedback/feedback_cue.dart';
 import 'package:sipho/core/feedback/feedback_service.dart';
 import 'package:sipho/core/feedback/feedback_settings.dart';
+import 'package:sipho/core/legal/sipho_legal.dart';
 import 'package:sipho/core/sound/sound_service.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
 import 'package:sipho/features/auth/data/auth_repository.dart';
 import 'package:sipho/features/profile/presentation/profile_edit_sheet.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -197,8 +199,63 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ],
             ),
             const SizedBox(height: 24),
+            const _PrivacyPolicyRow(),
+            const SizedBox(height: 12),
             const _SignOutButton(),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PrivacyPolicyRow extends StatelessWidget {
+  const _PrivacyPolicyRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: () {
+          launchUrl(
+            Uri.parse(kSiphoPrivacyPolicyUrl),
+            mode: LaunchMode.externalApplication,
+          );
+        },
+        borderRadius: BorderRadius.circular(18),
+        child: SizedBox(
+          height: 58,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.privacy_tip_outlined,
+                  color: AppColors.primaryDark,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    l10n.settingsPrivacyPolicy,
+                    style: const TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primaryDark,
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.open_in_new,
+                  color: AppColors.textSecondary,
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

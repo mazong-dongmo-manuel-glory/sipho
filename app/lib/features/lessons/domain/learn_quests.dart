@@ -1,3 +1,4 @@
+import 'package:sipho/features/lessons/domain/learn_quest_strings.dart';
 import 'package:sipho/features/lessons/domain/lesson_catalog.dart';
 
 class ServerQuestRecord {
@@ -99,6 +100,7 @@ class LearnQuestItem {
 /// Builds the quests displayed on the Learn tab from real user progress and
 /// any active/completed server quests (including AI coach challenges).
 List<LearnQuestItem> buildLearnQuests({
+  required LearnQuestStrings strings,
   required String languageCode,
   required Set<String> completedLessonIds,
   required int monthExpenseCount,
@@ -106,7 +108,6 @@ List<LearnQuestItem> buildLearnQuests({
   required bool hasMonthlyIncome,
   List<ServerQuestRecord> serverQuests = const [],
 }) {
-  final isFr = languageCode.toLowerCase().startsWith('fr');
   final catalogIds = [for (final lesson in kCatalogLessons) lesson.id];
   final nextId =
       nextLessonId(catalogIds, completedLessonIds) ?? catalogIds.first;
@@ -120,66 +121,51 @@ List<LearnQuestItem> buildLearnQuests({
   final unitTitle = unit.title(languageCode);
 
   final items = <LearnQuestItem>[
-    // 1. Next lesson quest
     LearnQuestItem(
       id: 'learn_first_lesson',
       emoji: '📚',
-      title: isFr ? 'Valider une leçon' : 'Complete a lesson',
-      subtitle: isFr
-          ? 'Réponds juste au quiz pour débloquer la suite'
-          : 'Answer the quiz right to unlock the next step',
+      title: strings.completeLessonTitle,
+      subtitle: strings.completeLessonSubtitle,
       progress: completedCount >= 1 ? 1 : 0,
       target: 1,
       actionRoute: '/lesson/$nextId',
     ),
-    // 2. Unit mastery quest (every lesson of the unit in progress)
     LearnQuestItem(
       id: 'learn_unit_mastery',
       emoji: '🎓',
-      title: isFr
-          ? 'Terminer l\'unité (${unit.lessons.length} leçons)'
-          : 'Finish the unit (${unit.lessons.length} lessons)',
-      subtitle: isFr
-          ? '$unitTitle · bonus de ${unit.bonusXp} XP à la fin'
-          : '$unitTitle · ${unit.bonusXp} XP bonus at the end',
+      title: strings.finishUnitTitle(unit.lessons.length),
+      subtitle: strings.finishUnitSubtitle(unitTitle, unit.bonusXp),
       progress: unitDone,
       target: unit.lessons.length,
       actionRoute: '/lesson/$nextId',
     ),
-    // 3. Real-life application: set up income + 1 fixed strand
     LearnQuestItem(
       id: 'learn_build_foundation',
       emoji: '🪺',
-      title: isFr ? 'Poser ton socle du mois' : 'Set up your monthly base',
-      subtitle: isFr
-          ? 'Indique ton revenu et au moins 1 charge fixe'
-          : 'Set your income and at least 1 fixed bill',
+      title: strings.buildFoundationTitle,
+      subtitle: strings.buildFoundationSubtitle,
       progress: (hasMonthlyIncome ? 1 : 0) + (activeFixedCount > 0 ? 1 : 0),
       target: 2,
       actionRoute: !hasMonthlyIncome ? '/profile' : '/fixed-expenses',
     ),
-    // 4. Real-life habit: log 3 expenses this month
     LearnQuestItem(
       id: 'learn_track_three',
       emoji: '✍️',
-      title: isFr ? 'Noter 3 dépenses ce mois-ci' : 'Log 3 expenses this month',
-      subtitle: isFr
-          ? 'Mets en pratique la leçon sur le suivi'
-          : 'Put the spending tracking lesson into practice',
+      title: strings.trackThreeTitle,
+      subtitle: strings.trackThreeSubtitle,
       progress: monthExpenseCount,
       target: 3,
       actionRoute: '/expenses/add',
     ),
   ];
 
-  // Append server / AI coach quests (claimable via `claimQuest` Cloud Function)
   for (final sq in serverQuests) {
     if (sq.status == 'claimed') continue;
     final route =
         sq.type == 'COMPLETE_LESSON' ? '/lesson/$nextId' : '/expenses/add';
     final fallbackTitle = sq.type == 'COMPLETE_LESSON'
-        ? (isFr ? 'Défi leçon' : 'Lesson challenge')
-        : (isFr ? 'Défi suivi' : 'Tracking challenge');
+        ? strings.lessonChallengeFallback
+        : strings.trackingChallengeFallback;
     final cleanTitle =
         sq.title.trim().isNotEmpty ? sq.title.trim() : fallbackTitle;
     final done = sq.status == 'completed' || sq.progress >= sq.target;
@@ -193,9 +179,7 @@ List<LearnQuestItem> buildLearnQuests({
         title: cleanTitle,
         subtitle: sq.description.trim().isNotEmpty
             ? sq.description.trim()
-            : (isFr
-                ? 'Défi personnalisé Sipho'
-                : 'Personalized Sipho challenge'),
+            : strings.personalizedChallengeFallback,
         progress: done ? sq.target : sq.progress,
         target: sq.target,
         rewardXp: sq.rewardXp > 0 ? sq.rewardXp : null,

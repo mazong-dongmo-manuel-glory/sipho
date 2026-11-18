@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sipho — Politique de confidentialité / Privacy Policy</title>
+  <meta name="description" content="Politique de confidentialité de l'application Sipho." />
+  <style>
+    :root {
+      --bg: #fff8ec;
+      --ink: #1e2a2f;
+      --muted: #5b6770;
+      --green: #1f9d55;
+      --card: #ffffff;
+      --border: #ede6d8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Nunito", "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.55;
+    }
+    header {
+      padding: 2rem 1.25rem 1rem;
+      max-width: 44rem;
+      margin: 0 auto;
+    }
+    header h1 {
+      margin: 0 0 0.35rem;
+      font-size: 1.75rem;
+      color: var(--green);
+    }
+    header p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+    nav {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    nav a {
+      color: var(--green);
+      font-weight: 700;
+      text-decoration: none;
+    }
+    main {
+      max-width: 44rem;
+      margin: 0 auto 3rem;
+      padding: 0 1.25rem;
+    }
+    section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem 1.35rem;
+      margin-bottom: 1rem;
+    }
+    h2 {
+      margin: 0 0 0.65rem;
+      font-size: 1.15rem;
+    }
+    ul { padding-left: 1.2rem; margin: 0.4rem 0; }
+    li { margin: 0.25rem 0; }
+    .lang { display: none; }
+    .lang.active { display: block; }
+    footer {
+      max-width: 44rem;
+      margin: 0 auto;
+      padding: 0 1.25rem 3rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    a { color: var(--green); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Sipho</h1>
+    <p>Politique de confidentialité · Privacy Policy</p>
+    <p>Dernière mise à jour / Last updated: 16 novembre 2026</p>
+    <nav>
+      <a href="#fr" onclick="show('fr')">Français</a>
+      <a href="#en" onclick="show('en')">English</a>
+    </nav>
+  </header>
+
+  <main>
+    <div id="fr" class="lang active">
+      <section>
+        <h2>1. Qui nous sommes</h2>
+        <p>
+          Sipho («&nbsp;nous&nbsp;») est une application mobile éducative d’apprentissage
+          financier éditée par <strong>Cargonomade</strong>. Contact confidentialité&nbsp;:
+          <a href="mailto:privacy@cargonomade.com">privacy@cargonomade.com</a>.
+        </p>
+        <p>
+          Sipho fournit des contenus éducatifs et des outils de suivi budgétaire.
+          Ce n’est <strong>pas</strong> un conseiller financier réglementé.
+        </p>
+      </section>
+
+      <section>
+        <h2>2. Données que nous collectons</h2>
+        <p>Selon ton utilisation et tes consentements, nous pouvons traiter&nbsp;:</p>
+        <ul>
+          <li><strong>Compte</strong> : identifiant Firebase Auth, e-mail (Google / Apple), nom d’affichage, photo de profil éventuelle.</li>
+          <li><strong>Profil</strong> : prénom / pseudo, pays, devise, fuseau horaire, objectifs, étape de vie, revenus déclarés (montants).</li>
+          <li><strong>Données financières saisies</strong> : dépenses, charges fixes, catégories, marchands, notes, photos de reçus (pour lecture du total), agrégats budgétaires.</li>
+          <li><strong>Progression éducative</strong> : leçons terminées, scores, XP, séries, quêtes, badges, ligue.</li>
+          <li><strong>Contacts (opt-in)</strong> : empreintes (hash) d’e-mails / numéros pour retrouver des amis — pas ta liste de contacts brute stockée en clair.</li>
+          <li><strong>Localisation (opt-in, précision réduite)</strong> : pour contextualiser le pays / la ville si tu l’autorises — jamais en arrière-plan.</li>
+          <li><strong>Notifications</strong> : jeton FCM et préférences (conseils, rappels) si tu actives les notifications.</li>
+          <li><strong>Données techniques</strong> : identifiants d’appareil / App Check, journaux de crash (Crashlytics), performance, analytics d’usage agrégés (Firebase).</li>
+        </ul>
+        <p>Nous ne demandons pas et ne stockons pas les numéros de carte bancaire.</p>
+      </section>
+
+      <section>
+        <h2>3. Finalités</h2>
+        <ul>
+          <li>Fournir et sécuriser le compte et l’application.</li>
+          <li>Afficher ton budget, tes leçons et ta progression.</li>
+          <li>Personnaliser des conseils éducatifs (y compris via modèles d’IA encadrés).</li>
+          <li>Fonctionnalités sociales (amis, classements) sans exposer tes montants.</li>
+          <li>Améliorer la stabilité, la sécurité (App Check) et la qualité du produit.</li>
+          <li>Respecter nos obligations légales.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>4. Bases légales (RGPD / Loi 25 / lois similaires)</h2>
+        <ul>
+          <li><strong>Exécution du contrat</strong> : fournir le service demandé.</li>
+          <li><strong>Consentement</strong> : contacts, localisation, notifications, certains traitements marketing le cas échéant.</li>
+          <li><strong>Intérêt légitime</strong> : sécurité, prévention des abus, amélioration du produit.</li>
+          <li><strong>Obligation légale</strong> lorsque applicable.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>5. Partage des données</h2>
+        <p>Nous partageons des données uniquement avec des sous-traitants nécessaires au service, notamment&nbsp;:</p>
+        <ul>
+          <li><strong>Google Firebase / Google Cloud</strong> (Auth, Firestore, Storage, Functions, Analytics, Crashlytics, Cloud Messaging, App Check, AI Logic).</li>
+          <li><strong>Apple</strong> (Sign in with Apple) lorsque tu choisis cette connexion.</li>
+        </ul>
+        <p>
+          Tes amis voient seulement des infos de jeu (pseudo, niveau, série, ligue) —
+          <strong>jamais</strong> tes montants ni tes reçus.
+        </p>
+        <p>Nous ne vendons pas tes données personnelles.</p>
+      </section>
+
+      <section>
+        <h2>6. Conservation</h2>
+        <p>
+          Les données de compte et de budget sont conservées tant que ton compte existe.
+          Tu peux demander la suppression via la fonction de suppression de compte dans l’app
+          (ou par e-mail). Des logs techniques peuvent être conservés plus brièvement pour la sécurité.
+        </p>
+      </section>
+
+      <section>
+        <h2>7. Sécurité</h2>
+        <p>
+          Authentification Firebase, règles Firestore/Storage, App Check, chiffrement en transit (HTTPS).
+          Aucune sécurité n’est absolue ; signale tout incident à
+          <a href="mailto:privacy@cargonomade.com">privacy@cargonomade.com</a>.
+        </p>
+      </section>
+
+      <section>
+        <h2>8. Tes droits</h2>
+        <p>
+          Selon ta région (RGPD, Loi 25 Québec, CCPA, etc.), tu peux demander l’accès,
+          la rectification, l’effacement, la portabilité, la limitation ou l’opposition,
+          et retirer un consentement. Contact&nbsp;:
+          <a href="mailto:privacy@cargonomade.com">privacy@cargonomade.com</a>.
+          Tu peux aussi introduire une réclamation auprès de ton autorité de protection des données.
+        </p>
+      </section>
+
+      <section>
+        <h2>9. Enfants</h2>
+        <p>
+          Sipho vise un public recommandé de 16 ans et plus. Nous ne collectons pas
+          sciemment de données d’enfants en dessous de l’âge requis dans ta région.
+        </p>
+      </section>
+
+      <section>
+        <h2>10. Modifications</h2>
+        <p>
+          Nous pouvons mettre à jour cette politique. La date en tête de page sera révisée.
+          En cas de changement important, nous pourrons t’en informer dans l’app.
+        </p>
+      </section>
+    </div>
+
+    <div id="en" class="lang">
+      <section>
+        <h2>1. Who we are</h2>
+        <p>
+          Sipho (“we”) is an educational personal-finance learning app operated by
+          <strong>Cargonomade</strong>. Privacy contact:
+          <a href="mailto:privacy@cargonomade.com">privacy@cargonomade.com</a>.
+        </p>
+        <p>
+          Sipho provides educational content and budgeting tools. It is
+          <strong>not</strong> a regulated financial adviser.
+        </p>
+      </section>
+
+      <section>
+        <h2>2. Data we collect</h2>
+        <p>Depending on your use and consents, we may process:</p>
+        <ul>
+          <li><strong>Account</strong>: Firebase Auth ID, email (Google / Apple), display name, optional profile photo.</li>
+          <li><strong>Profile</strong>: nickname, country, currency, timezone, goals, life stage, declared income amounts.</li>
+          <li><strong>Financial data you enter</strong>: expenses, fixed costs, categories, merchants, notes, receipt photos (to read totals), budget aggregates.</li>
+          <li><strong>Learning progress</strong>: completed lessons, scores, XP, streaks, quests, badges, league.</li>
+          <li><strong>Contacts (opt-in)</strong>: hashed emails/phone numbers to find friends — not your raw contact list stored in plain text.</li>
+          <li><strong>Location (opt-in, reduced accuracy)</strong>: to contextualize country/city if you allow it — never in the background.</li>
+          <li><strong>Notifications</strong>: FCM token and preferences if you enable notifications.</li>
+          <li><strong>Technical data</strong>: device / App Check identifiers, crash logs (Crashlytics), performance, aggregated usage analytics (Firebase).</li>
+        </ul>
+        <p>We do not request or store bank card numbers.</p>
+      </section>
+
+      <section>
+        <h2>3. Purposes</h2>
+        <ul>
+          <li>Provide and secure your account and the app.</li>
+          <li>Show your budget, lessons, and progress.</li>
+          <li>Personalize educational tips (including constrained AI models).</li>
+          <li>Social features (friends, leaderboards) without exposing your amounts.</li>
+          <li>Improve stability, security (App Check), and product quality.</li>
+          <li>Comply with legal obligations.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>4. Legal bases</h2>
+        <ul>
+          <li><strong>Contract</strong>: deliver the service you request.</li>
+          <li><strong>Consent</strong>: contacts, location, notifications, and similar optional features.</li>
+          <li><strong>Legitimate interests</strong>: security, abuse prevention, product improvement.</li>
+          <li><strong>Legal obligation</strong> where applicable.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>5. Sharing</h2>
+        <p>We share data only with processors needed to run the service, including:</p>
+        <ul>
+          <li><strong>Google Firebase / Google Cloud</strong> (Auth, Firestore, Storage, Functions, Analytics, Crashlytics, Cloud Messaging, App Check, AI Logic).</li>
+          <li><strong>Apple</strong> (Sign in with Apple) when you choose that sign-in method.</li>
+        </ul>
+        <p>
+          Friends see only gameplay info (nickname, level, streak, league) —
+          <strong>never</strong> your amounts or receipts.
+        </p>
+        <p>We do not sell your personal data.</p>
+      </section>
+
+      <section>
+        <h2>6. Retention</h2>
+        <p>
+          Account and budget data are kept while your account exists.
+          You can delete your account in the app (or by email). Technical logs may be kept
+          for shorter security periods.
+        </p>
+      </section>
+
+      <section>
+        <h2>7. Security</h2>
+        <p>
+          Firebase Authentication, Firestore/Storage rules, App Check, HTTPS in transit.
+          No security is perfect; report incidents to
+          <a href="mailto:privacy@cargonomade.com">privacy@cargonomade.com</a>.
+        </p>
+      </section>
+
+      <section>
+        <h2>8. Your rights</h2>
+        <p>
+          Depending on your region (GDPR, Quebec Law 25, CCPA, etc.), you may request access,
+          correction, deletion, portability, restriction or objection, and withdraw consent.
+          Contact <a href="mailto:privacy@cargonomade.com">privacy@cargonomade.com</a>.
+          You may also lodge a complaint with your data-protection authority.
+        </p>
+      </section>
+
+      <section>
+        <h2>9. Children</h2>
+        <p>
+          Sipho is intended for users 16+. We do not knowingly collect data from children
+          below the applicable age in your region.
+        </p>
+      </section>
+
+      <section>
+        <h2>10. Changes</h2>
+        <p>
+          We may update this policy. The date at the top will change.
+          For material updates we may notify you in the app.
+        </p>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <p>© Cargonomade · Sipho · <a href="/privacy.html">https://sipho-f5a01.web.app/privacy.html</a></p>
+  </footer>
+
+  <script>
+    function show(lang) {
+      document.querySelectorAll('.lang').forEach((el) => el.classList.remove('active'));
+      document.getElementById(lang).classList.add('active');
+      document.documentElement.lang = lang;
+      history.replaceState(null, '', '#' + lang);
+    }
+    if (location.hash === '#en') show('en');
+  </script>
+</body>
+</html>

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
+import 'package:sipho/app/theme/app_theme.dart';
 
 class SiphoBottomNav extends StatelessWidget {
   const SiphoBottomNav({super.key, required this.child});
@@ -11,10 +13,14 @@ class SiphoBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    return Scaffold(
-      backgroundColor: dark ? AppColors.backgroundDark : AppColors.background,
-      body: child,
-      bottomNavigationBar: const _NavBar(),
+    final overlay = AppTheme.overlayFor(Theme.of(context).brightness);
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: overlay,
+      child: Scaffold(
+        backgroundColor: dark ? AppColors.backgroundDark : AppColors.background,
+        body: child,
+        bottomNavigationBar: const _NavBar(),
+      ),
     );
   }
 }

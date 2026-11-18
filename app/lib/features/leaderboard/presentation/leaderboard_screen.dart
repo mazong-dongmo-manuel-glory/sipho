@@ -172,10 +172,10 @@ class _LeagueBody extends ConsumerWidget {
           ),
           child: Row(
             children: [
-              const Icon(
-                Icons.emoji_events,
-                color: AppColors.badgeGold,
-                size: 38,
+              const LottieWidget(
+                assetPath: SiphoLotties.podium,
+                width: 52,
+                height: 40,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -337,9 +337,9 @@ class _ResultBanner extends StatelessWidget {
         children: [
           if (promoted) ...[
             const LottieWidget(
-              assetPath: SiphoLotties.trophyShine,
-              width: 56,
-              height: 56,
+              assetPath: SiphoLotties.podium,
+              width: 64,
+              height: 48,
               repeat: false,
             ),
             const SizedBox(width: 10),

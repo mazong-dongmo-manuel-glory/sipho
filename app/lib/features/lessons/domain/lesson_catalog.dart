@@ -730,6 +730,350 @@ const List<CatalogLesson> _unit2Lessons = [
   ),
 ];
 
+const List<CatalogLesson> _unit3Lessons = [
+  CatalogLesson(
+    id: 'debt_basics',
+    emoji: '💳',
+    minutes: 4,
+    titleFr: 'Dettes et crédit',
+    titleEn: 'Debt and credit',
+    objective: LText(
+      'Distinguer une dette utile d\'une dette dangereuse, et savoir par où commencer.',
+      'Tell useful debt from dangerous debt, and know where to start.',
+    ),
+    steps: [
+      InfoStep(
+        emoji: '💳',
+        title: LText('Pas toutes les dettes se valent', 'Not all debts are equal'),
+        body: LText(
+          'Une dette utile te rapproche d\'un objectif (études, outil de travail). Une dette dangereuse finance des envies et coûte cher en intérêts.',
+          'Useful debt moves you toward a goal (studies, work tools). Dangerous debt funds wants and costs a lot in interest.',
+        ),
+        points: [
+          LText('Utile : formation, outil qui rapporte',
+              'Useful: training, a tool that earns'),
+          LText('Dangereuse : envies, intérêts élevés',
+              'Dangerous: wants, high interest'),
+          LText('Le coût total compte plus que le paiement mensuel',
+              'Total cost matters more than the monthly payment'),
+        ],
+      ),
+      QuizStep(
+        question: LText('Laquelle est plutôt une dette utile ?',
+            'Which is closer to useful debt?'),
+        choices: [
+          LessonChoice(
+            fr: 'Un crédit pour des vacances à rembourser sur 3 ans',
+            en: 'A loan for a holiday repaid over 3 years',
+            correct: false,
+          ),
+          LessonChoice(
+            fr: 'Un prêt pour un outil indispensable à ton travail',
+            en: 'A loan for a tool you need for work',
+            correct: true,
+          ),
+          LessonChoice(
+            fr: 'Une carte de crédit pour des sorties chaque week-end',
+            en: 'A credit card for nights out every weekend',
+            correct: false,
+          ),
+        ],
+        explanation: LText(
+          'Un outil de travail peut augmenter tes revenus ; les vacances et sorties ne remboursent pas leurs intérêts.',
+          'A work tool can raise your income; holidays and nights out do not pay back their interest.',
+        ),
+      ),
+      InfoStep(
+        emoji: '🧭',
+        title: LText('Par où commencer', 'Where to start'),
+        body: LText(
+          'Liste tes dettes : montant, taux, paiement minimum. Commence par la plus chère (taux le plus élevé) tout en payant le minimum sur les autres.',
+          'List your debts: amount, rate, minimum payment. Start with the most expensive (highest rate) while paying the minimum on the others.',
+        ),
+        points: [
+          LText('Écris tout : montant, taux, minimum',
+              'Write it all down: amount, rate, minimum'),
+          LText('Attaque d\'abord le taux le plus élevé',
+              'Attack the highest rate first'),
+          LText('Évite de nouveaux crédits pour des envies',
+              'Avoid new credit for wants'),
+        ],
+      ),
+      TrueFalseStep(
+        statement: LText(
+          'Payer seulement le minimum sur une carte de crédit coûte souvent très cher sur la durée.',
+          'Paying only the minimum on a credit card often costs a lot over time.',
+        ),
+        answer: true,
+        explanation: LText(
+          'Oui : les intérêts s\'accumulent. Le minimum protège ta cote, mais allonge et renchérit la dette.',
+          'Yes: interest piles up. The minimum protects your score, but stretches and raises the cost of the debt.',
+        ),
+      ),
+      QuizStep(
+        question: LText('Tu as deux dettes. Laquelle rembourser en priorité ?',
+            'You have two debts. Which should you pay down first?'),
+        choices: [
+          LessonChoice(
+            fr: 'Celle au taux le plus bas',
+            en: 'The one with the lowest rate',
+            correct: false,
+          ),
+          LessonChoice(
+            fr: 'Celle au taux le plus élevé',
+            en: 'The one with the highest rate',
+            correct: true,
+          ),
+          LessonChoice(
+            fr: 'Celle avec le plus petit paiement minimum',
+            en: 'The one with the smallest minimum payment',
+            correct: false,
+          ),
+        ],
+        explanation: LText(
+          'Le taux le plus élevé coûte le plus cher chaque jour. C\'est lui qu\'on attaque en premier.',
+          'The highest rate costs the most each day. That is the one to attack first.',
+        ),
+      ),
+    ],
+    takeaways: [
+      LText('Dettes utiles vs dangereuses : le but et le taux comptent.',
+          'Useful vs dangerous debt: purpose and rate matter.'),
+      LText('Liste tes dettes, puis attaque le taux le plus élevé.',
+          'List your debts, then attack the highest rate.'),
+      LText('Le minimum sur une carte de crédit n\'efface presque rien.',
+          'The credit-card minimum barely clears anything.'),
+    ],
+  ),
+  CatalogLesson(
+    id: 'inflation_101',
+    emoji: '📈',
+    minutes: 3,
+    titleFr: 'L\'inflation, simplement',
+    titleEn: 'Inflation, simply',
+    objective: LText(
+      'Comprendre pourquoi les prix montent et ce que ça change pour ton budget.',
+      'Understand why prices rise and what that means for your budget.',
+    ),
+    steps: [
+      InfoStep(
+        emoji: '📈',
+        title: LText('Quand les prix montent', 'When prices rise'),
+        body: LText(
+          'L\'inflation, c\'est la hausse générale des prix. Avec le même montant, tu achètes un peu moins qu\'avant. Ton budget doit suivre.',
+          'Inflation is the general rise in prices. With the same amount you buy a little less than before. Your budget has to keep up.',
+        ),
+        points: [
+          LText('Même argent, un peu moins de pouvoir d\'achat',
+              'Same money, a little less buying power'),
+          LText('Certains postes montent plus vite (alimentation, transport)',
+              'Some categories rise faster (food, transport)'),
+          LText('Revoir son budget de temps en temps aide',
+              'Reviewing your budget now and then helps'),
+        ],
+      ),
+      QuizStep(
+        question: LText('Que signifie l\'inflation pour ton argent ?',
+            'What does inflation mean for your money?'),
+        choices: [
+          LessonChoice(
+            fr: 'Tes billets prennent de la valeur tout seuls',
+            en: 'Your cash grows in value by itself',
+            correct: false,
+          ),
+          LessonChoice(
+            fr: 'Avec le même montant, tu achètes un peu moins',
+            en: 'With the same amount, you buy a little less',
+            correct: true,
+          ),
+          LessonChoice(
+            fr: 'Les prix n\'ont aucun lien avec ton budget',
+            en: 'Prices have no link to your budget',
+            correct: false,
+          ),
+        ],
+        explanation: LText(
+          'L\'inflation réduit le pouvoir d\'achat : même somme, moins de biens ou de services.',
+          'Inflation reduces buying power: same sum, fewer goods or services.',
+        ),
+      ),
+      InfoStep(
+        emoji: '🛡️',
+        title: LText('Ce que tu peux faire', 'What you can do'),
+        body: LText(
+          'Tu ne contrôles pas l\'inflation, mais tu peux suivre tes postes qui montent, ajuster ton budget, et garder un fonds d\'urgence pour les surprises.',
+          'You cannot control inflation, but you can watch the categories that rise, adjust your budget, and keep an emergency fund for surprises.',
+        ),
+        points: [
+          LText('Repère les postes qui ont le plus augmenté',
+              'Spot the categories that rose most'),
+          LText('Ajuste ton budget, pas seulement tes envies',
+              'Adjust your budget, not only your wants'),
+          LText('Un fonds d\'urgence amortit les chocs',
+              'An emergency fund softens the shocks'),
+        ],
+      ),
+      TrueFalseStep(
+        statement: LText(
+          'Si les prix montent et que ton revenu reste fixe, ton reste à vivre diminue.',
+          'If prices rise and your income stays fixed, your money left to spend shrinks.',
+        ),
+        answer: true,
+        explanation: LText(
+          'Oui : mêmes revenus, dépenses plus chères → moins de marge. D\'où l\'intérêt de suivre et d\'ajuster.',
+          'Yes: same income, costlier spending → less room. That is why tracking and adjusting matter.',
+        ),
+      ),
+      QuizStep(
+        question: LText('Quelle réaction est la plus utile face à l\'inflation ?',
+            'Which reaction is most useful against inflation?'),
+        choices: [
+          LessonChoice(
+            fr: 'Ignorer les hausses et espérer',
+            en: 'Ignore the rises and hope',
+            correct: false,
+          ),
+          LessonChoice(
+            fr: 'Suivre ses postes et ajuster son budget',
+            en: 'Track your categories and adjust your budget',
+            correct: true,
+          ),
+          LessonChoice(
+            fr: 'Tout dépenser avant que les prix montent encore',
+            en: 'Spend everything before prices rise further',
+            correct: false,
+          ),
+        ],
+        explanation: LText(
+          'Suivre et ajuster te laisse le contrôle. Dépenser plus vite empire la situation.',
+          'Tracking and adjusting keeps you in control. Spending faster makes it worse.',
+        ),
+      ),
+    ],
+    takeaways: [
+      LText('L\'inflation réduit ce que ton argent peut acheter.',
+          'Inflation reduces what your money can buy.'),
+      LText('Certains postes montent plus vite : suis-les.',
+          'Some categories rise faster: watch them.'),
+      LText('Ajuste ton budget et garde un filet de sécurité.',
+          'Adjust your budget and keep a safety net.'),
+    ],
+  ),
+  CatalogLesson(
+    id: 'spotting_scams',
+    emoji: '🚨',
+    minutes: 3,
+    titleFr: 'Repérer les arnaques',
+    titleEn: 'Spotting scams',
+    objective: LText(
+      'Reconnaître les signes d\'une arnaque et savoir quoi faire.',
+      'Recognize the signs of a scam and know what to do.',
+    ),
+    steps: [
+      InfoStep(
+        emoji: '🚨',
+        title: LText('Les signes qui alertent', 'Warning signs'),
+        body: LText(
+          'Urgence artificielle, gain trop beau, demande d\'argent ou de codes secrets : ce sont des signaux classiques. Un vrai service ne te presse pas de « ne rien dire à personne ».',
+          'Fake urgency, a deal too good to be true, asking for money or secret codes: classic signals. A real service will not push you to "tell no one".',
+        ),
+        points: [
+          LText('Urgence + secret = méfiance', 'Urgency + secrecy = be wary'),
+          LText('Personne de sérieux ne demande ton code PIN',
+              'No serious person asks for your PIN'),
+          LText('Vérifie par un autre canal (site officiel, appel connu)',
+              'Check via another channel (official site, known number)'),
+        ],
+      ),
+      QuizStep(
+        question: LText('Quel message ressemble le plus à une arnaque ?',
+            'Which message looks most like a scam?'),
+        choices: [
+          LessonChoice(
+            fr: 'Ta banque t\'écrit sur son app pour une alerte de paiement',
+            en: 'Your bank messages you in its app about a payment alert',
+            correct: false,
+          ),
+          LessonChoice(
+            fr: '« Envoie de l\'argent maintenant, sinon ton compte sera bloqué — ne le dis à personne »',
+            en: '"Send money now or your account will be locked — tell no one"',
+            correct: true,
+          ),
+          LessonChoice(
+            fr: 'Un ami te rappelle un remboursement promis',
+            en: 'A friend reminds you of a promised repayment',
+            correct: false,
+          ),
+        ],
+        explanation: LText(
+          'Urgence + argent + secret : trio classique de l\'arnaque.',
+          'Urgency + money + secrecy: the classic scam trio.',
+        ),
+      ),
+      InfoStep(
+        emoji: '🔒',
+        title: LText('Que faire', 'What to do'),
+        body: LText(
+          'Ne clique pas, ne verse rien, ne donne aucun code. Contacte toi-même l\'organisme par un canal que tu connais. Signale si besoin.',
+          'Do not click, send money, or share any code. Contact the organisation yourself through a channel you know. Report it if needed.',
+        ),
+        points: [
+          LText('Raccroche / ignore le message',
+              'Hang up / ignore the message'),
+          LText('Vérifie sur le site ou le numéro officiel',
+              'Check on the official site or number'),
+          LText('Parle-en : les arnaques aiment le silence',
+              'Tell someone: scams thrive on silence'),
+        ],
+      ),
+      TrueFalseStep(
+        statement: LText(
+          'Un vrai conseiller te demandera parfois ton code secret par SMS.',
+          'A real adviser will sometimes ask for your secret code by SMS.',
+        ),
+        answer: false,
+        explanation: LText(
+          'Non : codes PIN, mots de passe et OTP restent pour toi seuls. Qui les demande est suspect.',
+          'No: PINs, passwords and OTPs stay yours alone. Anyone asking for them is suspect.',
+        ),
+      ),
+      QuizStep(
+        question: LText('On te demande un code reçu par SMS « pour valider ». Que faire ?',
+            'Someone asks for a code you got by SMS "to validate". What do you do?'),
+        choices: [
+          LessonChoice(
+            fr: 'L\'envoyer, c\'est pour t\'aider',
+            en: 'Send it — they are helping you',
+            correct: false,
+          ),
+          LessonChoice(
+            fr: 'Ne rien envoyer et vérifier par un canal officiel',
+            en: 'Send nothing and check via an official channel',
+            correct: true,
+          ),
+          LessonChoice(
+            fr: 'L\'envoyer seulement si on insiste beaucoup',
+            en: 'Send it only if they insist a lot',
+            correct: false,
+          ),
+        ],
+        explanation: LText(
+          'Ce code sert à prouver que c\'est toi. Le donner à quelqu\'un d\'autre, c\'est leur ouvrir la porte.',
+          'That code proves it is you. Giving it to someone else opens the door for them.',
+        ),
+      ),
+    ],
+    takeaways: [
+      LText('Urgence + secret + argent = signaux d\'alarme.',
+          'Urgency + secrecy + money = red flags.'),
+      LText('Ne partage jamais PIN, mot de passe ou code SMS.',
+          'Never share a PIN, password or SMS code.'),
+      LText('Vérifie toujours par un canal que tu connais.',
+          'Always verify through a channel you know.'),
+    ],
+  ),
+];
+
 class CatalogUnit {
   const CatalogUnit({
     required this.id,
@@ -780,12 +1124,23 @@ const List<CatalogUnit> kCatalogUnits = [
     bonusXp: 30,
     bonusSeeds: 10,
   ),
+  CatalogUnit(
+    id: 'unit_3',
+    titleFr: 'Protéger ton argent',
+    titleEn: 'Protect your money',
+    subtitle: LText(
+        'Dettes, inflation et arnaques', 'Debt, inflation and scams'),
+    lessons: _unit3Lessons,
+    bonusXp: 30,
+    bonusSeeds: 10,
+  ),
 ];
 
 /// Every lesson in path order (unit by unit).
 const List<CatalogLesson> kCatalogLessons = [
   ..._unit1Lessons,
   ..._unit2Lessons,
+  ..._unit3Lessons,
 ];
 
 /// First lesson the user has not finished, or null when the path is complete.

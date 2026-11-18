@@ -51,6 +51,7 @@ class TransactionRepository {
       'source': tx.source,
       'createdAt': FieldValue.serverTimestamp(),
     };
+    if (tx.fxRate != null) data['fxRate'] = tx.fxRate;
     if (tx.merchant != null) data['merchant'] = tx.merchant;
     if (tx.note != null) data['note'] = tx.note;
     if (tx.receiptPath != null) data['receiptPath'] = tx.receiptPath;
@@ -74,6 +75,7 @@ class TransactionRepository {
       'source': tx.source == 'receipt' ? 'receipt' : 'manual',
       'merchant': merchant.isEmpty ? FieldValue.delete() : merchant,
       'note': note.isEmpty ? FieldValue.delete() : note,
+      'fxRate': tx.fxRate ?? FieldValue.delete(),
     };
     await _firestore
         .collection('users/$uid/transactions')

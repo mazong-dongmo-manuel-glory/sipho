@@ -51,10 +51,12 @@ export const parseReceipt = onCall(
       throw new HttpsError("permission-denied", "Cannot access another user's receipt.");
     }
 
+    // README §3.4: free quota 5 scans/day (Remote Config later; server enforces the cap).
+    const maxScansPerDay = Number(process.env.SCAN_QUOTA_PER_DAY ?? 5);
     await enforceRateLimit({
       uid,
       action: "parseReceipt",
-      maxRequests: 15,
+      maxRequests: Number.isFinite(maxScansPerDay) && maxScansPerDay > 0 ? maxScansPerDay : 5,
       windowMs: 24 * 60 * 60 * 1000,
     });
 

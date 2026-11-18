@@ -12,6 +12,7 @@ import 'package:sipho/core/animations/lottie_widget.dart';
 import 'package:sipho/core/animations/sipho_lotties.dart';
 import 'package:sipho/core/feedback/feedback_cue.dart';
 import 'package:sipho/core/feedback/feedback_service.dart';
+import 'package:sipho/core/firebase/firebase_providers.dart';
 import 'package:sipho/features/expenses/data/receipt_parser.dart';
 import 'package:sipho/features/expenses/domain/parsed_receipt.dart';
 
@@ -82,9 +83,21 @@ class _ReceiptScanScreenState extends ConsumerState<ReceiptScanScreen> {
     }
   }
 
+  int _scanQuotaPerDay(WidgetRef ref) {
+    try {
+      final rc = ref.read(firebaseRemoteConfigProvider);
+      final value = rc.getInt('scan_quota_per_day');
+      if (value > 0) return value;
+    } on Object {
+      // Defaults below if RC is unavailable (tests / offline).
+    }
+    return 5;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final quota = _scanQuotaPerDay(ref);
     return Scaffold(
       backgroundColor: AppColors.ink,
       body: SafeArea(
@@ -187,6 +200,16 @@ class _ReceiptScanScreenState extends ConsumerState<ReceiptScanScreen> {
               style: const TextStyle(
                 fontFamily: 'Nunito',
                 fontSize: 13,
+                color: AppColors.mist,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.scanQuotaLeft(quota),
+              style: const TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
                 color: AppColors.mist,
               ),
             ),

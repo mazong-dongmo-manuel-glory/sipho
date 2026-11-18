@@ -100,6 +100,13 @@ void main() {
       expect(cueEffect(SiphoCue.giftOpened).haptic, HapticKind.heavy);
       expect(cueEffect(SiphoCue.expenseAdded).haptic, HapticKind.medium);
     });
+
+    test('budget alert uses uh_oh and a worried voice', () {
+      final effect = cueEffect(SiphoCue.budgetAlert);
+      expect(effect.sound, SiphoSound.uhOh);
+      expect(effect.haptic, HapticKind.medium);
+      expect(effect.voice, SiphoSound.siphoWorried);
+    });
   });
 
   group('FeedbackSettings.fromToggles', () {

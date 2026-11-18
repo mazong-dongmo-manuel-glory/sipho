@@ -28,7 +28,8 @@ void main() {
       final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
       final bundled = manifest
           .listAssets()
-          .where((a) => a.startsWith('assets/animations/'))
+          .where((a) =>
+              a.startsWith('assets/animations/') && a.endsWith('.json'))
           .toSet();
       expect(SiphoLotties.all.toSet(), bundled);
       expect(SiphoLotties.all.length, SiphoLotties.all.toSet().length);

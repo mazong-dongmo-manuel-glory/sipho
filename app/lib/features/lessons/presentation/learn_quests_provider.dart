@@ -1,10 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/core/firebase/firebase_providers.dart';
 import 'package:sipho/features/auth/presentation/auth_provider.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
 import 'package:sipho/features/gamification/domain/quest_reward.dart';
 import 'package:sipho/features/insights/data/insight_service.dart';
+import 'package:sipho/features/lessons/domain/learn_quest_strings.dart';
 import 'package:sipho/features/lessons/domain/learn_quests.dart';
 
 /// Asks the server to make sure today's daily quests exist (once per session and account).
@@ -64,8 +66,10 @@ final serverQuestsStreamProvider =
   });
 });
 
+/// Learn-tab quests. Pass [l10n] so titles come from ARB (README rule 6).
 final learnQuestsProvider =
-    Provider.family<List<LearnQuestItem>, String>((ref, languageCode) {
+    Provider.family<List<LearnQuestItem>, AppLocalizations>((ref, l10n) {
+  final languageCode = l10n.localeName;
   final monthKey = currentMonthKey();
   final finance = ref.watch(userFinanceProvider).valueOrNull;
   final transactions =
@@ -79,7 +83,7 @@ final learnQuestsProvider =
   final mergedServer = [...serverQuests];
 
   // If the AI coach produced a suggested quest in client-only mode (before Functions
-  // wrote it to Firestore), surface it immediately with live progress!
+  // wrote it to Firestore), surface it immediately with live progress.
   final aiSuggestion = activeAdvice?.suggestedQuest;
   if (aiSuggestion != null &&
       !mergedServer.any(
@@ -105,6 +109,7 @@ final learnQuestsProvider =
   }
 
   return buildLearnQuests(
+    strings: LearnQuestStrings.fromL10n(l10n),
     languageCode: languageCode,
     completedLessonIds: completedSet,
     monthExpenseCount: transactions.length,

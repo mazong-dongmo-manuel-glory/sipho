@@ -5,6 +5,10 @@ export interface StreakInfoDoc {
   best: number;
   lastActiveDay: string | null;
   freezes: number;
+  /** ISO timestamp when the streak was last broken (repair window). */
+  brokenAt: string | null;
+  /** Streak length just before the break (restored by `repairStreak`). */
+  brokenCurrent: number;
 }
 
 export interface GameStateDoc {
@@ -39,7 +43,10 @@ export function normalizeStreak(
         : typeof legacyFreezes === "number"
           ? Math.max(0, Math.trunc(legacyFreezes))
           : 2;
-    return { current, best, lastActiveDay, freezes };
+    const brokenAt = typeof obj.brokenAt === "string" ? obj.brokenAt : null;
+    const brokenCurrent =
+      typeof obj.brokenCurrent === "number" ? Math.max(0, Math.trunc(obj.brokenCurrent)) : 0;
+    return { current, best, lastActiveDay, freezes, brokenAt, brokenCurrent };
   }
 
   const current = typeof raw === "number" ? Math.max(0, Math.trunc(raw)) : 0;
@@ -48,6 +55,8 @@ export function normalizeStreak(
     best: current,
     lastActiveDay: legacyLastLessonDate ?? null,
     freezes: typeof legacyFreezes === "number" ? Math.max(0, Math.trunc(legacyFreezes)) : 2,
+    brokenAt: null,
+    brokenCurrent: 0,
   };
 }
 
@@ -85,6 +94,8 @@ export function initialGameStatePayload(): Record<string, unknown> {
       best: 0,
       lastActiveDay: null,
       freezes: 2,
+      brokenAt: null,
+      brokenCurrent: 0,
     },
     leagueId: "bronze",
     weeklyXp: 0,
@@ -104,6 +115,8 @@ export function computeNextStreak(
         best: Math.max(1, current.best),
         lastActiveDay: todayIso,
         freezes: current.freezes,
+        brokenAt: null,
+        brokenCurrent: 0,
       },
       streakBonus: false,
     };
@@ -125,6 +138,8 @@ export function computeNextStreak(
         best: Math.max(nextCurrent, current.best),
         lastActiveDay: todayIso,
         freezes: current.freezes,
+        brokenAt: null,
+        brokenCurrent: 0,
       },
       streakBonus: nextCurrent >= 7,
     };
@@ -136,7 +151,40 @@ export function computeNextStreak(
       best: Math.max(1, current.best),
       lastActiveDay: todayIso,
       freezes: current.freezes,
+      brokenAt: new Date().toISOString(),
+      brokenCurrent: current.current,
     },
     streakBonus: false,
+  };
+}
+
+/** Streak milestones celebrated in the app (README §5.3). */
+export const STREAK_MILESTONES = [3, 7, 14, 30, 50, 100, 200, 365] as const;
+
+/** True when a repair is still possible (broken within the last 24 hours, freeze available). */
+export function canRepairStreak(
+  streak: StreakInfoDoc,
+  nowMs: number = Date.now()
+): boolean {
+  if (!streak.brokenAt || streak.brokenCurrent <= 0) return false;
+  if (streak.freezes < 1) return false;
+  const brokenMs = Date.parse(streak.brokenAt);
+  if (!Number.isFinite(brokenMs)) return false;
+  return nowMs - brokenMs <= 24 * 60 * 60 * 1000;
+}
+
+export function repairStreakState(
+  streak: StreakInfoDoc,
+  todayIso: string
+): StreakInfoDoc | null {
+  if (!canRepairStreak(streak)) return null;
+  const restored = Math.max(1, streak.brokenCurrent);
+  return {
+    current: restored,
+    best: Math.max(restored, streak.best),
+    lastActiveDay: todayIso,
+    freezes: streak.freezes - 1,
+    brokenAt: null,
+    brokenCurrent: 0,
   };
 }

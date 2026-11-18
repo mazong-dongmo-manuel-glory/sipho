@@ -1,20 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:sipho/core/firebase/firebase_providers.dart';
 import 'package:sipho/core/time/device_timezone.dart';
 import 'package:sipho/features/auth/domain/user_model.dart';
 
-part 'auth_repository.g.dart';
-
-@riverpod
-AuthRepository authRepository(AuthRepositoryRef ref) => AuthRepository(
-      firebaseAuth: ref.watch(firebaseAuthProvider),
-      firestore: ref.watch(firestoreProvider),
-    );
+final authRepositoryProvider = Provider<AuthRepository>(
+  (ref) => AuthRepository(
+    firebaseAuth: ref.watch(firebaseAuthProvider),
+    firestore: ref.watch(firestoreProvider),
+  ),
+);
 
 class AuthRepository {
   AuthRepository({
@@ -191,7 +190,7 @@ class AuthRepository {
     });
   }
 
-  /// Saves the answers from the three onboarding questions.
+  /// Saves the answers from the onboarding questions.
   /// Completion is a separate write, so the nest screens stay reachable.
   Future<void> saveOnboardingProfile({
     required String displayName,
@@ -199,6 +198,8 @@ class AuthRepository {
     required String currency,
     required String region,
     required String goal,
+    required String lifeStage,
+    int monthlyIncomeCents = 0,
   }) async {
     final user = _auth.currentUser;
     if (user == null) {
@@ -208,12 +209,15 @@ class AuthRepository {
     final deviceLocale = PlatformDispatcher.instance.locale;
     final language =
         deviceLocale.languageCode.toLowerCase().startsWith('fr') ? 'fr' : 'en';
+    final income = monthlyIncomeCents < 0 ? 0 : monthlyIncomeCents;
     await _firestore.collection('users').doc(user.uid).update({
       'displayName': displayName,
       'countryCode': countryCode,
       'currency': currency,
       'region': region,
       'goal': goal,
+      'lifeStage': lifeStage,
+      'monthlyIncomeCents': income,
       'locale': language,
     });
   }
@@ -224,9 +228,17 @@ class AuthRepository {
       throw StateError('Not signed in');
     }
     await ensureProfile(user);
-    await _firestore.collection('users').doc(user.uid).update({
+    final batch = _firestore.batch();
+    batch.update(_firestore.collection('users').doc(user.uid), {
       'onboardingDone': true,
     });
+    // Touch game state so `onGameBadgeCheck` can award the "builder" badge.
+    batch.set(
+      _firestore.doc('users/${user.uid}/game/state'),
+      {'updatedAt': FieldValue.serverTimestamp()},
+      SetOptions(merge: true),
+    );
+    await batch.commit();
   }
 
   /// Updates editable profile fields on `users/{uid}`.

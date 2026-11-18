@@ -109,6 +109,13 @@ class _ChestOpenScreenState extends ConsumerState<ChestOpenScreen> {
                           width: 320,
                           height: 260,
                         ),
+                      if (_open)
+                        const LottieWidget(
+                          assetPath: SiphoLotties.questComplete,
+                          width: 140,
+                          height: 140,
+                          repeat: false,
+                        ),
                       _Gift(open: _open),
                     ],
                   ),

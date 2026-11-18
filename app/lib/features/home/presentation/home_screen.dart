@@ -9,6 +9,8 @@ import 'package:sipho/app/theme/app_spacing.dart';
 import 'package:sipho/core/ai/sipho_ai_client.dart';
 import 'package:sipho/core/animations/lottie_widget.dart';
 import 'package:sipho/core/animations/sipho_lotties.dart';
+import 'package:sipho/core/feedback/feedback_cue.dart';
+import 'package:sipho/core/feedback/feedback_service.dart';
 import 'package:sipho/core/money/money.dart';
 import 'package:sipho/core/money/money_formatter.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
@@ -32,6 +34,9 @@ import 'package:sipho/features/notifications/data/notification_service.dart';
 
 final homeRewardProvider =
     StateProvider<({String amount, String category})?>((ref) => null);
+
+/// Plays [SiphoCue.budgetAlert] at most once per session when remaining goes negative.
+final _budgetAlertPlayedProvider = StateProvider<bool>((ref) => false);
 
 Future<void> _askInsight(
   BuildContext context,
@@ -115,6 +120,17 @@ class HomeScreen extends ConsumerWidget {
     );
     final insightState = ref.watch(insightControllerProvider);
     final activeAdvice = ref.watch(activeCoachAdviceProvider);
+    ref.listen(monthSummaryProvider(monthKey), (previous, next) {
+      final data = next.valueOrNull;
+      if (data == null || !data.hasIncome || data.remainingCents >= 0) return;
+      final wasOk = previous?.valueOrNull == null ||
+          !(previous!.valueOrNull!.hasIncome) ||
+          previous.valueOrNull!.remainingCents >= 0;
+      if (!wasOk) return;
+      if (ref.read(_budgetAlertPlayedProvider)) return;
+      ref.read(_budgetAlertPlayedProvider.notifier).state = true;
+      ref.read(feedbackServiceProvider).play(SiphoCue.budgetAlert);
+    });
     ref.listen(pendingNotificationRouteProvider, (previous, next) {
       if (next == null) return;
       ref.read(pendingNotificationRouteProvider.notifier).state = null;

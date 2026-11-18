@@ -1,0 +1,36 @@
+{
+  "code": "SN",
+  "name": "Sénégal",
+  "currency": "XOF",
+  "packLevel": "partial",
+  "version": 1,
+  "verifiedAt": "2026-11-17",
+  "regions": {
+    "DK": { "name": "Dakar" },
+    "TH": { "name": "Thiès" },
+    "SL": { "name": "Saint-Louis" }
+  },
+  "savingsAccounts": [
+    { "id": "tontine", "name": { "fr": "Tontine / Natt", "en": "Tontine Rotating Savings" }, "lessonId": "sn_tontine_101" },
+    { "id": "mobile_money_save", "name": { "fr": "Épargne Mobile Money (Wave/Orange)", "en": "Mobile Money Savings" }, "lessonId": "sn_momo_101" }
+  ],
+  "retirement": {
+    "publicPlans": ["IPRES", "CSS"],
+    "accounts": []
+  },
+  "regulatorNotice": {
+    "fr": "Contenu informatif et éducatif. Pas un conseil financier personnalisé.",
+    "en": "Informational and educational content. Not personalized financial advice."
+  },
+  "economySources": ["bceao", "ansd", "worldbank"],
+  "defaultFixedExpenses": [
+    "rent",
+    "electricity_senelec",
+    "water_sde",
+    "internet_data",
+    "phone",
+    "groceries_market",
+    "transport_car_rapide",
+    "family_support"
+  ]
+}

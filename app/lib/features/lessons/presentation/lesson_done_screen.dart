@@ -54,16 +54,24 @@ class LessonDoneScreen extends ConsumerWidget {
                   color: AppColors.primaryDark,
                 ),
               ),
-              const Expanded(
+              Expanded(
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    LottieWidget(
+                    const LottieWidget(
                       assetPath: SiphoLotties.confetti,
                       width: 340,
                       height: 280,
                     ),
-                    SiphoArt.celebrating(frame: 240),
+                    if (result.levelUp)
+                      const LottieWidget(
+                        assetPath: SiphoLotties.levelUp,
+                        width: 180,
+                        height: 180,
+                        repeat: false,
+                      )
+                    else
+                      const SiphoArt.celebrating(frame: 240),
                   ],
                 ),
               ),

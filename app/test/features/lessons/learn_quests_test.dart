@@ -1,9 +1,41 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sipho/features/lessons/domain/learn_quest_strings.dart';
 import 'package:sipho/features/lessons/domain/learn_quests.dart';
+
+LearnQuestStrings _en() => LearnQuestStrings(
+      completeLessonTitle: 'Complete a lesson',
+      completeLessonSubtitle: 'Answer the quiz right to unlock the next step',
+      finishUnitTitle: (count) => 'Finish the unit ($count lessons)',
+      finishUnitSubtitle: (unitTitle, bonusXp) =>
+          '$unitTitle · $bonusXp XP bonus at the end',
+      buildFoundationTitle: 'Set up your monthly base',
+      buildFoundationSubtitle: 'Set your income and at least 1 fixed bill',
+      trackThreeTitle: 'Log 3 expenses this month',
+      trackThreeSubtitle: 'Put the spending tracking lesson into practice',
+      lessonChallengeFallback: 'Lesson challenge',
+      trackingChallengeFallback: 'Tracking challenge',
+      personalizedChallengeFallback: 'Personalized Sipho challenge',
+    );
+
+LearnQuestStrings _fr() => LearnQuestStrings(
+      completeLessonTitle: 'Valider une leçon',
+      completeLessonSubtitle: 'Réponds juste au quiz pour débloquer la suite',
+      finishUnitTitle: (count) => 'Terminer l\'unité ($count leçons)',
+      finishUnitSubtitle: (unitTitle, bonusXp) =>
+          '$unitTitle · bonus de $bonusXp XP à la fin',
+      buildFoundationTitle: 'Poser ton socle du mois',
+      buildFoundationSubtitle: 'Indique ton revenu et au moins 1 charge fixe',
+      trackThreeTitle: 'Noter 3 dépenses ce mois-ci',
+      trackThreeSubtitle: 'Mets en pratique la leçon sur le suivi',
+      lessonChallengeFallback: 'Défi leçon',
+      trackingChallengeFallback: 'Défi suivi',
+      personalizedChallengeFallback: 'Défi personnalisé Sipho',
+    );
 
 void main() {
   test('builds core learning quests with accurate routes and progress', () {
     final quests = buildLearnQuests(
+      strings: _fr(),
       languageCode: 'fr',
       completedLessonIds: const {'emergency_fund'},
       monthExpenseCount: 2,
@@ -15,6 +47,7 @@ void main() {
 
     final firstLesson = quests.firstWhere((q) => q.id == 'learn_first_lesson');
     expect(firstLesson.isCompleted, isTrue);
+    expect(firstLesson.title, 'Valider une leçon');
 
     final unitMastery = quests.firstWhere((q) => q.id == 'learn_unit_mastery');
     expect(unitMastery.clampedProgress, 1);
@@ -34,6 +67,7 @@ void main() {
 
   test('the unit quest follows the unit in progress', () {
     final quests = buildLearnQuests(
+      strings: _en(),
       languageCode: 'en',
       completedLessonIds: const {
         'emergency_fund',
@@ -55,6 +89,7 @@ void main() {
 
   test('prepends AI server quests and marks completed ones claimable', () {
     final quests = buildLearnQuests(
+      strings: _en(),
       languageCode: 'en',
       completedLessonIds: const {},
       monthExpenseCount: 3,

@@ -1,8 +1,5 @@
-// Firebase options for the DEV flavor (`lib/main_dev.dart`).
-//
-// Today the dev flavor uses the only Firebase project that exists (`sipho-f5a01`). Staging and
-// production have their own files (firebase_options_staging.dart / firebase_options_prod.dart)
-// and must never point at this project; `assertFirebaseConfigured` enforces it at startup.
+// Firebase options for the DEV entry (`lib/main_dev.dart` / debug builds).
+// Same Firebase project as release (`sipho-f5a01`).
 //
 // Client API keys are identifiers, not secrets: access is enforced by Firestore rules + App Check.
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;

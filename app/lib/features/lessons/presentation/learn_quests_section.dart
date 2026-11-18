@@ -29,9 +29,8 @@ class _LearnQuestsSectionState extends ConsumerState<LearnQuestsSection> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final language = Localizations.localeOf(context).languageCode;
     final insightState = ref.watch(insightControllerProvider);
-    final quests = ref.watch(learnQuestsProvider(language));
+    final quests = ref.watch(learnQuestsProvider(l10n));
     final claimingId = ref.watch(questClaimControllerProvider);
     final doneQuestsCount = quests.where((q) => q.isCompleted).length;
     final hasClaimable =

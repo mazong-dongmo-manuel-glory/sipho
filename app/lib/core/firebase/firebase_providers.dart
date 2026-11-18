@@ -6,38 +6,30 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-part 'firebase_providers.g.dart';
+final firebaseAuthProvider =
+    Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
 
-@riverpod
-FirebaseAuth firebaseAuth(FirebaseAuthRef ref) => FirebaseAuth.instance;
+final firestoreProvider =
+    Provider<FirebaseFirestore>((ref) => FirebaseFirestore.instance);
 
-@riverpod
-FirebaseFirestore firestore(FirestoreRef ref) => FirebaseFirestore.instance;
+final firebaseStorageProvider =
+    Provider<FirebaseStorage>((ref) => FirebaseStorage.instance);
 
-@riverpod
-FirebaseStorage firebaseStorage(FirebaseStorageRef ref) =>
-    FirebaseStorage.instance;
+/// Same region as every Cloud Function (`us-central1`).
+final firebaseFunctionsProvider = Provider<FirebaseFunctions>(
+  (ref) => FirebaseFunctions.instanceFor(region: 'us-central1'),
+);
 
-/// Same region as every Cloud Function (`us-central1`). The default is that region today, but
-/// an explicit value keeps callables working if the SDK ever changes its fallback.
-@riverpod
-FirebaseFunctions firebaseFunctions(FirebaseFunctionsRef ref) =>
-    FirebaseFunctions.instanceFor(region: 'us-central1');
+final firebaseMessagingProvider =
+    Provider<FirebaseMessaging>((ref) => FirebaseMessaging.instance);
 
-@riverpod
-FirebaseMessaging firebaseMessaging(FirebaseMessagingRef ref) =>
-    FirebaseMessaging.instance;
+final firebaseAnalyticsProvider =
+    Provider<FirebaseAnalytics>((ref) => FirebaseAnalytics.instance);
 
-@riverpod
-FirebaseAnalytics firebaseAnalytics(FirebaseAnalyticsRef ref) =>
-    FirebaseAnalytics.instance;
+final firebaseCrashlyticsProvider =
+    Provider<FirebaseCrashlytics>((ref) => FirebaseCrashlytics.instance);
 
-@riverpod
-FirebaseCrashlytics firebaseCrashlytics(FirebaseCrashlyticsRef ref) =>
-    FirebaseCrashlytics.instance;
-
-@riverpod
-FirebaseRemoteConfig firebaseRemoteConfig(FirebaseRemoteConfigRef ref) =>
-    FirebaseRemoteConfig.instance;
+final firebaseRemoteConfigProvider =
+    Provider<FirebaseRemoteConfig>((ref) => FirebaseRemoteConfig.instance);

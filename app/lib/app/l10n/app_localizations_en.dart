@@ -71,6 +71,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'By continuing, you accept our terms\nand our privacy policy.';
 
   @override
+  String get settingsPrivacyPolicy => 'Privacy policy';
+
+  @override
   String get logoutBtn => 'Sign out';
 
   @override
@@ -129,6 +132,44 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get onboardingGoalCheer =>
       'We\'ll get there, one small step at a time!';
+
+  @override
+  String get onboardingLifeHeading => 'Where are you in life?';
+
+  @override
+  String get onboardingLifeLead => 'We adapt tips and lessons to your stage.';
+
+  @override
+  String get onboardingLifeStudent => 'Student';
+
+  @override
+  String get onboardingLifeFirstJob => 'First job';
+
+  @override
+  String get onboardingLifeFamily => 'Family life';
+
+  @override
+  String get onboardingLifePreRetirement => 'Pre-retirement';
+
+  @override
+  String get onboardingLifeRetired => 'Retired';
+
+  @override
+  String get onboardingIncomeHeading => 'Your monthly income';
+
+  @override
+  String get onboardingIncomeLead =>
+      'Optional — unlocks “left to spend” and under-budget quests.';
+
+  @override
+  String get onboardingIncomeBubble =>
+      'A rough number is enough. You can refine it later in your profile.';
+
+  @override
+  String get onboardingIncomeHint => 'Net income per month · you can skip';
+
+  @override
+  String get onboardingIncomeSkip => 'I\'LL SET THIS LATER';
 
   @override
   String get onboardingBuildNest => 'BUILD MY NEST';
@@ -1347,10 +1388,110 @@ class AppLocalizationsEn extends AppLocalizations {
   String get badgeLeagueSilverHint => 'Move up to the Silver league.';
 
   @override
+  String get badgeBuilder => 'Nest builder';
+
+  @override
+  String get badgeBuilderHint => 'Finish building your nest (onboarding).';
+
+  @override
+  String get badgeUnit3 => 'Money-smart';
+
+  @override
+  String get badgeUnit3Hint => 'Finish unit 3.';
+
+  @override
   String get badgeEarnedLabel => 'Earned';
 
   @override
   String get badgeLockedLabel => 'To earn';
+
+  @override
+  String get learnQuestCompleteLesson => 'Complete a lesson';
+
+  @override
+  String get learnQuestCompleteLessonSub =>
+      'Answer the quiz right to unlock the next step';
+
+  @override
+  String learnQuestFinishUnit(int count) {
+    return 'Finish the unit ($count lessons)';
+  }
+
+  @override
+  String learnQuestFinishUnitSub(String unitTitle, int bonusXp) {
+    return '$unitTitle · $bonusXp XP bonus at the end';
+  }
+
+  @override
+  String get learnQuestBuildFoundation => 'Set up your monthly base';
+
+  @override
+  String get learnQuestBuildFoundationSub =>
+      'Set your income and at least 1 fixed bill';
+
+  @override
+  String get learnQuestTrackThree => 'Log 3 expenses this month';
+
+  @override
+  String get learnQuestTrackThreeSub =>
+      'Put the spending tracking lesson into practice';
+
+  @override
+  String get learnQuestLessonChallenge => 'Lesson challenge';
+
+  @override
+  String get learnQuestTrackingChallenge => 'Tracking challenge';
+
+  @override
+  String get learnQuestPersonalized => 'Personalized Sipho challenge';
+
+  @override
+  String get onboardingLocating => 'Finding your location…';
+
+  @override
+  String get onboardingLocationDenied =>
+      'Location permission denied. Pick your country instead.';
+
+  @override
+  String get onboardingLocationError =>
+      'Couldn’t read your location. Pick your country instead.';
+
+  @override
+  String get streakMilestonesTitle => 'Streak milestones';
+
+  @override
+  String get streakMilestoneReached => 'Reached!';
+
+  @override
+  String get streakRepairTitle => 'Repair your streak?';
+
+  @override
+  String get streakRepairBody =>
+      'You missed yesterday. Repair within 24 h using 1 freeze.';
+
+  @override
+  String get streakRepairCta => 'REPAIR STREAK';
+
+  @override
+  String get streakRepairDone => 'Streak repaired!';
+
+  @override
+  String get streakRepairError => 'Couldn’t repair the streak.';
+
+  @override
+  String get streakRepairNoFreeze => 'You need a streak freeze (shop).';
+
+  @override
+  String get expenseCurrencyLabel => 'Currency';
+
+  @override
+  String get expenseFxUnavailable =>
+      'Exchange rate unavailable for that currency. Try again later or use your main currency.';
+
+  @override
+  String scanQuotaLeft(int count) {
+    return '$count scans left today';
+  }
 
   @override
   String get profileGoals => 'My goals';

@@ -21,7 +21,7 @@ enum SiphoSound {
   leagueUp('league_up'),
   lessonDone('lesson_done'),
 
-  /// Reserved for budget alerts: no client-side trigger exists yet.
+  /// Budget alert (`SiphoCue.budgetAlert`) when remaining goes negative.
   uhOh('uh_oh'),
   siphoHappy('sipho_happy', isVoice: true),
   siphoProud('sipho_proud', isVoice: true),

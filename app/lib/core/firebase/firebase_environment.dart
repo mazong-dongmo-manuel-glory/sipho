@@ -1,16 +1,17 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 
-/// Marker used by the generated option files until `flutterfire configure` has been run for
-/// that environment.
+/// Marker used by option files until `flutterfire configure` has been run.
 const kUnconfiguredFirebaseValue = 'REPLACE_ME';
 
-/// Firebase project behind the `dev` flavor. No other flavor may ever point at it.
-const kDevFirebaseProjectId = 'sipho-f5a01';
+/// The only Firebase project Sipho uses today (dev and release share it).
+const kFirebaseProjectId = 'sipho-f5a01';
+
+/// Kept for older comments / checks that still say "dev project".
+const kDevFirebaseProjectId = kFirebaseProjectId;
 
 const kFirebaseFlavors = <String>['dev', 'staging', 'prod'];
 
-/// Fails fast when a flavor is wired to a missing or wrong Firebase project, so a production
-/// or staging build can never silently talk to the development project (and its data).
+/// Fails fast when a flavor's Firebase options are still placeholders.
 void assertFirebaseConfigured(
   FirebaseOptions options, {
   required String flavor,
@@ -28,16 +29,15 @@ void assertFirebaseConfigured(
   if (unconfigured) {
     throw StateError(
       'Firebase is not configured for the "$flavor" flavor. '
-      'Run `flutterfire configure --project=sipho-$flavor '
-      '--out=lib/core/firebase/firebase_options_$flavor.dart` '
-      'and add the matching google-services.json under android/app/ (dev only).',
+      'Point firebase_options_$flavor.dart at $kFirebaseProjectId '
+      '(or run flutterfire configure for a dedicated project later).',
     );
   }
 
-  if (flavor != 'dev' && options.projectId == kDevFirebaseProjectId) {
+  if (options.projectId != kFirebaseProjectId) {
     throw StateError(
-      'The "$flavor" flavor points at the dev Firebase project '
-      '($kDevFirebaseProjectId). Each flavor needs its own project.',
+      'The "$flavor" flavor points at "${options.projectId}", but Sipho '
+      'currently uses a single Firebase project ($kFirebaseProjectId).',
     );
   }
 }

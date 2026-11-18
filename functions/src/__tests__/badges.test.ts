@@ -13,6 +13,11 @@ describe("badges", () => {
     expect(new Set(BADGE_IDS).size).toBe(BADGE_IDS.length);
   });
 
+  test("builder badge requires onboardingDone", () => {
+    expect(earnedBadges({ ...none, onboardingDone: false })).toEqual([]);
+    expect(earnedBadges({ ...none, onboardingDone: true })).toEqual(["builder"]);
+  });
+
   test("lesson badges: first lesson, then each unit once all its lessons are done", () => {
     const one = { ...none, completedLessonIds: new Set(["emergency_fund"]) };
     expect(earnedBadges(one)).toEqual(["first_lesson"]);

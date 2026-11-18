@@ -181,10 +181,13 @@
 |---|---|---|---|---|
 | `sipho_mascot.riv` | Rive | content, fier, danse, inquiet, triste, endormi, fête, neutre (8 émotions) | Phase 0 | ⬜ |
 | `sipho_nest.riv` | Rive | vide → tissage progressif → complet | Phase 0 | ⬜ |
-| `confetti_celebration.json` | Lottie | Explosion confettis jaunes/verts | Phase 0 | ⬜ |
-| `xp_coins.json` | Lottie | Pièces qui volent vers pastille XP | Phase 4 | ⬜ |
-| `streak_fire.json` | Lottie | Flamme qui brûle (série active) | Phase 4 | ⬜ |
-| `scan_laser.json` | Lottie | Rayon laser qui balaie | Phase 3 | ⬜ |
+| `confetti_celebration.json` | Lottie | Explosion confettis jaunes/verts | Phase 0 | ✅ placeholder |
+| `xp_coins.json` | Lottie | Pièces qui volent vers pastille XP | Phase 4 | ✅ placeholder |
+| `streak_fire.json` | Lottie | Flamme qui brûle (série active) | Phase 4 | ✅ placeholder |
+| `scan_laser.json` | Lottie | Rayon laser qui balaie | Phase 3 | ✅ placeholder |
+| `quest_complete.json` | Lottie | Validation de quête (IconScout) | Phase 4 | ✅ |
+| `podium.json` | Lottie | Trophée / podium ligue (IconScout) | Phase 4 | ✅ |
+| `level_up.json` | Lottie | Montée de niveau | Phase 4 | ✅ générée |
 
 ---
 

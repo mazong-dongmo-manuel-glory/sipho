@@ -71,6 +71,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'En continuant, tu acceptes nos conditions\net notre politique de confidentialité.';
 
   @override
+  String get settingsPrivacyPolicy => 'Politique de confidentialité';
+
+  @override
   String get logoutBtn => 'Se déconnecter';
 
   @override
@@ -129,6 +132,44 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get onboardingGoalCheer => 'On y va, un petit pas à la fois !';
+
+  @override
+  String get onboardingLifeHeading => 'Où en es-tu dans la vie ?';
+
+  @override
+  String get onboardingLifeLead => 'On adapte conseils et leçons à ton étape.';
+
+  @override
+  String get onboardingLifeStudent => 'Étudiant·e';
+
+  @override
+  String get onboardingLifeFirstJob => 'Premier emploi';
+
+  @override
+  String get onboardingLifeFamily => 'Vie de famille';
+
+  @override
+  String get onboardingLifePreRetirement => 'Avant la retraite';
+
+  @override
+  String get onboardingLifeRetired => 'À la retraite';
+
+  @override
+  String get onboardingIncomeHeading => 'Ton revenu mensuel';
+
+  @override
+  String get onboardingIncomeLead =>
+      'Optionnel — débloque le « reste à vivre » et les quêtes sous budget.';
+
+  @override
+  String get onboardingIncomeBubble =>
+      'Un ordre de grandeur suffit. Tu pourras l’ajuster plus tard dans ton profil.';
+
+  @override
+  String get onboardingIncomeHint => 'Revenu net par mois · tu peux passer';
+
+  @override
+  String get onboardingIncomeSkip => 'JE LE FERAI PLUS TARD';
 
   @override
   String get onboardingBuildNest => 'CONSTRUIRE MON NID';
@@ -1354,10 +1395,111 @@ class AppLocalizationsFr extends AppLocalizations {
   String get badgeLeagueSilverHint => 'Monte en ligue Argent.';
 
   @override
+  String get badgeBuilder => 'Bâtisseur';
+
+  @override
+  String get badgeBuilderHint =>
+      'Termine la construction de ton nid (onboarding).';
+
+  @override
+  String get badgeUnit3 => 'Malin de l\'argent';
+
+  @override
+  String get badgeUnit3Hint => 'Termine l\'unité 3.';
+
+  @override
   String get badgeEarnedLabel => 'Obtenu';
 
   @override
   String get badgeLockedLabel => 'À gagner';
+
+  @override
+  String get learnQuestCompleteLesson => 'Valider une leçon';
+
+  @override
+  String get learnQuestCompleteLessonSub =>
+      'Réponds juste au quiz pour débloquer la suite';
+
+  @override
+  String learnQuestFinishUnit(int count) {
+    return 'Terminer l\'unité ($count leçons)';
+  }
+
+  @override
+  String learnQuestFinishUnitSub(String unitTitle, int bonusXp) {
+    return '$unitTitle · bonus de $bonusXp XP à la fin';
+  }
+
+  @override
+  String get learnQuestBuildFoundation => 'Poser ton socle du mois';
+
+  @override
+  String get learnQuestBuildFoundationSub =>
+      'Indique ton revenu et au moins 1 charge fixe';
+
+  @override
+  String get learnQuestTrackThree => 'Noter 3 dépenses ce mois-ci';
+
+  @override
+  String get learnQuestTrackThreeSub =>
+      'Mets en pratique la leçon sur le suivi';
+
+  @override
+  String get learnQuestLessonChallenge => 'Défi leçon';
+
+  @override
+  String get learnQuestTrackingChallenge => 'Défi suivi';
+
+  @override
+  String get learnQuestPersonalized => 'Défi personnalisé Sipho';
+
+  @override
+  String get onboardingLocating => 'Recherche de ta position…';
+
+  @override
+  String get onboardingLocationDenied =>
+      'Permission refusée. Choisis ton pays à la place.';
+
+  @override
+  String get onboardingLocationError =>
+      'Impossible de lire ta position. Choisis ton pays.';
+
+  @override
+  String get streakMilestonesTitle => 'Paliers de série';
+
+  @override
+  String get streakMilestoneReached => 'Atteint !';
+
+  @override
+  String get streakRepairTitle => 'Réparer ta série ?';
+
+  @override
+  String get streakRepairBody =>
+      'Tu as manqué hier. Répare sous 24 h avec 1 gel.';
+
+  @override
+  String get streakRepairCta => 'RÉPARER LA SÉRIE';
+
+  @override
+  String get streakRepairDone => 'Série réparée !';
+
+  @override
+  String get streakRepairError => 'Impossible de réparer la série.';
+
+  @override
+  String get streakRepairNoFreeze => 'Il te faut un gel de série (boutique).';
+
+  @override
+  String get expenseCurrencyLabel => 'Devise';
+
+  @override
+  String get expenseFxUnavailable =>
+      'Taux de change indisponible pour cette devise. Réessaie plus tard ou utilise ta devise principale.';
+
+  @override
+  String scanQuotaLeft(int count) {
+    return '$count scans restants aujourd\'hui';
+  }
 
   @override
   String get profileGoals => 'Mes objectifs';

@@ -1,0 +1,36 @@
+{
+  "code": "CI",
+  "name": "Côte d'Ivoire",
+  "currency": "XOF",
+  "packLevel": "partial",
+  "version": 1,
+  "verifiedAt": "2026-11-17",
+  "regions": {
+    "ABJ": { "name": "Abidjan" },
+    "YM": { "name": "Yamoussoukro" },
+    "BS": { "name": "Bouaké" }
+  },
+  "savingsAccounts": [
+    { "id": "tontine", "name": { "fr": "Tontine", "en": "Tontine Rotating Savings" }, "lessonId": "ci_tontine_101" },
+    { "id": "mobile_money_save", "name": { "fr": "Épargne Mobile Money (Wave/Orange/MTN)", "en": "Mobile Money Savings" }, "lessonId": "ci_momo_101" }
+  ],
+  "retirement": {
+    "publicPlans": ["CNPS"],
+    "accounts": []
+  },
+  "regulatorNotice": {
+    "fr": "Contenu informatif et éducatif. Pas un conseil financier personnalisé.",
+    "en": "Informational and educational content. Not personalized financial advice."
+  },
+  "economySources": ["bceao", "ins_ci", "worldbank"],
+  "defaultFixedExpenses": [
+    "rent",
+    "electricity_cie",
+    "water_sodeci",
+    "internet_data",
+    "phone",
+    "groceries_market",
+    "transport_gbaka",
+    "family_support"
+  ]
+}

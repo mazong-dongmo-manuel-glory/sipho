@@ -1,19 +1,17 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sipho/features/auth/data/auth_repository.dart';
 
-part 'auth_provider.g.dart';
+final authStateProvider = StreamProvider<User?>((ref) {
+  return ref.watch(authRepositoryProvider).authStateChanges;
+});
 
-@riverpod
-Stream<User?> authState(AuthStateRef ref) =>
-    ref.watch(authRepositoryProvider).authStateChanges;
+final authNotifierProvider =
+    NotifierProvider<AuthNotifier, AsyncValue<User?>>(AuthNotifier.new);
 
-@riverpod
-class AuthNotifier extends _$AuthNotifier {
+class AuthNotifier extends Notifier<AsyncValue<User?>> {
   @override
-  AsyncValue<User?> build() {
-    return const AsyncValue.data(null);
-  }
+  AsyncValue<User?> build() => const AsyncValue.data(null);
 
   Future<void> signInWithGoogle() async {
     state = const AsyncValue.loading();

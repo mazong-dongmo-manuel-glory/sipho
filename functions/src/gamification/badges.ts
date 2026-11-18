@@ -32,6 +32,7 @@ export async function syncBadges(uid: string): Promise<string[]> {
       bestStreak: game.streak.best,
       leagueId: game.leagueId,
       completedLessonIds,
+      onboardingDone: userSnap.data()?.onboardingDone === true,
     },
     game.badges
   );

@@ -1,15 +1,11 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+class Money {
+  const Money({
+    required this.cents,
+    required this.currency,
+  });
 
-part 'money.freezed.dart';
-
-@freezed
-class Money with _$Money {
-  // ignore: unused_element
-  const Money._();
-  const factory Money({
-    required int cents,
-    required String currency,
-  }) = _Money;
+  final int cents;
+  final String currency;
 
   static const Money zero = Money(cents: 0, currency: 'CAD');
 
@@ -32,4 +28,12 @@ class Money with _$Money {
   /// Returns cents clamped to [min, max].
   Money clamp(int minCents, int maxCents) =>
       Money(cents: cents.clamp(minCents, maxCents), currency: currency);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Money && other.cents == cents && other.currency == currency;
+
+  @override
+  int get hashCode => Object.hash(cents, currency);
 }

@@ -9,6 +9,22 @@ et ce projet adhère au [Versionnage Sémantique](https://semver.org/lang/fr/).
 
 ## [Unreleased] - 2026-11-12
 
+### Ajouté — Fonctionnalités MVP manquantes (i18n, géoloc, packs, unité 3, FX, série, badges, quotas)
+- Quêtes Apprendre : textes FR/EN via ARB (`LearnQuestStrings`) — plus de chaînes en dur dans le domaine.
+- Onboarding : « Utiliser ma position » (`LocationService` + geolocator/geocoding) ne conserve que pays / région / devise.
+- Packs pays **CI** et **SN** (`content/countries/`) importables avec le script existant.
+- Unité 3 : `debt_basics`, `inflation_101`, `spotting_scams` (catalogue app ↔ `LESSON_UNITS` serveur) + badge `unit_3`.
+- Multi-devises : sélecteur à l'ajout express, conversion via `fx/latest`, persistance `amountMainCents` + `fxRate` ; scheduler `fxRates` écrit le doc seulement si `FX_FEED_URL` renvoie un flux valide.
+- Série : réparation sous 24 h (`repairStreak` + UI) et paliers 3 / 7 / 14 / 30…
+- Badge **Bâtisseur** à la fin d'onboarding (`onboardingDone` + touch `game/state`).
+- Quotas scan : plafond serveur `SCAN_QUOTA_PER_DAY` (défaut 5) + Remote Config `scan_quota_per_day` affiché sur l'écran scan.
+- Contournement codegen : modèles plain Dart ; providers Riverpod manuels (`firebase_providers`, auth, router, analytics) — `riverpod_generator` désactivé dans `build.yaml` (mismatch analyzer).
+
+### Ajouté — Onboarding enrichi, Lottie IconScout, alerte budget
+- Onboarding : étapes **étape de vie** (`lifeStage`) et **revenu mensuel** optionnel (skip) avant le nid — le reste à vivre et les quêtes « sous budget » ne dépendent plus d’un passage par le profil.
+- Lottie manquantes branchées : `quest_complete` et `podium` (téléchargements IconScout free, crédits dans `assets/animations/CREDITS.txt`), `level_up` (générée aux couleurs Sipho). Affichées à l’ouverture du cadeau, sur la ligue / promotion, et en fin de leçon si passage de niveau.
+- `SiphoCue.budgetAlert` + son `uh_oh` : joué une fois par session quand le reste à vivre passe sous zéro.
+
 ### Corrigé — Impossible de terminer une leçon (`UNAUTHENTICATED`)
 - Cause : Cloud Run (Functions Gen2) refusait l'appel à `completeLesson` **avant** le code Firebase (`The request was not authorized to invoke this service`). L'app voyait `firebase_functions/unauthenticated` alors que l'utilisateur était bien connecté.
 - Correctif serveur : redéploiement des callables sur `sipho-f5a01` pour rétablir l'invoker public (Auth Firebase reste vérifiée dans la fonction).

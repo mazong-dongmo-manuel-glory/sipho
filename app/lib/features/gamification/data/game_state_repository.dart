@@ -55,6 +55,8 @@ class GameStateRepository {
             best: (rawStreak['best'] as num?)?.toInt() ?? 0,
             lastActiveDay: rawStreak['lastActiveDay'] as String?,
             freezes: (rawStreak['freezes'] as num?)?.toInt() ?? 2,
+            brokenAt: rawStreak['brokenAt'] as String?,
+            brokenCurrent: (rawStreak['brokenCurrent'] as num?)?.toInt() ?? 0,
           )
         : StreakInfo(
             current: (rawStreak is num) ? rawStreak.toInt() : 0,

@@ -115,8 +115,11 @@ export async function processUserRollover(
         });
         logger.info("streak freeze applied", { uid });
       } else {
+        const brokenAt = now.toISOString();
         tx.update(gameRef, {
           "streak.current": 0,
+          "streak.brokenAt": brokenAt,
+          "streak.brokenCurrent": game.streak.current,
           lastRolloverDay: todayKey,
           updatedAt: FieldValue.serverTimestamp(),
         });
