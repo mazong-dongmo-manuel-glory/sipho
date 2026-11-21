@@ -2,8 +2,9 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-/// Debug token of the DEV Firebase project (sipho-f5a01), registered once in
-/// Firebase Console > App Check > Apps > (Android and iOS) > Manage debug tokens.
+/// Debug token of the staging/dev Firebase project (`sipho-staging`, console
+/// « sipho-dev »), registered once in Firebase Console > App Check > Apps >
+/// (Android and iOS) > Manage debug tokens.
 ///
 /// It is a credential: the repository is public, so it must NEVER be written in the source. It is
 /// passed at launch with `--dart-define=APP_CHECK_DEBUG_TOKEN=<uuid>` (kept in the git-ignored

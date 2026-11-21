@@ -420,6 +420,11 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String friendsRedeemDonePending(int days) {
+    return 'Bienvenue ! Vous êtes amis. Reste actif $days jours pour débloquer l\'XP de parrainage (anti-abus).';
+  }
+
+  @override
   String get friendsCodeInvalid =>
       'Entre un code valide (lettres et chiffres).';
 
@@ -574,6 +579,21 @@ class AppLocalizationsFr extends AppLocalizations {
       'Sipho n\'affiche un taux que s\'il vient d\'une source datée.';
 
   @override
+  String homeCountryEconomyTitle(String country) {
+    return 'Économie · $country';
+  }
+
+  @override
+  String homeEconomyInflationChip(String value) {
+    return 'Inflation $value';
+  }
+
+  @override
+  String homeEconomyRateChip(String value) {
+    return 'Taux directeur $value';
+  }
+
+  @override
   String get expenseDeleted => 'Dépense retirée';
 
   @override
@@ -697,7 +717,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get rewardHabit => 'Une bonne habitude de plus !';
 
   @override
-  String get rewardXp => '+5 XP';
+  String get rewardXp => '+2 XP';
 
   @override
   String get rewardToast => '✓  Bien joué ! Ta quête avance.';
@@ -791,6 +811,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get expenseScanned => 'Épicerie · 📷 scanné';
+
+  @override
+  String get expenseScannedBadge => 'scanné';
 
   @override
   String get expenseLeisure => 'Loisirs · 25,00 € → 36,80 \$';
@@ -927,6 +950,18 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get chartsEmpty => 'Aucune dépense ce mois-ci.';
+
+  @override
+  String get chartsFixedVsVariable => 'Fixes vs variables';
+
+  @override
+  String get chartsFixedLabel => 'Fixes (socle)';
+
+  @override
+  String get chartsVariableLabel => 'Variables';
+
+  @override
+  String get chartsSixMonths => '6 derniers mois';
 
   @override
   String get budgetTitle => 'Budget';
@@ -1116,6 +1151,16 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get lessonRecapFinish => 'TERMINER';
+
+  @override
+  String get lessonNotFoundTitle => 'Leçon introuvable';
+
+  @override
+  String get lessonNotFoundBody =>
+      'Cette leçon n\'est plus disponible. Choisis-en une autre sur ton parcours.';
+
+  @override
+  String get lessonNotFoundCta => 'Retour à Apprendre';
 
   @override
   String get lessonLeaveTitle => 'Quitter la leçon ?';
@@ -1408,6 +1453,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get badgeUnit3Hint => 'Termine l\'unité 3.';
 
   @override
+  String get badgeUnit4 => 'Investisseur avisé';
+
+  @override
+  String get badgeUnit4Hint => 'Termine l\'unité 4.';
+
+  @override
   String get badgeEarnedLabel => 'Obtenu';
 
   @override
@@ -1506,6 +1557,63 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get profileGoal => 'Voyage au Cameroun · 1 200 / 3 000 \$';
+
+  @override
+  String get addGoalTitle => 'Ajouter un objectif';
+
+  @override
+  String get addGoalBtn => 'Créer l\'objectif';
+
+  @override
+  String get goalTitleLabel => 'Nom de l\'objectif';
+
+  @override
+  String get goalTitleHint => 'ex. Voyage, Fonds d\'urgence...';
+
+  @override
+  String get goalTargetLabel => 'Montant cible';
+
+  @override
+  String get goalSavedLabel => 'Déjà épargné';
+
+  @override
+  String get goalDepositBtn => 'Ajouter une épargne';
+
+  @override
+  String get goalDepositTitle => 'Verser vers l\'objectif';
+
+  @override
+  String get goalDepositAmount => 'Montant à ajouter';
+
+  @override
+  String get goalDepositConfirm => 'Enregistrer le versement';
+
+  @override
+  String get goalEmptyTitle => 'Aucun objectif d\'épargne';
+
+  @override
+  String get goalEmptySubtitle =>
+      'Fixe-toi un but (voyage, projet, réserve) et avance pas à pas !';
+
+  @override
+  String get goalCompleted => 'Objectif atteint 🎉';
+
+  @override
+  String get goalReachedBadge => 'Atteint ✓';
+
+  @override
+  String get goalSaveQuick => '+ Épargner';
+
+  @override
+  String goalTrackerCount(int count) {
+    return '$count objectifs configurés';
+  }
+
+  @override
+  String get goalDelete => 'Supprimer l\'objectif';
+
+  @override
+  String get goalDeleteConfirm => 'Veux-tu supprimer cet objectif ?';
 
   @override
   String get profileInvite => 'Inviter des amis  →';
@@ -1955,6 +2063,39 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get coachPreviousTitle => 'Conseils précédents';
+
+  @override
+  String get coachHourlyTitle => 'Accompagnement Sipho';
+
+  @override
+  String get coachHourlyDismiss => 'Compris';
+
+  @override
+  String coachEducationLevel(String stage, int score) {
+    return 'Niveau : $stage · $score/100';
+  }
+
+  @override
+  String get coachStageFoundation => 'Fondations';
+
+  @override
+  String get coachStageHabits => 'Habitudes';
+
+  @override
+  String get coachStageSaving => 'Épargne';
+
+  @override
+  String get coachStageProtect => 'Protection';
+
+  @override
+  String get coachStageGrow => 'Faire grandir';
+
+  @override
+  String get coachEducationCardTitle => 'Éducation financière';
+
+  @override
+  String get coachEducationCardHint =>
+      'Progression d’après tes leçons, ta série et tes habitudes sur Sipho.';
 
   @override
   String get learnQuestsTitle => 'Quêtes d\'apprentissage';

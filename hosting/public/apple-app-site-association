@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "REPLACE_ME_TEAM_ID.com.cargonomade.sipho",
+        "paths": ["/invite/*", "/i/*", "/"]
+      }
+    ]
+  }
+}

@@ -12,6 +12,7 @@ import {
 import { initialGameStatePayload, normalizeGameState } from "../shared/gameState";
 import { localDateKey, resolveUserTime } from "../shared/timezone";
 import { logger } from "../shared/logger";
+import { bumpFriendChallenges } from "../social/challengeProgress";
 
 const db = (): Firestore => getFirestore();
 
@@ -139,6 +140,10 @@ export const markFixedPaid = onCall(SECURE_CALLABLE_OPTIONS, async (request) => 
 
     return { xpGained, levelUp, alreadyPaid: false };
   });
+
+  if (!outcome.alreadyPaid) {
+    await bumpFriendChallenges(uid, "fixed_paid");
+  }
 
   logger.info("fixed expense marked paid", {
     uid,

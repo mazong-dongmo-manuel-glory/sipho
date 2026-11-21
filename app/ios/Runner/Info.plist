@@ -31,7 +31,8 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.303740226831-pcttvf5iu8bkemhhnn42thfbsv0f19jq</string>
+				<!-- sipho-staging iOS OAuth (matches GoogleService-Info.plist REVERSED_CLIENT_ID) -->
+				<string>com.googleusercontent.apps.246057291906-8s8j9qik7m29iff7btp8rbmvt6m2pihc</string>
 			</array>
 		</dict>
 	</array>

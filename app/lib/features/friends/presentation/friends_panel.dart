@@ -7,7 +7,10 @@ import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/features/friends/data/friends_repository.dart';
 import 'package:sipho/features/friends/domain/friends.dart';
+import 'package:sipho/features/friends/presentation/challenge_friend_sheet.dart';
 import 'package:sipho/features/friends/presentation/contacts_section.dart';
+import 'package:sipho/features/friends/presentation/friend_challenge_card.dart';
+import 'package:sipho/features/friends/presentation/friend_challenges_providers.dart';
 import 'package:sipho/features/friends/presentation/friends_failure_text.dart';
 import 'package:sipho/features/friends/presentation/friends_providers.dart';
 import 'package:sipho/features/leaderboard/presentation/league_labels.dart';
@@ -193,6 +196,7 @@ class _FriendsPanelState extends ConsumerState<FriendsPanel> {
               const SizedBox(height: 12),
             ],
             _SectionTitle(l10n.friendsListTitle),
+            const _ActiveChallengesSection(),
             if (data.friends.isEmpty)
               _Hint(l10n.friendsEmpty)
             else
@@ -416,6 +420,27 @@ class _RedeemSection extends StatelessWidget {
   }
 }
 
+class _ActiveChallengesSection extends ConsumerWidget {
+  const _ActiveChallengesSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final challenges = ref.watch(activeChallengesProvider);
+    if (challenges.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 8),
+        const _SectionTitle('Défis 1v1 ⚔️'),
+        for (final challenge in challenges)
+          FriendChallengeCard(challenge: challenge),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+}
+
 class _FriendsList extends ConsumerWidget {
   const _FriendsList({required this.links, required this.onRemove});
 
@@ -442,7 +467,25 @@ class _FriendsList extends ConsumerWidget {
         for (final uid in order)
           _PersonRow(
             uid: uid,
+            sharedStreak: byUid[uid]?.sharedStreak ?? 0,
             actions: (name) => [
+              IconButton(
+                tooltip: 'Défier',
+                onPressed: () {
+                  final link = byUid[uid]!;
+                  final profile = profiles[uid] ??
+                      PublicProfile(uid: uid, pseudo: name);
+                  ChallengeFriendSheet.show(
+                    context,
+                    link: link,
+                    friendProfile: profile,
+                  );
+                },
+                icon: const Icon(
+                  Icons.flash_on_rounded,
+                  color: AppColors.accent,
+                ),
+              ),
               IconButton(
                 tooltip: AppLocalizations.of(context).friendsRemove,
                 onPressed: () => onRemove(byUid[uid]!, name),
@@ -450,7 +493,11 @@ class _FriendsList extends ConsumerWidget {
               ),
             ],
           ),
-        for (final link in pending) _PersonRow(uid: link.uid),
+        for (final link in pending)
+          _PersonRow(
+            uid: link.uid,
+            sharedStreak: link.sharedStreak,
+          ),
       ],
     );
   }
@@ -461,11 +508,13 @@ class _PersonRow extends ConsumerWidget {
   const _PersonRow({
     required this.uid,
     this.showStats = true,
+    this.sharedStreak = 0,
     this.actions,
   });
 
   final String uid;
   final bool showStats;
+  final int sharedStreak;
   final List<Widget> Function(String name)? actions;
 
   @override
@@ -478,7 +527,8 @@ class _PersonRow extends ConsumerWidget {
     final stats = profile == null || !showStats
         ? null
         : '${l10n.friendsStats(profile.level, profile.streak)}'
-            ' · ${leagueTierLabel(l10n, profile.league)}';
+            ' · ${leagueTierLabel(l10n, profile.league)}'
+            '${sharedStreak > 0 ? " · 🔥 $sharedStreak j partagés" : ""}';
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),

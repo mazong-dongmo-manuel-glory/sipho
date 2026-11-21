@@ -38,4 +38,31 @@ void main() {
     expect(spendingChangePercent(1200, 1000), 20);
     expect(spendingChangePercent(500, 0), isNull);
   });
+
+  test('splits fixed nest categories from variable spend', () {
+    final split = buildFixedVsVariable(const [
+      (category: 'rent', cents: 50000),
+      (category: 'groceries', cents: 8000),
+      (category: 'phone', cents: 3000),
+      (category: 'restaurants', cents: 2000),
+    ]);
+    expect(split.fixedCents, 53000);
+    expect(split.variableCents, 10000);
+    expect(split.totalCents, 63000);
+  });
+
+  test('builds a six-month trend ending at the selected month', () {
+    final points = buildSixMonthTrend(
+      endMonth: DateTime(2026, 11),
+      totalsByMonth: {
+        '2026-09': 100,
+        '2026-11': 300,
+      },
+    );
+    expect(points.length, 6);
+    expect(points.first.monthKey, '2026-06');
+    expect(points.last.monthKey, '2026-11');
+    expect(points.last.totalCents, 300);
+    expect(points[3].totalCents, 100); // 2026-09
+  });
 }

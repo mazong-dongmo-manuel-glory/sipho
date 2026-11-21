@@ -238,6 +238,7 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
                 confirmDismiss: (_) => _deleteExpense(entry.value[i]),
                 child: _ExpenseTile(
                   transaction: entry.value[i],
+                  userCurrency: currency,
                   onTap: () => showEditExpenseSheet(context, entry.value[i]),
                 ),
               ),
@@ -422,10 +423,18 @@ class _Tabs extends StatelessWidget {
   }
 }
 
-class _ExpenseTile extends StatelessWidget {
-  const _ExpenseTile({required this.transaction, this.onTap});
+typedef _ExpenseTile = ExpenseTile;
+
+class ExpenseTile extends StatelessWidget {
+  const ExpenseTile({
+    super.key,
+    required this.transaction,
+    this.userCurrency = 'CAD',
+    this.onTap,
+  });
 
   final SiphoTransaction transaction;
+  final String userCurrency;
   final VoidCallback? onTap;
 
   @override
@@ -435,84 +444,133 @@ class _ExpenseTile extends StatelessWidget {
     final title = hasMerchant
         ? transaction.merchant!.trim()
         : expenseCategoryLabel(l10n, transaction.category);
+
+    final isScanned = transaction.source == 'receipt';
+    final isForeign = transaction.amountMainCents != null &&
+        transaction.currency.toUpperCase() != userCurrency.toUpperCase();
+
+    final foreignConversionText = isForeign
+        ? '${_formatCents(context, transaction.amountCents, transaction.currency)} → ${_formatCents(context, transaction.amountMainCents!, userCurrency)}'
+        : null;
+
     final subtitleParts = <String>[
       if (hasMerchant) expenseCategoryLabel(l10n, transaction.category),
       if (transaction.note?.trim().isNotEmpty == true) transaction.note!.trim(),
+      if (foreignConversionText != null) foreignConversionText,
     ];
     final subtitle = subtitleParts.join(' · ');
-    final amount = _formatCents(
-      context,
-      transaction.amountCents,
-      transaction.currency,
-    );
+
+    final displayAmount = isForeign
+        ? _formatCents(context, transaction.amountMainCents!, userCurrency)
+        : _formatCents(context, transaction.amountCents, transaction.currency);
+
     return Material(
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        child: SizedBox(
-          height: 65,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.seedPill,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(
-                    expenseCategoryIcon(transaction.category),
-                    color: AppColors.categoryGold,
-                    size: 25,
-                  ),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 65),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.seedPill,
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                child: Icon(
+                  expenseCategoryIcon(transaction.category),
+                  color: AppColors.categoryGold,
+                  size: 25,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontFamily: 'Nunito',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.primaryDark,
+                            ),
+                          ),
+                        ),
+                        if (isScanned) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.seedPill,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text(
+                                  '📷',
+                                  style: TextStyle(fontSize: 10),
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  l10n.expenseScannedBadge,
+                                  style: const TextStyle(
+                                    fontFamily: 'Nunito',
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.seedText,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    if (subtitle.isNotEmpty) ...[
+                      const SizedBox(height: 2),
                       Text(
-                        title,
+                        subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontFamily: 'Nunito',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.primaryDark,
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
                         ),
                       ),
-                      if (subtitle.isNotEmpty)
-                        Text(
-                          subtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontFamily: 'Nunito',
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
                     ],
-                  ),
+                  ],
                 ),
-                Text(
-                  amount,
-                  style: const TextStyle(
-                    fontFamily: 'Nunito',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primaryDark,
-                  ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                displayAmount,
+                style: const TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primaryDark,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

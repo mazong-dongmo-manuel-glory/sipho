@@ -10,9 +10,16 @@ import 'package:sipho/core/money/money_formatter.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
 import 'package:sipho/features/auth/data/auth_repository.dart';
+import 'package:sipho/features/auth/presentation/auth_provider.dart';
+import 'package:sipho/features/coach/data/coach_repository.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
 import 'package:sipho/features/gamification/data/game_state_repository.dart';
 import 'package:sipho/features/gamification/domain/badges.dart';
+import 'package:sipho/features/goals/data/goal_repository.dart';
+import 'package:sipho/features/goals/domain/goal.dart';
+import 'package:sipho/features/goals/presentation/add_goal_sheet.dart';
+import 'package:sipho/features/goals/presentation/deposit_goal_sheet.dart';
+import 'package:sipho/features/goals/presentation/goal_card.dart';
 import 'package:sipho/features/leaderboard/presentation/league_labels.dart';
 import 'package:sipho/features/profile/presentation/profile_edit_sheet.dart';
 
@@ -36,6 +43,7 @@ class ProfileScreen extends ConsumerWidget {
                 .format(created),
           );
 
+    final coach = ref.watch(coachProgressProvider).valueOrNull;
     final streakText = game != null ? '${game.streak.current}' : '—';
     final xpText = game != null ? '${game.xp}' : '—';
     final seedsText = game != null ? '${game.gems}' : '—';
@@ -195,6 +203,65 @@ class ProfileScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 18),
+            if (coach != null) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.coachEducationCardTitle,
+                      style: const TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      l10n.coachEducationLevel(
+                        _coachStageLabel(l10n, coach.stageId),
+                        coach.educationScore,
+                      ),
+                      style: const TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      l10n.coachEducationCardHint,
+                      style: const TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: LinearProgressIndicator(
+                        value: (coach.educationScore / 100).clamp(0.0, 1.0),
+                        minHeight: 8,
+                        backgroundColor: AppColors.border,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+            ],
             Text(
               l10n.profileBadges,
               style: const TextStyle(
@@ -222,6 +289,37 @@ class ProfileScreen extends ConsumerWidget {
                   ),
               ],
             ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  l10n.profileGoals,
+                  style: const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.primaryDark,
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () =>
+                      showAddGoalSheet(context, currency: currency),
+                  icon: const Icon(Icons.add, size: 18, color: AppColors.primary),
+                  label: Text(
+                    l10n.addGoalTitle,
+                    style: const TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            _GoalsSection(currency: currency),
             const SizedBox(height: 16),
             Material(
               color: AppColors.surface,
@@ -353,6 +451,22 @@ class _Stat extends StatelessWidget {
   }
 }
 
+String _coachStageLabel(AppLocalizations l10n, String stageId) {
+  switch (stageId) {
+    case 'habits':
+      return l10n.coachStageHabits;
+    case 'saving':
+      return l10n.coachStageSaving;
+    case 'protect':
+      return l10n.coachStageProtect;
+    case 'grow':
+      return l10n.coachStageGrow;
+    case 'foundation':
+    default:
+      return l10n.coachStageFoundation;
+  }
+}
+
 void _showBadge(
   BuildContext context,
   AppLocalizations l10n,
@@ -425,6 +539,143 @@ class _Pill extends StatelessWidget {
           color: foreground,
         ),
       ),
+    );
+  }
+}
+
+class _GoalsSection extends ConsumerWidget {
+  const _GoalsSection({required this.currency});
+
+  final String currency;
+
+  void _confirmDelete(BuildContext context, WidgetRef ref, Goal goal) {
+    final l10n = AppLocalizations.of(context);
+    final uid = ref.read(authStateProvider).valueOrNull?.uid;
+    if (uid == null) return;
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.goalDelete),
+        content: Text(l10n.goalDeleteConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(l10n.cancelBtn),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              await ref.read(goalRepositoryProvider).deleteGoal(uid, goal.id);
+            },
+            child: Text(
+              l10n.deleteBtn,
+              style: const TextStyle(color: AppColors.danger),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final goalsAsync = ref.watch(userGoalsProvider);
+
+    return goalsAsync.when(
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: CircularProgressIndicator(),
+        ),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (goals) {
+        if (goals.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    color: AppColors.seedPill,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Text('🎯', style: TextStyle(fontSize: 24)),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  l10n.goalEmptyTitle,
+                  style: const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.primaryDark,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.goalEmptySubtitle,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      showAddGoalSheet(context, currency: currency),
+                  icon:
+                      const Icon(Icons.add, size: 16, color: AppColors.primary),
+                  label: Text(
+                    l10n.addGoalTitle,
+                    style: const TextStyle(
+                      fontFamily: 'Nunito',
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.primary),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Column(
+          children: [
+            for (var i = 0; i < goals.length; i++) ...[
+              if (i > 0) const SizedBox(height: 10),
+              GoalCard(
+                goal: goals[i],
+                currency: currency,
+                onDeposit: () => showDepositGoalSheet(
+                  context,
+                  goal: goals[i],
+                  currency: currency,
+                ),
+                onDelete: () => _confirmDelete(context, ref, goals[i]),
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 }

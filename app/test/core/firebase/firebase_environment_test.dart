@@ -13,72 +13,115 @@ FirebaseOptions _options(String projectId) => FirebaseOptions(
     );
 
 void main() {
-  test('dev flavor is configured and points at the dev project', () {
+  test('prod options point at sipho-f5a01 and pass assert', () {
     for (final options in [
-      dev.DefaultFirebaseOptions.android,
-      dev.DefaultFirebaseOptions.ios
+      prod.DefaultFirebaseOptions.android,
+      prod.DefaultFirebaseOptions.ios,
     ]) {
-      expect(options.projectId, kDevFirebaseProjectId);
-      expect(() => assertFirebaseConfigured(options, flavor: 'dev'),
-          returnsNormally);
+      expect(options.projectId, kProdFirebaseProjectId);
+      expect(
+        () => assertFirebaseConfigured(options, flavor: 'prod'),
+        returnsNormally,
+      );
     }
   });
 
-  test('staging and prod never share the dev Firebase project', () {
-    final all = <String, List<FirebaseOptions>>{
-      'staging': [
-        staging.DefaultFirebaseOptions.android,
-        staging.DefaultFirebaseOptions.ios,
-      ],
-      'prod': [
-        prod.DefaultFirebaseOptions.android,
-        prod.DefaultFirebaseOptions.ios,
-      ],
-    };
-    all.forEach((flavor, options) {
-      for (final o in options) {
-        expect(o.projectId, isNot(kDevFirebaseProjectId), reason: flavor);
-        expect(o.projectId, 'sipho-$flavor');
-      }
-    });
+  test('dev and staging option files target the staging project id', () {
+    for (final options in [
+      dev.DefaultFirebaseOptions.android,
+      dev.DefaultFirebaseOptions.ios,
+      staging.DefaultFirebaseOptions.android,
+      staging.DefaultFirebaseOptions.ios,
+    ]) {
+      expect(options.projectId, kStagingFirebaseProjectId);
+    }
   });
 
-  test('an unconfigured flavor refuses to start instead of falling back to dev',
-      () {
+  test('dev/staging options for sipho-staging pass assert when configured', () {
     expect(
       () => assertFirebaseConfigured(
         staging.DefaultFirebaseOptions.android,
         flavor: 'staging',
       ),
-      throwsA(isA<StateError>().having(
-        (e) => e.message,
-        'message',
-        contains('flutterfire configure --project=sipho-staging'),
-      )),
-    );
-    expect(
-      () => assertFirebaseConfigured(prod.DefaultFirebaseOptions.ios,
-          flavor: 'prod'),
-      throwsStateError,
-    );
-  });
-
-  test(
-      'a configured prod flavor is accepted, but not if it targets the dev project',
-      () {
-    expect(
-      () => assertFirebaseConfigured(_options('sipho-prod'), flavor: 'prod'),
       returnsNormally,
     );
     expect(
-      () => assertFirebaseConfigured(_options(kDevFirebaseProjectId),
-          flavor: 'prod'),
-      throwsA(isA<StateError>().having(
-          (e) => e.message, 'message', contains('dev Firebase project'))),
+      () => assertFirebaseConfigured(
+        staging.DefaultFirebaseOptions.ios,
+        flavor: 'staging',
+      ),
+      returnsNormally,
     );
     expect(
-      () => assertFirebaseConfigured(_options('sipho-staging'), flavor: 'qa'),
-      throwsStateError,
+      () => assertFirebaseConfigured(
+        dev.DefaultFirebaseOptions.android,
+        flavor: 'dev',
+      ),
+      returnsNormally,
     );
+  });
+
+  test('an unconfigured flavor placeholder refuses to start', () {
+    const placeholder = FirebaseOptions(
+      apiKey: kUnconfiguredFirebaseValue,
+      appId: kUnconfiguredFirebaseValue,
+      messagingSenderId: kUnconfiguredFirebaseValue,
+      projectId: kStagingFirebaseProjectId,
+    );
+    expect(
+      () => assertFirebaseConfigured(placeholder, flavor: 'staging'),
+      throwsA(isA<StateError>().having(
+        (e) => e.message,
+        'message',
+        contains('flutterfire configure --project=$kStagingFirebaseProjectId'),
+      )),
+    );
+  });
+
+  test('wrong project for a flavor is rejected', () {
+    expect(
+      () => assertFirebaseConfigured(_options('sipho-other'), flavor: 'prod'),
+      throwsA(isA<StateError>().having(
+        (e) => e.message,
+        'message',
+        contains('must use "$kProdFirebaseProjectId"'),
+      )),
+    );
+    expect(
+      () => assertFirebaseConfigured(
+        _options(kStagingFirebaseProjectId),
+        flavor: 'prod',
+      ),
+      throwsA(isA<StateError>()),
+    );
+    expect(
+      () => assertFirebaseConfigured(
+        _options(kProdFirebaseProjectId),
+        flavor: 'staging',
+      ),
+      throwsA(isA<StateError>()),
+    );
+    expect(
+      () => assertFirebaseConfigured(
+        _options(kProdFirebaseProjectId),
+        flavor: 'prod',
+      ),
+      returnsNormally,
+    );
+    expect(
+      () => assertFirebaseConfigured(
+        _options(kStagingFirebaseProjectId),
+        flavor: 'dev',
+      ),
+      returnsNormally,
+    );
+  });
+
+  test('flavor → project map matches the two-environment architecture', () {
+    expect(kExpectedProjectByFlavor['dev'], kStagingFirebaseProjectId);
+    expect(kExpectedProjectByFlavor['staging'], kStagingFirebaseProjectId);
+    expect(kExpectedProjectByFlavor['prod'], kProdFirebaseProjectId);
+    expect(kDevFirebaseProjectId, kStagingFirebaseProjectId);
+    expect(kFirebaseProjectId, kProdFirebaseProjectId);
   });
 }

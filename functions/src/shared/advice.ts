@@ -3,8 +3,10 @@ import { ALL_LESSON_IDS, LessonId } from "./lessonPath";
 /**
  * Personalised financial-advice notifications: the pure rules.
  *
- * What the push talks about is decided here, by rules, from the learner's real data (budget,
- * spending, goal, lesson results). The AI only words it; if the AI is unavailable or answers
+ * What the push may talk about is decided here, by rules, from the learner's real data (budget,
+ * spending, goal, lesson results, life stage). Among the topics that apply and are not on
+ * cooldown, one is drawn at random (weighted, stable for a learner on a given day). The AI only
+ * words it, in light of how far the learner has come; if the AI is unavailable or answers
  * something unsafe, a template built from the same facts is sent instead. Nothing in this file
  * touches Firestore or the network, so all of it is unit-tested.
  */
@@ -60,6 +62,35 @@ export const ADVICE_GOALS = [
 ] as const;
 export type AdviceGoal = (typeof ADVICE_GOALS)[number];
 
+/** Same values as the onboarding life-stage step. Anything else is dropped before the prompt. */
+export const ADVICE_LIFE_STAGES = [
+  "student",
+  "first_job",
+  "family",
+  "pre_retirement",
+  "retired",
+] as const;
+export type AdviceLifeStage = (typeof ADVICE_LIFE_STAGES)[number];
+
+/** How often a topic is drawn when several apply. Urgent ones come up more, none is guaranteed. */
+export const ADVICE_FOCUS_WEIGHT: Record<AdviceFocus, number> = {
+  budget_over: 5,
+  weak_lesson: 4,
+  top_category: 3,
+  no_tracking: 3,
+  next_lesson: 2,
+  goal: 2,
+  general: 1,
+};
+
+const LIFE_STAGE_FACT: Record<AdviceLifeStage, string> = {
+  student: "student",
+  first_job: "first job",
+  family: "raising a family",
+  pre_retirement: "approaching retirement",
+  retired: "retired",
+};
+
 /** Plain-language topic of each lesson, for the prompt (English) and the fallback text. */
 export const LESSON_TOPICS: Record<LessonId, { en: string; fr: string }> = {
   emergency_fund: { en: "building an emergency fund", fr: "le fonds d'urgence" },
@@ -68,6 +99,12 @@ export const LESSON_TOPICS: Record<LessonId, { en: string; fr: string }> = {
   savings_goal: { en: "setting a savings goal", fr: "se fixer un objectif d'épargne" },
   pay_yourself_first: { en: "paying yourself first", fr: "s'épargner en premier" },
   small_amounts: { en: "the power of small amounts", fr: "la force des petits montants" },
+  debt_basics: { en: "understanding debt and credit", fr: "les dettes et le crédit" },
+  inflation_101: { en: "understanding inflation", fr: "l'inflation et le pouvoir d'achat" },
+  spotting_scams: { en: "spotting financial scams", fr: "repérer les arnaques financières" },
+  investing_basics: { en: "investing basics", fr: "les bases de l'investissement" },
+  compound_interest: { en: "the magic of compound interest", fr: "les intérêts composés" },
+  smart_budget_503020: { en: "the 50/30/20 budget rule", fr: "la règle du 50/30/20" },
 };
 
 export const CATEGORY_LABELS: Record<string, { en: string; fr: string }> = {
@@ -106,6 +143,10 @@ export interface AdviceInput {
   completedLessonIds: string[];
   lessons: LessonResultSummary[];
   streak: number;
+  /** Onboarding life stage; unknown values are ignored. */
+  lifeStage?: string;
+  /** Game level, 1 when missing. */
+  level?: number;
 }
 
 export interface AdviceContext {
@@ -125,6 +166,11 @@ export interface AdviceContext {
   completedCount: number;
   goal: AdviceGoal | null;
   streak: number;
+  lifeStage: AdviceLifeStage | null;
+  level: number;
+  /** Lessons whose latest score is at least {@link WEAK_SCORE_BELOW}. */
+  masteredCount: number;
+  totalLessons: number;
 }
 
 function safeCents(value: unknown): number {
@@ -165,6 +211,21 @@ export function buildAdviceContext(input: AdviceInput): AdviceContext {
   const completed = new Set(input.completedLessonIds);
   const nextLessonId = ALL_LESSON_IDS.find((id) => !completed.has(id)) ?? null;
 
+  const mastered = new Set<LessonId>();
+  for (const lesson of input.lessons) {
+    if (!isLessonId(lesson.lessonId)) continue;
+    const score = Math.max(0, Math.min(100, Math.trunc(lesson.lastScore)));
+    if (score >= WEAK_SCORE_BELOW) mastered.add(lesson.lessonId);
+  }
+
+  const lifeStage = (ADVICE_LIFE_STAGES as readonly string[]).includes(input.lifeStage ?? "")
+    ? (input.lifeStage as AdviceLifeStage)
+    : null;
+  const level =
+    typeof input.level === "number" && Number.isFinite(input.level)
+      ? Math.max(1, Math.trunc(input.level))
+      : 1;
+
   return {
     currency: /^[A-Z]{3}$/.test(input.currency) ? input.currency : "CAD",
     incomeCents: income,
@@ -181,6 +242,10 @@ export function buildAdviceContext(input: AdviceInput): AdviceContext {
       ? (input.goal as AdviceGoal)
       : null,
     streak: Math.max(0, Math.trunc(input.streak)),
+    lifeStage,
+    level,
+    masteredCount: mastered.size,
+    totalLessons: ALL_LESSON_IDS.length,
   };
 }
 
@@ -216,23 +281,56 @@ export interface RecentAdvice {
   daysAgo: number;
 }
 
+/** Topics that have something to say and have not been used within their cooldown. */
+export function eligibleAdviceFocuses(
+  ctx: AdviceContext,
+  recent: readonly RecentAdvice[]
+): AdviceFocus[] {
+  return ADVICE_FOCUS_PRIORITY.filter((focus) => {
+    if (!focusApplies(focus, ctx)) return false;
+    return !recent.some((r) => r.focus === focus && r.daysAgo < ADVICE_COOLDOWN_DAYS[focus]);
+  });
+}
+
 /**
- * Picks what to talk about: the most important focus that applies and has not been used within
- * its cooldown. Returns null when everything was said recently, so nothing is sent rather than
- * repeating the same advice.
+ * Most important eligible topic. Kept for tests and for a roll of 0, which always lands on it.
  */
 export function chooseAdviceFocus(
   ctx: AdviceContext,
   recent: readonly RecentAdvice[]
 ): AdviceFocus | null {
-  for (const focus of ADVICE_FOCUS_PRIORITY) {
-    if (!focusApplies(focus, ctx)) continue;
-    const onCooldown = recent.some(
-      (r) => r.focus === focus && r.daysAgo < ADVICE_COOLDOWN_DAYS[focus]
-    );
-    if (!onCooldown) return focus;
+  return eligibleAdviceFocuses(ctx, recent)[0] ?? null;
+}
+
+/**
+ * Draws one eligible topic. `roll` is in `[0, 1)`: 0 picks the most urgent, values closer to 1
+ * reach the lighter topics. The same roll always returns the same topic.
+ */
+export function pickAdviceFocus(
+  ctx: AdviceContext,
+  recent: readonly RecentAdvice[],
+  roll: number
+): AdviceFocus | null {
+  const pool = eligibleAdviceFocuses(ctx, recent);
+  if (pool.length === 0) return null;
+  const total = pool.reduce((sum, focus) => sum + ADVICE_FOCUS_WEIGHT[focus], 0);
+  const clamped = Number.isFinite(roll) ? Math.min(0.999999, Math.max(0, roll)) : 0;
+  let cursor = clamped * total;
+  for (const focus of pool) {
+    cursor -= ADVICE_FOCUS_WEIGHT[focus];
+    if (cursor < 0) return focus;
   }
-  return null;
+  return pool[pool.length - 1];
+}
+
+/** Stable roll in `[0, 1)` from a seed (learner id + local day), so a retry the same day matches. */
+export function adviceRoll(seed: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    hash ^= seed.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 4294967296;
 }
 
 /** Whole days between two `YYYY-MM-DD` keys (`later` − `earlier`). */
@@ -328,6 +426,15 @@ export function adviceFacts(focus: AdviceFocus, ctx: AdviceContext): string[] {
       facts.push(`The learner has completed ${ctx.completedCount} lessons.`);
       break;
   }
+  return facts.concat(evolutionFacts(ctx));
+}
+
+/** Where the learner is, added to every prompt so the wording follows their progress. */
+function evolutionFacts(ctx: AdviceContext): string[] {
+  const facts = [
+    `Progress: ${ctx.completedCount} of ${ctx.totalLessons} lessons completed, level ${ctx.level}, ${ctx.masteredCount} currently mastered.`,
+  ];
+  if (ctx.lifeStage) facts.push(`Life stage: ${LIFE_STAGE_FACT[ctx.lifeStage]}.`);
   if (ctx.streak > 0) facts.push(`Current streak: ${ctx.streak} days.`);
   return facts;
 }
@@ -385,7 +492,8 @@ ${facts.map((f) => `- ${f}`).join("\n")}
 Rules:
 - Title: at most ${ADVICE_TITLE_MAX} characters, one emoji allowed. Body: at most ${ADVICE_BODY_MAX} characters.
 - Speak to the learner ("tu" in French), kindly, never guilt-tripping, never judging.
-- Give ONE tiny action doable in the app today (log an expense, replay a lesson, check the budget).
+- Explain the idea in one short sentence that fits where this learner is (lessons done, life stage, streak).
+- Then give ONE tiny action doable in the app today (log an expense, replay a lesson, check the budget).
 - Use only numbers that appear in the facts. Do not invent any amount, rate, price, tax, bank or financial product.
 - Never encourage spending. No investment, credit, tax or legal advice. Educational tone only.
 - Do not mention private details beyond the facts. Do not repeat these recent titles: ${recentTitles.length > 0 ? recentTitles.join(" | ") : "none"}.

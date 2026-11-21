@@ -99,19 +99,18 @@ Option A au MVP pour la simplicité, avec quotas contrôlés via Remote Config.
 ### Contexte
 Un seul projet Firebase mélangerait données de test et de production, risquant la corruption de données réelles.
 
-### Décision
-- **`sipho-dev`** : développement local + émulateurs Firebase
-- **`sipho-staging`** : QA, beta interne, tests d'intégration
-- **`sipho-prod`** : utilisateurs finaux uniquement
+### Décision (mise à jour 2026-11-20 — 2 projets réels)
+- **Dev / QA :** project ID **`sipho-staging`** (nom affiché console : **« sipho-dev »**). Flavors Dart `dev` et `staging` pointent ici.
+- **Production :** project ID **`sipho-f5a01`**. Flavor Dart `prod` / builds release.
+- **Piège :** l’ID Firebase **`staging`** (seul) **n’existe pas** sur le compte Sipho. Toujours `--project sipho-staging`. Voir `AGENTS.md` et `ENVIRONMENTS.md`.
 
-**App Check (2026-11-15)** : Play Integrity / App Attest en release, jeton debug fixe en debug (le même sur tous les appareils de dev, révocable dans la console, jamais lu par un build release). **Le jeton est un secret** : le dépôt GitHub est public, il est donc passé par `--dart-define=APP_CHECK_DEBUG_TOKEN=<uuid>` (`.vscode/launch.json`, ignoré par git) et jamais écrit dans le code. S'il fuite : le supprimer dans la console et en générer un nouveau (`uuidgen`). L'enforcement serveur (`enforceAppCheck`) est activé une fois les jetons valides observés.
+**App Check (2026-11-15)** : Play Integrity / App Attest en release, jeton debug via `--dart-define=APP_CHECK_DEBUG_TOKEN=<uuid>` (secret, dépôt public). Enforcement serveur une fois les jetons OK.
 
-Chaque environnement pointe vers le bon projet via `firebase_options_<env>.dart`. Il n'y a **plus de flavors Android** (retirés le 2026-11-14 : un seul projet réel, dev, et `--flavor` gênait le quotidien, surtout sur iOS qui n'a qu'un schéma). L'environnement se choisit côté Dart : `main.dart` prend dev en debug et prod en release, `main_dev.dart` / `main_staging.dart` forcent un environnement. À rétablir (flavors Android + schémas Xcode) quand staging et prod existeront pour de bon.
+Chaque environnement pointe via `firebase_options_<env>.dart`. Plus de flavors Android (2026-11-14) : `main.dart` = debug→dev, release→prod ; `main_dev.dart` / `main_staging.dart` forcent le projet `sipho-staging`.
 
 ### Conséquences
-- Isolation totale dev / prod
-- 3 déploiements à maintenir (CI/CD automatise ça)
-- Coûts Firebase multipliés par 3 (acceptables au stade MVP)
+- Isolation dev / prod
+- 2 déploiements Firebase (CI : `deploy_dev`/`deploy_staging` → `sipho-staging`, `deploy_prod` → `sipho-f5a01`)
 
 ---
 
@@ -249,8 +248,8 @@ Le README prévoit amis, parrainage et séries entre amis. Le serveur savait éc
 
 ### À trancher / limites connues
 - **Partage par lien** : le partage envoie un message avec le code. Les App Links / Universal Links (README §5.3) demandent un domaine et `assetlinks.json` / `apple-app-site-association` sur Firebase Hosting, qui n'existent pas encore.
-- **Récompense de parrainage immédiate** : le code accorde 50 XP + 10 graines au parrain dès l'usage (25 XP + 5 graines au filleul), alors que le README parle d'un « filleul actif 7 jours » (200 XP + cadeau rare). Avec jusqu'à 50 usages par code, des comptes jetables peuvent gonfler l'XP, et l'XP de parrainage compte dans `weeklyXp` (classement des ligues). À corriger avant l'ouverture publique : récompense différée à l'activité du filleul et XP hors classement.
-- **Encouragements, défis 1v1, séries entre amis** (V2) : non faits.
+- **Récompense de parrainage (corrigé 2026-11-19)** : `referralRedeem` crée l'amitié + 5 graines de bienvenue (sans XP). Après **7 jours locaux actifs** du filleul (`referralReward.trackReferralActiveDay`), le parrain reçoit 200 XP + 20 graines + `pendingReferralChest: gold`, le filleul 25 XP + 5 graines — **sans toucher `weeklyXp`** (hors ligue).
+- **Défis 1v1 (corrigé 2026-11-19)** : `createFriendChallenge` / `respondFriendChallenge` ; progression via événements serveur (`lesson_complete`, `budget_day`, `fixed_paid`, `activity_day`) ; règles Firestore en écriture serveur uniquement.
 
 ### Conséquences
 - Aucune donnée financière n'est exposée par le social.
@@ -284,6 +283,26 @@ Le chemin de leçons n'était qu'une liste de 3 leçons : le verrouillage n'exis
 
 ### Conséquences
 - Ajouter une unité demande de modifier `lessonPath.ts`, `lesson_catalog.dart` et le contenu ; le test de parité échoue sinon.
+
+---
+
+## ADR-015 — Coach horaire progressif (tips + pop-up + niveau d'éducation)
+
+**Date :** 2026-11-19  
+**Statut :** ✅ ACCEPTÉE
+
+### Contexte
+L'utilisateur veut un accompagnement régulier (économie, astuces, épargne) sous forme de notifications et de pop-ups, personnalisé, évolutif, sans répéter le même conseil deux fois de suite, avec un niveau d'éducation financière stocké et visible.
+
+### Décision
+- **Progression éducative serveur** (`shared/coach.ts`) : score 0–100 à partir des leçons, meilleure série, niveau, revenu renseigné, objectif, jours sous budget → stages `foundation` → `habits` → `saving` → `protect` → `grow`. Stocké dans `users/{uid}/coach/progress`.
+- **Catalogue de tips stage-gated** : chaque tip a un `minStage` ; tirage stable par `(uid, hourKey)` ; exclusion stricte du `lastTipId` ; fenêtre anti-répétition `recentTipIds` (24). Contenu éducatif uniquement (pas de taux, produits, placement/impôt).
+- **Scheduler `coachHourly`** : chaque heure locale active (08–21), première fenêtre de 12 min ; écrit `coach/current` (idempotent via `hourKey`) ; FCM seulement si `notifPrefs.tips`, hors heures calmes, et si le plafond d'engagement (max 2/jour) le permet — le pop-up in-app reste la voie principale.
+- **Client** : `CoachPopupHost` écoute `coach/current`, affiche pop-up + notification locale, anti-doublon via SharedPreferences ; profil affiche le niveau / score.
+
+### Conséquences
+- Distinct d'`adviceNotifier` (ADR-014) : cadence horaire + catalogue progressif vs sujet IA quotidien plafonné.
+- Opt-in « Conseils » requis pour rafraîchir le tip serveur.
 
 ---
 
@@ -366,3 +385,33 @@ Les graines (`gems`) étaient gagnées partout (leçons, quêtes, bonus d'unité
 
 ### Conséquences
 - Ajouter un article = `shop.ts`, `shop_catalog.dart`, une chaîne FR/EN ; le test de parité échoue sinon.
+
+---
+
+## ADR-016 — Actus économiques locales via Google News RSS (gratuit)
+
+**Date :** 2026-11-20  
+**Statut :** ✅ ACCEPTÉE
+
+### Contexte
+Besoin d’actualités économiques/financières **simples**, ciblées par pays (pouvoir d’achat, logement, taux…), sans budget API.
+
+### Options évaluées
+| Option | Limite free | Verdict |
+|---|---|---|
+| **Google News RSS** | Pas de clé, pas de quota publié | **Retenu** (défaut) |
+| GNews | 100 req/j, delay 12 h, **non commercial** | Optionnel via `GNEWS_API_KEY` (CA/FR/WORLD) |
+| Mediastack | 100 req/**mois** | Trop bas |
+| NewsAPI.org | 100 req/j, non commercial, delay | Redondant vs GNews |
+| NewsData.io | Crédits/j, delay free | Surdimensionné |
+
+### Décision
+- Fetch **serveur uniquement** (`economyNewsFetch`, 1×/jour) → cache Firestore `economyNews/{code}`.
+- Défaut RSS Google News avec requêtes localisées (CA/FR/CM/CI/SN/WORLD).
+- Takeaways **templates éducatifs** (pas d’IA obligatoire) : aucun chiffre inventé.
+- L’app affiche les puces dans Info Éco ; lien vers la source d’origine.
+
+### Conséquences
+- Fragile si Google change le format RSS → logs + doc `provider: none` / liste vide.
+- GNews free ne convient pas à une app commerciale en prod sans plan payant.
+- Deploy : règles `economyNews` + function ; env optionnelle `GNEWS_API_KEY`.

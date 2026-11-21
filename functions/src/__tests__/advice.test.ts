@@ -13,8 +13,10 @@ import {
   allowedNumbers,
   buildAdviceContext,
   buildAdvicePrompt,
+  adviceRoll,
   chooseAdviceFocus,
   dateKeyDiffDays,
+  pickAdviceFocus,
   numberTokens,
   recommendedLessonFor,
   templateAdvice,
@@ -181,6 +183,46 @@ describe("chooseAdviceFocus", () => {
   test("sends nothing rather than repeating when everything was said recently", () => {
     const ctx = ctxOf({ completedLessonIds: [...ALL_LESSON_IDS], goal: "" });
     expect(chooseAdviceFocus(ctx, [{ focus: "general", daysAgo: 2 }])).toBeNull();
+    expect(pickAdviceFocus(ctx, [{ focus: "general", daysAgo: 2 }], 0.5)).toBeNull();
+  });
+
+  test("a roll of 0 is the most urgent topic; a roll near 1 reaches a lighter one", () => {
+    const ctx = ctxOf({
+      variableCents: 300_000,
+      lessons: [{ lessonId: "needs_wants", lastScore: 40, bestScore: 40, attempts: 1 }],
+      categoryCents: { restaurants: 40_000, groceries: 5_000 },
+    });
+    expect(pickAdviceFocus(ctx, [], 0)).toBe("budget_over");
+    expect(pickAdviceFocus(ctx, [], 0.999)).not.toBe("budget_over");
+    const seen = new Set<string>();
+    for (let i = 0; i < 20; i++) seen.add(pickAdviceFocus(ctx, [], i / 20) ?? "");
+    expect(seen.size).toBeGreaterThan(1);
+  });
+
+  test("the same learner and day always draw the same topic", () => {
+    expect(adviceRoll("u1:2026-11-15")).toBe(adviceRoll("u1:2026-11-15"));
+    expect(adviceRoll("u1:2026-11-15")).not.toBe(adviceRoll("u2:2026-11-15"));
+    expect(adviceRoll("u1:2026-11-15")).toBeGreaterThanOrEqual(0);
+    expect(adviceRoll("u1:2026-11-15")).toBeLessThan(1);
+  });
+
+  test("progress facts follow the learner and drop unknown life stages", () => {
+    const ctx = ctxOf({
+      lifeStage: "family",
+      level: 4,
+      streak: 6,
+      completedLessonIds: ["emergency_fund"],
+      lessons: [{ lessonId: "emergency_fund", lastScore: 90, bestScore: 90, attempts: 1 }],
+    });
+    expect(ctx.lifeStage).toBe("family");
+    expect(ctx.level).toBe(4);
+    expect(ctx.masteredCount).toBe(1);
+    expect(ctxOf({ lifeStage: "cousin Marc" }).lifeStage).toBeNull();
+    const facts = adviceFacts("general", ctx).join(" ");
+    expect(facts).toContain("raising a family");
+    expect(facts).toContain("level 4");
+    expect(facts).toContain("6 days");
+    expect(facts).not.toContain("Marc");
   });
 
   test("every focus has a cooldown and a route the app knows", () => {

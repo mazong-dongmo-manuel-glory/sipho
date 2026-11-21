@@ -20,7 +20,14 @@ describe("Server security & gamification logic", () => {
 
   test("computeNextStreak increments consecutive days and caps same-day replays", () => {
     const day1 = computeNextStreak(
-      { current: 0, best: 0, lastActiveDay: null, freezes: 2 },
+      {
+        current: 0,
+        best: 0,
+        lastActiveDay: null,
+        freezes: 2,
+        brokenAt: null,
+        brokenCurrent: 0,
+      },
       "2026-11-10"
     );
     expect(day1.nextStreak.current).toBe(1);
@@ -34,7 +41,14 @@ describe("Server security & gamification logic", () => {
     expect(day2.nextStreak.best).toBe(2);
 
     const broken = computeNextStreak(
-      { current: 8, best: 8, lastActiveDay: "2026-11-01", freezes: 0 },
+      {
+        current: 8,
+        best: 8,
+        lastActiveDay: "2026-11-01",
+        freezes: 0,
+        brokenAt: null,
+        brokenCurrent: 0,
+      },
       "2026-11-10"
     );
     expect(broken.nextStreak.current).toBe(1);
@@ -105,6 +119,26 @@ describe("Server security & gamification logic", () => {
       "savings_goal",
       "pay_yourself_first",
       "small_amounts",
+      "debt_basics",
+      "inflation_101",
+      "spotting_scams",
+      "investing_basics",
+      "compound_interest",
+      "smart_budget_503020",
+      "ca_tfsa_101",
+      "ca_rrsp_101",
+      "ca_fhsa_101",
+      "fr_livreta_101",
+      "fr_pea_101",
+      "fr_per_101",
+      "fr_av_101",
+      "cm_tontine_101",
+      "cm_momo_101",
+      "ci_tontine_101",
+      "ci_momo_101",
+      "sn_tontine_101",
+      "sn_momo_101",
+      "gen_savings_101",
     ]);
   });
 

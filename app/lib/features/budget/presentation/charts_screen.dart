@@ -12,6 +12,7 @@ import 'package:sipho/features/budget/domain/month_chart.dart';
 import 'package:sipho/features/expenses/domain/transaction.dart';
 import 'package:sipho/features/expenses/presentation/expense_category_label.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
+import 'package:sipho/features/gamification/data/game_state_repository.dart';
 
 const _sliceColors = [
   AppColors.primaryDark,
@@ -26,6 +27,7 @@ class ChartsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final game = ref.watch(gameStateStreamProvider).valueOrNull;
     final month = ref.watch(expensesMonthProvider);
     final monthKey = monthKeyOf(month);
     final previous = DateTime(month.year, month.month - 1);
@@ -79,21 +81,27 @@ class ChartsScreen extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: _Pill(
-                          AppColors.flamePill, AppColors.flameText, '🔥  12'),
+                        AppColors.flamePill,
+                        AppColors.flameText,
+                        '🔥  ${game?.streak.current ?? '—'}',
+                      ),
                     ),
                     const SizedBox(width: 16),
-                    const Expanded(
+                    Expanded(
                       child: _Pill(
-                          AppColors.seedPill, AppColors.seedText, '🌾  340'),
+                        AppColors.seedPill,
+                        AppColors.seedText,
+                        '🌾  ${game?.gems ?? '—'}',
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: _Pill(
                         AppColors.mint,
                         AppColors.primaryDark,
-                        l10n.homeLevelPill(7),
+                        l10n.homeLevelPill(game?.level ?? 1),
                       ),
                     ),
                   ],
@@ -159,6 +167,23 @@ class ChartsScreen extends ConsumerWidget {
                 _WeekBars(
                   cents: chart.weekdayCents,
                   letters: _weekdayLetters(context),
+                ),
+                const SizedBox(height: 16),
+                _FixedVariableCard(
+                  l10n: l10n,
+                  split: buildFixedVsVariable([
+                    for (final row in _rows(items))
+                      (category: row.category, cents: row.cents),
+                  ]),
+                  format: (cents) =>
+                      _formatCents(context, cents, currency),
+                ),
+                const SizedBox(height: 16),
+                _SixMonthTrendCard(
+                  l10n: l10n,
+                  points: _sixMonthPoints(ref, month),
+                  format: (cents) =>
+                      _formatCents(context, cents, currency),
                 ),
                 const SizedBox(height: 16),
                 if (chart.slices.isEmpty)
@@ -271,6 +296,17 @@ List<({String category, int cents, String date})> _rows(
         date: tx.date,
       ),
   ];
+}
+
+List<MonthTrendPoint> _sixMonthPoints(WidgetRef ref, DateTime endMonth) {
+  final totals = <String, int>{};
+  for (var i = 0; i < 6; i++) {
+    final m = DateTime(endMonth.year, endMonth.month - i);
+    final key = monthKeyOf(m);
+    final summary = ref.watch(monthSummaryProvider(key)).valueOrNull;
+    totals[key] = summary?.spentCents ?? 0;
+  }
+  return buildSixMonthTrend(endMonth: endMonth, totalsByMonth: totals);
 }
 
 String _sliceName(AppLocalizations l10n, String category) {
@@ -541,6 +577,225 @@ class _Legend extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _FixedVariableCard extends StatelessWidget {
+  const _FixedVariableCard({
+    required this.l10n,
+    required this.split,
+    required this.format,
+  });
+
+  final AppLocalizations l10n;
+  final FixedVsVariable split;
+  final String Function(int cents) format;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = split.totalCents;
+    final fixedFrac = total == 0 ? 0.0 : split.fixedCents / total;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.chartsFixedVsVariable,
+          style: const TextStyle(
+            fontFamily: 'Nunito',
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+            color: AppColors.primaryDark,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: SizedBox(
+                  height: 14,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: (fixedFrac * 1000).round().clamp(0, 1000),
+                        child: const ColoredBox(color: AppColors.primaryDark),
+                      ),
+                      Expanded(
+                        flex: ((1 - fixedFrac) * 1000).round().clamp(0, 1000),
+                        child: const ColoredBox(color: AppColors.accent),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${l10n.chartsFixedLabel}\n${format(split.fixedCents)}',
+                      style: const TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primaryDark,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      '${l10n.chartsVariableLabel}\n${format(split.variableCents)}',
+                      textAlign: TextAlign.end,
+                      style: const TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.accent,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SixMonthTrendCard extends StatelessWidget {
+  const _SixMonthTrendCard({
+    required this.l10n,
+    required this.points,
+    required this.format,
+  });
+
+  final AppLocalizations l10n;
+  final List<MonthTrendPoint> points;
+  final String Function(int cents) format;
+
+  @override
+  Widget build(BuildContext context) {
+    final maxCents = points.fold<int>(
+      0,
+      (m, p) => p.totalCents > m ? p.totalCents : m,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.chartsSixMonths,
+          style: const TextStyle(
+            fontFamily: 'Nunito',
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+            color: AppColors.primaryDark,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          height: 160,
+          padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: maxCents <= 0
+              ? Center(
+                  child: Text(
+                    l10n.chartsEmpty,
+                    style: const TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                )
+              : LineChart(
+                  LineChartData(
+                    minY: 0,
+                    maxY: maxCents * 1.15,
+                    gridData: const FlGridData(show: false),
+                    borderData: FlBorderData(show: false),
+                    titlesData: FlTitlesData(
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      leftTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 22,
+                          getTitlesWidget: (value, meta) {
+                            final i = value.round();
+                            if (i < 0 || i >= points.length) {
+                              return const SizedBox.shrink();
+                            }
+                            final label = points[i].monthKey.substring(5);
+                            return Text(
+                              label,
+                              style: const TextStyle(
+                                fontFamily: 'Nunito',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textSecondary,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    lineTouchData: LineTouchData(
+                      touchTooltipData: LineTouchTooltipData(
+                        getTooltipItems: (spots) => [
+                          for (final spot in spots)
+                            LineTooltipItem(
+                              format(spot.y.round()),
+                              const TextStyle(
+                                fontFamily: 'Nunito',
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: [
+                          for (var i = 0; i < points.length; i++)
+                            FlSpot(i.toDouble(), points[i].totalCents.toDouble()),
+                        ],
+                        isCurved: true,
+                        color: AppColors.primary,
+                        barWidth: 3,
+                        dotData: const FlDotData(show: true),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          color: AppColors.primary.withValues(alpha: 0.12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+        ),
+      ],
     );
   }
 }

@@ -31,7 +31,8 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.cargonomade.sipho"
+        // Must match google-services.json / Firebase Android app package.
+        applicationId = "com.cargonomade.sipho.staging"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -39,7 +40,7 @@ android {
     }
 
     // No product flavors (ADR-005). Dart picks the entry (main / main_dev / …).
-    // Native Firebase: debug and release both use sipho-f5a01 (single project).
+    // Native Firebase files currently point at sipho-staging (QA).
 
     signingConfigs {
         create("release") {

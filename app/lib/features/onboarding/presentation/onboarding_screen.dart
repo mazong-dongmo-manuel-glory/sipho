@@ -53,7 +53,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           );
       if (!mounted) return;
       context.go('/onboarding/nest', extra: _name.trim());
-    } catch (_) {
+    } catch (error, stack) {
+      debugPrint('onboarding saveOnboardingProfile failed: $error\n$stack');
+      // Profile may already be saved (retry / race). Continue if so.
+      try {
+        final uid = ref.read(authRepositoryProvider).currentUser?.uid;
+        if (uid != null) {
+          final existing = await ref.read(authRepositoryProvider).getUser(uid);
+          if (existing != null && existing.displayName.trim().isNotEmpty) {
+            if (!mounted) return;
+            context.go('/onboarding/nest', extra: _name.trim());
+            return;
+          }
+        }
+      } catch (recoverError) {
+        debugPrint('onboarding recover-after-save failed: $recoverError');
+      }
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(

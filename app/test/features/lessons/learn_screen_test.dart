@@ -104,6 +104,8 @@ void main() {
       await pump(tester);
       expect(find.text('UNIT 1'), findsOneWidget);
       expect(find.text('UNIT 2'), findsOneWidget);
+      expect(find.text('UNIT 3'), findsOneWidget);
+      expect(find.text('UNIT 4'), findsOneWidget);
       for (final unit in kCatalogUnits) {
         expect(find.text(unit.titleEn), findsOneWidget);
         expect(find.text(unit.subtitle.en), findsOneWidget);
@@ -112,14 +114,14 @@ void main() {
         expect(find.textContaining(lesson.titleEn), findsOneWidget,
             reason: lesson.id);
       }
-      expect(find.text('0/3 lessons'), findsNWidgets(2));
+      expect(find.text('0/3 lessons'), findsNWidgets(4));
     });
 
     testWidgets('only the first lesson is playable at the start',
         (tester) async {
       await pump(tester);
       expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
-      expect(find.byIcon(Icons.lock_rounded), findsNWidgets(5));
+      expect(find.byIcon(Icons.lock_rounded), findsNWidgets(11));
       expect(find.byIcon(Icons.star_rounded), findsNothing);
       expect(find.text('YOUR TURN'), findsOneWidget);
     });
@@ -132,7 +134,7 @@ void main() {
       );
       expect(find.byIcon(Icons.star_rounded), findsNWidgets(2));
       expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
-      expect(find.byIcon(Icons.lock_rounded), findsNWidgets(3));
+      expect(find.byIcon(Icons.lock_rounded), findsNWidgets(9));
       expect(find.text('2/3 lessons'), findsOneWidget);
     });
 
@@ -192,7 +194,7 @@ void main() {
       final gifts = tester
           .widgetList<UnitGiftNode>(find.byType(UnitGiftNode))
           .map((g) => g.reached);
-      expect(gifts, [false, false]);
+      expect(gifts, [false, false, false, false]);
     });
 
     testWidgets('the end-of-unit gift opens once the unit is complete',
@@ -203,7 +205,7 @@ void main() {
           .widgetList<UnitGiftNode>(find.byType(UnitGiftNode))
           .map((g) => g.reached)
           .toList();
-      expect(gifts, [true, false]);
+      expect(gifts, [true, false, false, false]);
     });
   });
 }

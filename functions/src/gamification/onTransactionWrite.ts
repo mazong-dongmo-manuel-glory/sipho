@@ -2,13 +2,19 @@ import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { getFirestore, FieldValue, Firestore, Timestamp } from "firebase-admin/firestore";
 import { logger } from "../shared/logger";
 import { XP_CONFIG, xpToLevel } from "../shared/xpConfig";
-import { idempotencyKey, checkAndMarkIdempotencyKey } from "../shared/idempotency";
+import {
+  idempotencyKey,
+  checkAndMarkIdempotencyKey,
+  clearIdempotencyKey,
+} from "../shared/idempotency";
 import {
   computeNextStreak,
   initialGameStatePayload,
   normalizeGameState,
 } from "../shared/gameState";
 import { localDateKey, resolveUserTime } from "../shared/timezone";
+import { bumpFriendChallenges } from "../social/challengeProgress";
+import { trackReferralActiveDay } from "../referrals/referralReward";
 
 const db = (): Firestore => getFirestore();
 
@@ -41,72 +47,82 @@ export const onTransactionWrite = onDocumentWritten(
     const eventKey = idempotencyKey("onTransactionWrite", event.id);
     if (await checkAndMarkIdempotencyKey(eventKey)) return;
 
-    const beforeData = event.data?.before.exists
-      ? (event.data.before.data() as StoredTransaction)
-      : undefined;
-    const afterData = event.data?.after.exists
-      ? (event.data.after.data() as StoredTransaction)
-      : undefined;
+    try {
+      const beforeData = event.data?.before.exists
+        ? (event.data.before.data() as StoredTransaction)
+        : undefined;
+      const afterData = event.data?.after.exists
+        ? (event.data.after.data() as StoredTransaction)
+        : undefined;
 
-    if (!beforeData && !afterData) return;
+      if (!beforeData && !afterData) return;
 
-    const isCreate = !beforeData && Boolean(afterData);
-    const batch = db().batch();
+      const isCreate = !beforeData && Boolean(afterData);
+      const batch = db().batch();
 
-    // ── 1. Monthly aggregates (supports create, update across categories/months, delete) ─
-    const touchedCategoryMonths = new Set<string>();
+      // ── 1. Monthly aggregates (supports create, update across categories/months, delete) ─
+      const touchedCategoryMonths = new Set<string>();
 
-    if (beforeData) {
-      const prevCents = effectiveCents(beforeData);
-      const prevCat = safeCategory(beforeData.category);
-      const prevMonth = extractMonthKey(beforeData.date);
-      if (prevCents > 0 && prevMonth) {
-        const prevMonthRef = db().doc(`users/${uid}/months/${prevMonth}`);
-        batch.set(
-          prevMonthRef,
-          {
-            totalVariableCents: FieldValue.increment(-prevCents),
-            expenses: { [prevCat]: FieldValue.increment(-prevCents) },
-            updatedAt: FieldValue.serverTimestamp(),
-          },
-          { merge: true }
-        );
+      if (beforeData) {
+        const prevCents = effectiveCents(beforeData);
+        const prevCat = safeCategory(beforeData.category);
+        const prevMonth = extractMonthKey(beforeData.date);
+        if (prevCents > 0 && prevMonth) {
+          const prevMonthRef = db().doc(`users/${uid}/months/${prevMonth}`);
+          batch.set(
+            prevMonthRef,
+            {
+              totalVariableCents: FieldValue.increment(-prevCents),
+              expenses: { [prevCat]: FieldValue.increment(-prevCents) },
+              updatedAt: FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+        }
       }
-    }
 
-    if (afterData) {
-      const nextCents = effectiveCents(afterData);
-      const nextCat = safeCategory(afterData.category);
-      const nextMonth = extractMonthKey(afterData.date);
-      if (nextCents > 0 && nextMonth) {
-        const nextMonthRef = db().doc(`users/${uid}/months/${nextMonth}`);
-        batch.set(
-          nextMonthRef,
-          {
-            totalVariableCents: FieldValue.increment(nextCents),
-            expenses: { [nextCat]: FieldValue.increment(nextCents) },
-            updatedAt: FieldValue.serverTimestamp(),
-          },
-          { merge: true }
-        );
-        touchedCategoryMonths.add(`${nextMonth}::${nextCat}`);
+      if (afterData) {
+        const nextCents = effectiveCents(afterData);
+        const nextCat = safeCategory(afterData.category);
+        const nextMonth = extractMonthKey(afterData.date);
+        if (nextCents > 0 && nextMonth) {
+          const nextMonthRef = db().doc(`users/${uid}/months/${nextMonth}`);
+          batch.set(
+            nextMonthRef,
+            {
+              totalVariableCents: FieldValue.increment(nextCents),
+              expenses: { [nextCat]: FieldValue.increment(nextCents) },
+              updatedAt: FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+          touchedCategoryMonths.add(`${nextMonth}::${nextCat}`);
+        }
       }
-    }
 
-    await batch.commit();
+      await batch.commit();
 
-    // ── 2. XP + quest progress on new transaction only ───────────────────────
-    if (isCreate && afterData) {
-      await recordTransactionActivity(uid, txId, new Date());
-      await updateQuestProgress(uid, "ADD_TRANSACTION", 1);
-    }
-
-    // ── 3. Budget / envelope alert check ─────────────────────────────────────
-    for (const pair of touchedCategoryMonths) {
-      const [monthKey, category] = pair.split("::");
-      if (monthKey && category) {
-        await checkBudgetAlert(uid, monthKey, category);
+      // ── 2. XP + quest progress on new transaction only ───────────────────────
+      if (isCreate && afterData) {
+        const dayKey = await recordTransactionActivity(uid, txId, new Date());
+        await updateQuestProgress(uid, "ADD_TRANSACTION", 1);
+        if (dayKey) {
+          await bumpFriendChallenges(uid, "activity_day", dayKey);
+          await trackReferralActiveDay(uid, dayKey);
+        }
       }
+
+      // ── 3. Budget / envelope alert check ─────────────────────────────────────
+      for (const pair of touchedCategoryMonths) {
+        const [monthKey, category] = pair.split("::");
+        if (monthKey && category) {
+          await checkBudgetAlert(uid, monthKey, category);
+        }
+      }
+    } catch (err) {
+      // Allow Cloud Functions retries to re-run work if we failed mid-handler.
+      await clearIdempotencyKey(eventKey);
+      throw err;
     }
   }
 );
@@ -145,12 +161,16 @@ function extractMonthKey(date?: string | Timestamp): string {
  *  - advances the streak (logging an expense counts, like finishing a lesson),
  *  - awards capped XP (`XP_CONFIG.transactionMax` per local day).
  */
-export async function recordTransactionActivity(uid: string, txId: string, now: Date): Promise<void> {
+export async function recordTransactionActivity(
+  uid: string,
+  txId: string,
+  now: Date
+): Promise<string | null> {
   const userRef = db().doc(`users/${uid}`);
   const gameRef = db().doc(`users/${uid}/game/state`);
   const publicRef = db().doc(`publicProfiles/${uid}`);
 
-  await db().runTransaction(async (t) => {
+  const dayKey = await db().runTransaction(async (t) => {
     const userSnap = await t.get(userRef);
     const dayKey = localDateKey(now, resolveUserTime(userSnap.data()));
     const dailyRef = db().doc(`users/${uid}/dailyXp/${dayKey}`);
@@ -173,7 +193,7 @@ export async function recordTransactionActivity(uid: string, txId: string, now: 
       nextStreak.current !== baseGame.streak.current ||
       nextStreak.lastActiveDay !== baseGame.streak.lastActiveDay;
 
-    if (xpGain === 0 && !streakChanged) return;
+    if (xpGain === 0 && !streakChanged) return dayKey;
 
     const newXp = baseGame.xp + xpGain;
     const newLevel = xpToLevel(newXp);
@@ -227,7 +247,10 @@ export async function recordTransactionActivity(uid: string, txId: string, now: 
       dayKey,
       streak: nextStreak.current,
     });
+    return dayKey;
   });
+
+  return dayKey;
 }
 
 async function updateQuestProgress(uid: string, type: string, increment: number): Promise<void> {

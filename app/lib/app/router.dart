@@ -21,6 +21,7 @@ import 'package:sipho/features/gamification/domain/quest_reward.dart';
 import 'package:sipho/features/gamification/presentation/chest_open_screen.dart';
 import 'package:sipho/features/gamification/presentation/streak_screen.dart';
 import 'package:sipho/features/home/presentation/home_screen.dart';
+import 'package:sipho/features/insights/presentation/insight_detail_screen.dart';
 import 'package:sipho/features/leaderboard/presentation/leaderboard_screen.dart';
 import 'package:sipho/features/lessons/domain/lesson_result.dart';
 import 'package:sipho/features/lessons/presentation/learn_screen.dart';
@@ -171,6 +172,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/notification-settings',
         builder: (_, __) => const NotificationSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/insights',
+        builder: (_, __) => const InsightDetailScreen(),
       ),
     ],
   );

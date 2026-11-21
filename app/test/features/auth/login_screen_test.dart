@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +7,10 @@ import 'package:sipho/features/auth/presentation/login_screen.dart';
 
 void main() {
   testWidgets('welcome screen shows the Figma copy in order', (tester) async {
+    // Figma frame includes Apple; force iOS so the button is visible in the test.
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+
     tester.view.physicalSize = const Size(393, 852);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -42,5 +47,8 @@ void main() {
     }
 
     expect(tester.takeException(), isNull);
+
+    // Must clear before the binding verifies foundation invariants (tearDown is too late).
+    debugDefaultTargetPlatformOverride = null;
   });
 }

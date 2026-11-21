@@ -19,6 +19,7 @@ const List<BadgeDef> kBadges = [
   BadgeDef('unit_1', Icons.school),
   BadgeDef('unit_2', Icons.savings),
   BadgeDef('unit_3', Icons.shield),
+  BadgeDef('unit_4', Icons.auto_graph),
   BadgeDef('streak_7', Icons.local_fire_department),
   BadgeDef('streak_30', Icons.whatshot),
   BadgeDef('level_5', Icons.trending_up),
@@ -39,6 +40,8 @@ String badgeTitle(AppLocalizations l10n, String id) {
       return l10n.badgeUnit2;
     case 'unit_3':
       return l10n.badgeUnit3;
+    case 'unit_4':
+      return l10n.badgeUnit4;
     case 'streak_7':
       return l10n.badgeStreak7;
     case 'streak_30':
@@ -67,6 +70,8 @@ String badgeHint(AppLocalizations l10n, String id) {
       return l10n.badgeUnit2Hint;
     case 'unit_3':
       return l10n.badgeUnit3Hint;
+    case 'unit_4':
+      return l10n.badgeUnit4Hint;
     case 'streak_7':
       return l10n.badgeStreak7Hint;
     case 'streak_30':

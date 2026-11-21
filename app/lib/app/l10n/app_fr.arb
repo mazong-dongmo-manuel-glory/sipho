@@ -185,6 +185,14 @@
       }
     }
   },
+  "friendsRedeemDonePending": "Bienvenue ! Vous êtes amis. Reste actif {days} jours pour débloquer l'XP de parrainage (anti-abus).",
+  "@friendsRedeemDonePending": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "friendsCodeInvalid": "Entre un code valide (lettres et chiffres).",
   "friendsErrCodeNotFound": "Ce code n'existe pas. Vérifie-le avec ton ami.",
   "friendsErrOwnCode": "C'est ton propre code : partage-le à un ami.",
@@ -238,6 +246,30 @@
   "contactsErrPhoneTooMany": "Trop d'essais. Réessaie plus tard.",
   "homeEconomyTitle": "Les indicateurs officiels arrivent",
   "homeEconomyImpact": "Sipho n'affiche un taux que s'il vient d'une source datée.",
+  "homeCountryEconomyTitle": "Économie · {country}",
+  "@homeCountryEconomyTitle": {
+    "placeholders": {
+      "country": {
+        "type": "String"
+      }
+    }
+  },
+  "homeEconomyInflationChip": "Inflation {value}",
+  "@homeEconomyInflationChip": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "homeEconomyRateChip": "Taux directeur {value}",
+  "@homeEconomyRateChip": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "expenseDeleted": "Dépense retirée",
   "onboardingSaveError": "Impossible d'enregistrer ton profil. Réessaie.",
   "notifSettingsTitle": "Notifications",
@@ -283,7 +315,7 @@
     }
   },
   "rewardHabit": "Une bonne habitude de plus !",
-  "rewardXp": "+5 XP",
+  "rewardXp": "+2 XP",
   "rewardToast": "✓  Bien joué ! Ta quête avance.",
   "scanTitle": "Scanner une facture",
   "scanHint": "Place ta facture dans le cadre",
@@ -314,6 +346,7 @@
   "expenseBreakfast": "Restos · déjeuner",
   "expenseCommute": "Transport · trajet boulot",
   "expenseScanned": "Épicerie · 📷 scanné",
+  "expenseScannedBadge": "scanné",
   "expenseLeisure": "Loisirs · 25,00 € → 36,80 $",
   "socleTitle": "Mon socle",
   "socleSubtitle": "Tes brins, bien organisés.",
@@ -392,6 +425,10 @@
   },
   "chartsSummarySame": "Autant que le mois dernier",
   "chartsEmpty": "Aucune dépense ce mois-ci.",
+  "chartsFixedVsVariable": "Fixes vs variables",
+  "chartsFixedLabel": "Fixes (socle)",
+  "chartsVariableLabel": "Variables",
+  "chartsSixMonths": "6 derniers mois",
   "budgetTitle": "Budgets",
   "budgetIntro": "Part de tes dépenses du mois",
   "chartsGroceries": "Épicerie    42 %",
@@ -466,6 +503,9 @@
   "lessonFalse": "Faux",
   "lessonRecapTitle": "À retenir",
   "lessonRecapFinish": "TERMINER",
+  "lessonNotFoundTitle": "Leçon introuvable",
+  "lessonNotFoundBody": "Cette leçon n'est plus disponible. Choisis-en une autre sur ton parcours.",
+  "lessonNotFoundCta": "Retour à Apprendre",
   "lessonLeaveTitle": "Quitter la leçon ?",
   "lessonLeaveBody": "Ta progression dans cette leçon sera perdue.",
   "lessonLeaveStay": "RESTER",
@@ -581,6 +621,8 @@
   "badgeBuilderHint": "Termine la construction de ton nid (onboarding).",
   "badgeUnit3": "Malin de l'argent",
   "badgeUnit3Hint": "Termine l'unité 3.",
+  "badgeUnit4": "Investisseur avisé",
+  "badgeUnit4Hint": "Termine l'unité 4.",
   "badgeEarnedLabel": "Obtenu",
   "badgeLockedLabel": "À gagner",
   "learnQuestCompleteLesson": "Valider une leçon",
@@ -622,6 +664,31 @@
   },
   "profileGoals": "Mes objectifs",
   "profileGoal": "Voyage au Cameroun · 1 200 / 3 000 $",
+  "addGoalTitle": "Ajouter un objectif",
+  "addGoalBtn": "Créer l'objectif",
+  "goalTitleLabel": "Nom de l'objectif",
+  "goalTitleHint": "ex. Voyage, Fonds d'urgence...",
+  "goalTargetLabel": "Montant cible",
+  "goalSavedLabel": "Déjà épargné",
+  "goalDepositBtn": "Ajouter une épargne",
+  "goalDepositTitle": "Verser vers l'objectif",
+  "goalDepositAmount": "Montant à ajouter",
+  "goalDepositConfirm": "Enregistrer le versement",
+  "goalEmptyTitle": "Aucun objectif d'épargne",
+  "goalEmptySubtitle": "Fixe-toi un but (voyage, projet, réserve) et avance pas à pas !",
+  "goalCompleted": "Objectif atteint 🎉",
+  "goalReachedBadge": "Atteint ✓",
+  "goalSaveQuick": "+ Épargner",
+  "goalTrackerCount": "{count} objectifs configurés",
+  "@goalTrackerCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "goalDelete": "Supprimer l'objectif",
+  "goalDeleteConfirm": "Veux-tu supprimer cet objectif ?",
   "profileInvite": "Inviter des amis  →",
   "shopTitle": "La boutique de Sipho",
   "shopSubtitle": "Un style unique, comme ton aventure.",
@@ -774,6 +841,22 @@
   "coachLogExpenseCta": "NOTER UNE DÉPENSE",
   "coachOpenCard": "Voir le conseil →",
   "coachPreviousTitle": "Conseils précédents",
+  "coachHourlyTitle": "Accompagnement Sipho",
+  "coachHourlyDismiss": "Compris",
+  "coachEducationLevel": "Niveau : {stage} · {score}/100",
+  "@coachEducationLevel": {
+    "placeholders": {
+      "stage": { "type": "String" },
+      "score": { "type": "int" }
+    }
+  },
+  "coachStageFoundation": "Fondations",
+  "coachStageHabits": "Habitudes",
+  "coachStageSaving": "Épargne",
+  "coachStageProtect": "Protection",
+  "coachStageGrow": "Faire grandir",
+  "coachEducationCardTitle": "Éducation financière",
+  "coachEducationCardHint": "Progression d’après tes leçons, ta série et tes habitudes sur Sipho.",
   "learnQuestsTitle": "Quêtes d'apprentissage",
   "learnQuestsSummary": "{done}/{total} terminées",
   "@learnQuestsSummary": {

@@ -1074,6 +1074,265 @@ const List<CatalogLesson> _unit3Lessons = [
   ),
 ];
 
+const List<CatalogLesson> _unit4Lessons = [
+  CatalogLesson(
+    id: 'investing_basics',
+    emoji: '🌱',
+    minutes: 4,
+    titleFr: 'Bases de l\'investissement',
+    titleEn: 'Investing basics',
+    objective: LText(
+      'Comprendre la différence entre épargner et investir, et le rôle du risque.',
+      'Understand the difference between saving and investing, and how risk works.',
+    ),
+    steps: [
+      InfoStep(
+        emoji: '🌱',
+        title: LText('Épargner vs Investir', 'Saving vs Investing'),
+        body: LText(
+          'Épargner, c\'est mettre de l\'argent de côté en sécurité. Investir, c\'est faire travailler cet argent pour qu\'il prenne de la valeur sur le moyen et long terme.',
+          'Saving is putting money aside safely. Investing is putting that money to work so it gains value over the medium and long term.',
+        ),
+        points: [
+          LText('L\'épargne reste disponible pour les urgences',
+              'Savings stay liquid for emergencies'),
+          LText('L\'investissement vise le moyen et long terme (3 à 5 ans et plus)',
+              'Investing targets the medium and long term (3 to 5 years+)'),
+          LText('Tout investissement comporte un risque, rémunéré par le rendement',
+              'Every investment carries risk, rewarded by expected returns'),
+        ],
+      ),
+      QuizStep(
+        question: LText('Quel argent est adapté pour commencer à investir ?',
+            'Which money is suitable to start investing?'),
+        choices: [
+          LessonChoice(
+            fr: 'L\'argent de ton loyer ou des courses du mois',
+            en: 'Your rent or groceries money for the month',
+            correct: false,
+          ),
+          LessonChoice(
+            fr: 'Un surplus dont tu n\'as pas besoin à court terme, après avoir ton fonds d\'urgence',
+            en: 'Surplus cash you do not need short term, after your emergency fund',
+            correct: true,
+          ),
+          LessonChoice(
+            fr: 'Un prêt contracté pour spéculer rapidement',
+            en: 'A loan taken to speculate quickly',
+            correct: false,
+          ),
+        ],
+        explanation: LText(
+          'On n\'investit jamais l\'argent du quotidien ou des urgences. On commence avec des surplus après s\'être protégé.',
+          'Never invest money needed for daily life or emergencies. Start with surpluses after securing a safety net.',
+        ),
+      ),
+      TrueFalseStep(
+        statement: LText(
+          'Investir garantit de doubler son argent en quelques semaines sans risque.',
+          'Investing guarantees doubling your money in weeks with no risk.',
+        ),
+        answer: false,
+        explanation: LText(
+          'Les gains rapides et sans risque n\'existent pas : c\'est le piège classique des arnaques. Les vrais investissements prennent du temps.',
+          'Fast risk-free gains do not exist: that is a classic scam red flag. Real investments take time to compound.',
+        ),
+      ),
+      InfoStep(
+        emoji: '🧺',
+        title: LText('La diversification', 'Diversification'),
+        body: LText(
+          'Diversifier signifie répartir ton argent sur plusieurs actifs (entreprises, secteurs, pays) plutôt que tout miser sur un seul.',
+          'Diversifying means spreading your money across multiple assets (companies, sectors, countries) rather than betting on one.',
+        ),
+        points: [
+          LText('Si une entreprise chute, les autres amortissent le choc',
+              'If one company drops, the others cushion the fall'),
+          LText('Les fonds indiciels permettent de diversifier à moindre coût',
+              'Index funds make broad diversification simple and low cost'),
+        ],
+      ),
+    ],
+    takeaways: [
+      LText('Construis ton fonds d\'urgence avant de commencer à investir.',
+          'Build your emergency fund before you start investing.'),
+      LText('Investis pour le long terme : le temps absorbe les soubresauts du marché.',
+          'Invest for the long run: time smooths market fluctuations.'),
+      LText('Diversifie toujours pour ne jamais dépendre d\'un seul actif.',
+          'Always diversify so you never depend on a single asset.'),
+    ],
+  ),
+  CatalogLesson(
+    id: 'compound_interest',
+    emoji: '🪄',
+    minutes: 3,
+    titleFr: 'La magie des intérêts composés',
+    titleEn: 'The magic of compound interest',
+    objective: LText(
+      'Découvrir comment les gains créent de nouveaux gains au fil du temps.',
+      'Discover how returns generate new returns over time.',
+    ),
+    steps: [
+      InfoStep(
+        emoji: '🪄',
+        title: LText('L\'effet boule de neige', 'The snowball effect'),
+        body: LText(
+          'Les intérêts composés, c\'est quand tes intérêts génèrent eux-mêmes des intérêts. Plus tu laisses passer de temps, plus la croissance s\'accélère.',
+          'Compound interest happens when your interest earns interest of its own. The more time passes, the faster it grows.',
+        ),
+        points: [
+          LText('Année 1 : tu gagnes des intérêts sur ton versement initial',
+              'Year 1: you earn interest on your initial deposit'),
+          LText('Année 2 : tu gagnes des intérêts sur ton capital ET sur les intérêts passés',
+              'Year 2: you earn interest on your principal AND past earnings'),
+          LText('Sur 10 à 20 ans, la courbe grimpe de façon impressionnante',
+              'Over 10 to 20 years, the growth curve turns exponential'),
+        ],
+      ),
+      QuizStep(
+        question: LText('Qui tirera le plus profit des intérêts composés ?',
+            'Who will benefit most from compound interest?'),
+        choices: [
+          LessonChoice(
+            fr: 'Une personne qui commence à 20 ans avec 30 \$/€ par mois',
+            en: 'Someone starting at 20 with 30 \$/€ per month',
+            correct: true,
+          ),
+          LessonChoice(
+            fr: 'Une personne qui attend 45 ans pour mettre 100 \$/€ par mois',
+            en: 'Someone waiting until 45 to put 100 \$/€ per month',
+            correct: false,
+          ),
+        ],
+        explanation: LText(
+          'Commencer 25 ans plus tôt donne beaucoup plus d\'années aux intérêts pour décupler le capital, même avec de petits montants.',
+          'Starting 25 years earlier gives compound interest decades to multiply your capital, even on modest contributions.',
+        ),
+      ),
+      TrueFalseStep(
+        statement: LText(
+          'Plus on commence tôt à épargner ou investir, plus l\'effet des intérêts composés est puissant.',
+          'The earlier you start saving or investing, the more powerful compound interest becomes.',
+        ),
+        answer: true,
+        explanation: LText(
+          'Exact ! Le temps est le facteur le plus décisif dans l\'effet boule de neige financier.',
+          'Exactly! Time is the most decisive factor in the financial snowball effect.',
+        ),
+      ),
+      InfoStep(
+        emoji: '⏳',
+        title: LText('La régularité avant tout', 'Consistency above all'),
+        body: LText(
+          'Pas besoin d\'une fortune pour commencer. Mettre même 15 ou 25 \$/€ de côté chaque mois de façon automatique enclenche la machine.',
+          'You don\'t need a fortune to start. Putting even 15 or 25 \$/€ aside automatically every month gets the flywheel spinning.',
+        ),
+        points: [
+          LText('Automatise tes virements pour ne jamais hésiter',
+              'Automate your transfers so you never hesitate'),
+          LText('La patience et la discipline battent les coups de chance',
+              'Patience and discipline outperform lucky gambles'),
+        ],
+      ),
+    ],
+    takeaways: [
+      LText('Les intérêts composés font faire des petits à ton argent.',
+          'Compound interest lets your returns make returns of their own.'),
+      LText('Commencer tôt a plus d\'impact que commencer gros.',
+          'Starting early has more impact than waiting to start big.'),
+      LText('La régularité automatique transforme les petits pas en grand nid.',
+          'Automated consistency turns small steps into a solid nest egg.'),
+    ],
+  ),
+  CatalogLesson(
+    id: 'smart_budget_503020',
+    emoji: '⚖️',
+    minutes: 4,
+    titleFr: 'La règle du 50 / 30 / 20',
+    titleEn: 'The 50 / 30 / 20 rule',
+    objective: LText(
+      'Apprendre une méthode simple et universelle pour équilibrer ses revenus chaque mois.',
+      'Learn a simple, universal framework to balance your monthly income.',
+    ),
+    steps: [
+      InfoStep(
+        emoji: '⚖️',
+        title: LText('Trois parts pour ton revenu', 'Three slices for your income'),
+        body: LText(
+          'La règle 50/30/20 est une boussole pour répartir ton salaire net chaque mois sans prise de tête et garder l\'esprit serein.',
+          'The 50/30/20 rule is a practical compass to divide your take-home pay each month without stress.',
+        ),
+        points: [
+          LText('50 % pour tes besoins essentiels (loyer, factures, courses)',
+              '50% for essential needs (rent, bills, groceries)'),
+          LText('30 % pour tes envies et loisirs (sorties, restos, plaisirs)',
+              '30% for wants and leisure (outings, dining, treats)'),
+          LText('20 % pour ton épargne et tes objectifs d\'avenir',
+              '20% for your savings and future goals'),
+        ],
+      ),
+      QuizStep(
+        question: LText('Dans quelle tranche classe-t-on une sortie resto entre amis ?',
+            'In which bucket does dining out with friends belong?'),
+        choices: [
+          LessonChoice(
+            fr: 'Les 50 % de besoins vitaux',
+            en: 'The 50% essential needs',
+            correct: false,
+          ),
+          LessonChoice(
+            fr: 'Les 30 % d\'envies et loisirs',
+            en: 'The 30% wants and leisure',
+            correct: true,
+          ),
+          LessonChoice(
+            fr: 'Les 20 % d\'épargne',
+            en: 'The 20% savings',
+            correct: false,
+          ),
+        ],
+        explanation: LText(
+          'Se nourrir est un besoin, mais aller au resto est un plaisir agréable qui relève de tes envies.',
+          'Eating is a need, but dining at a restaurant is an enjoyable treat that belongs in wants.',
+        ),
+      ),
+      TrueFalseStep(
+        statement: LText(
+          'Si tes besoins dépassent 50 %, cette règle t\'interdit de faire des ajustements.',
+          'If your essentials exceed 50%, the rule forbids making adjustments.',
+        ),
+        answer: false,
+        explanation: LText(
+          'La règle est un guide souple, pas une prison. Adapte-la à ta réalité (ex: 60/25/15) puis améliore tes ratios progressivement.',
+          'The rule is a flexible guide, not a rigid constraint. Adapt it to your reality (e.g. 60/25/15) and improve over time.',
+        ),
+      ),
+      InfoStep(
+        emoji: '🧘',
+        title: LText('Dépenser sans culpabilité', 'Guilt-free spending'),
+        body: LText(
+          'Le grand avantage : dès que tes 20 % d\'épargne et ton socle de 50 % sont sécurisés, tes 30 % d\'envies se dépensent en toute tranquillité.',
+          'The biggest perk: once your 20% savings and 50% baseline are locked in, your 30% wants can be enjoyed guilt-free.',
+        ),
+        points: [
+          LText('Tu profites de la vie sans craindre pour la fin de mois',
+              'You enjoy life without fearing month-end surprises'),
+          LText('Ton nid grandit chaque mois automatiquement',
+              'Your nest grows automatically each and every month'),
+        ],
+      ),
+    ],
+    takeaways: [
+      LText('50 % pour tes besoins vitaux, 30 % pour tes envies, 20 % pour ton épargne.',
+          '50% for vital needs, 30% for wants, 20% for savings.'),
+      LText('Cette règle est une boussole flexible, adaptable à ton coût de la vie.',
+          'This framework is a flexible compass, adaptable to your reality.'),
+      LText('Prévoir un budget plaisir permet de tenir ses finances sans frustration.',
+          'Budgeting for fun lets you maintain healthy finances without burnout.'),
+    ],
+  ),
+];
+
 class CatalogUnit {
   const CatalogUnit({
     required this.id,
@@ -1134,6 +1393,16 @@ const List<CatalogUnit> kCatalogUnits = [
     bonusXp: 30,
     bonusSeeds: 10,
   ),
+  CatalogUnit(
+    id: 'unit_4',
+    titleFr: 'Faire grandir son argent',
+    titleEn: 'Grow your money',
+    subtitle: LText(
+        'Investir et faire fructifier son épargne', 'Invest and make your savings grow'),
+    lessons: _unit4Lessons,
+    bonusXp: 30,
+    bonusSeeds: 10,
+  ),
 ];
 
 /// Every lesson in path order (unit by unit).
@@ -1141,7 +1410,11 @@ const List<CatalogLesson> kCatalogLessons = [
   ..._unit1Lessons,
   ..._unit2Lessons,
   ..._unit3Lessons,
+  ..._unit4Lessons,
 ];
+
+/// Path + country modules (player lookup). Country list is appended in
+/// `country_lesson_catalog.dart` via [kAllPlayableLessons].
 
 /// First lesson the user has not finished, or null when the path is complete.
 String? nextLessonId(List<String> lessonIds, Set<String> completed) {

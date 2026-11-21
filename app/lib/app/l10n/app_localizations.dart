@@ -849,6 +849,12 @@ abstract class AppLocalizations {
   /// **'Welcome! +{xp} XP, and you are now friends.'**
   String friendsRedeemDone(int xp);
 
+  /// No description provided for @friendsRedeemDonePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome! You\'re friends now. Keep active for {days} days to unlock the referral XP (anti-abuse).'**
+  String friendsRedeemDonePending(int days);
+
   /// No description provided for @friendsCodeInvalid.
   ///
   /// In en, this message translates to:
@@ -1125,6 +1131,24 @@ abstract class AppLocalizations {
   /// **'Sipho only shows a rate when it comes from a dated source.'**
   String get homeEconomyImpact;
 
+  /// No description provided for @homeCountryEconomyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Economy in {country}'**
+  String homeCountryEconomyTitle(String country);
+
+  /// No description provided for @homeEconomyInflationChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Inflation {value}'**
+  String homeEconomyInflationChip(String value);
+
+  /// No description provided for @homeEconomyRateChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Key rate {value}'**
+  String homeEconomyRateChip(String value);
+
   /// No description provided for @expenseDeleted.
   ///
   /// In en, this message translates to:
@@ -1362,7 +1386,7 @@ abstract class AppLocalizations {
   /// No description provided for @rewardXp.
   ///
   /// In en, this message translates to:
-  /// **'+5 XP'**
+  /// **'+2 XP'**
   String get rewardXp;
 
   /// No description provided for @rewardToast.
@@ -1544,6 +1568,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Groceries · 📷 scanned'**
   String get expenseScanned;
+
+  /// No description provided for @expenseScannedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'scanned'**
+  String get expenseScannedBadge;
 
   /// No description provided for @expenseLeisure.
   ///
@@ -1766,6 +1796,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No expenses this month.'**
   String get chartsEmpty;
+
+  /// No description provided for @chartsFixedVsVariable.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed vs variable'**
+  String get chartsFixedVsVariable;
+
+  /// No description provided for @chartsFixedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed (nest)'**
+  String get chartsFixedLabel;
+
+  /// No description provided for @chartsVariableLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Variable'**
+  String get chartsVariableLabel;
+
+  /// No description provided for @chartsSixMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 6 months'**
+  String get chartsSixMonths;
 
   /// No description provided for @budgetTitle.
   ///
@@ -2096,6 +2150,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'FINISH'**
   String get lessonRecapFinish;
+
+  /// No description provided for @lessonNotFoundTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lesson not found'**
+  String get lessonNotFoundTitle;
+
+  /// No description provided for @lessonNotFoundBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This lesson is no longer available. Pick another from your path.'**
+  String get lessonNotFoundBody;
+
+  /// No description provided for @lessonNotFoundCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Learn'**
+  String get lessonNotFoundCta;
 
   /// No description provided for @lessonLeaveTitle.
   ///
@@ -2619,6 +2691,18 @@ abstract class AppLocalizations {
   /// **'Finish unit 3.'**
   String get badgeUnit3Hint;
 
+  /// No description provided for @badgeUnit4.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart Investor'**
+  String get badgeUnit4;
+
+  /// No description provided for @badgeUnit4Hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish unit 4.'**
+  String get badgeUnit4Hint;
+
   /// No description provided for @badgeEarnedLabel.
   ///
   /// In en, this message translates to:
@@ -2792,6 +2876,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Trip to Cameroon · 1,200 / 3,000 \$'**
   String get profileGoal;
+
+  /// No description provided for @addGoalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a goal'**
+  String get addGoalTitle;
+
+  /// No description provided for @addGoalBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Create goal'**
+  String get addGoalBtn;
+
+  /// No description provided for @goalTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal name'**
+  String get goalTitleLabel;
+
+  /// No description provided for @goalTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Vacation, Emergency fund...'**
+  String get goalTitleHint;
+
+  /// No description provided for @goalTargetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Target amount'**
+  String get goalTargetLabel;
+
+  /// No description provided for @goalSavedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Already saved'**
+  String get goalSavedLabel;
+
+  /// No description provided for @goalDepositBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Add savings'**
+  String get goalDepositBtn;
+
+  /// No description provided for @goalDepositTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add money to goal'**
+  String get goalDepositTitle;
+
+  /// No description provided for @goalDepositAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount to add'**
+  String get goalDepositAmount;
+
+  /// No description provided for @goalDepositConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Save deposit'**
+  String get goalDepositConfirm;
+
+  /// No description provided for @goalEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No savings goals yet'**
+  String get goalEmptyTitle;
+
+  /// No description provided for @goalEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a target (trip, project, buffer) and save step by step!'**
+  String get goalEmptySubtitle;
+
+  /// No description provided for @goalCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal achieved 🎉'**
+  String get goalCompleted;
+
+  /// No description provided for @goalReachedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Done ✓'**
+  String get goalReachedBadge;
+
+  /// No description provided for @goalSaveQuick.
+  ///
+  /// In en, this message translates to:
+  /// **'+ Save'**
+  String get goalSaveQuick;
+
+  /// No description provided for @goalTrackerCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} goals set'**
+  String goalTrackerCount(int count);
+
+  /// No description provided for @goalDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete goal'**
+  String get goalDelete;
+
+  /// No description provided for @goalDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to delete this goal?'**
+  String get goalDeleteConfirm;
 
   /// No description provided for @profileInvite.
   ///
@@ -3638,6 +3830,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Previous advice'**
   String get coachPreviousTitle;
+
+  /// No description provided for @coachHourlyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sipho coaching'**
+  String get coachHourlyTitle;
+
+  /// No description provided for @coachHourlyDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get coachHourlyDismiss;
+
+  /// No description provided for @coachEducationLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Level: {stage} · {score}/100'**
+  String coachEducationLevel(String stage, int score);
+
+  /// No description provided for @coachStageFoundation.
+  ///
+  /// In en, this message translates to:
+  /// **'Foundations'**
+  String get coachStageFoundation;
+
+  /// No description provided for @coachStageHabits.
+  ///
+  /// In en, this message translates to:
+  /// **'Habits'**
+  String get coachStageHabits;
+
+  /// No description provided for @coachStageSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving'**
+  String get coachStageSaving;
+
+  /// No description provided for @coachStageProtect.
+  ///
+  /// In en, this message translates to:
+  /// **'Protection'**
+  String get coachStageProtect;
+
+  /// No description provided for @coachStageGrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Growing'**
+  String get coachStageGrow;
+
+  /// No description provided for @coachEducationCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial education'**
+  String get coachEducationCardTitle;
+
+  /// No description provided for @coachEducationCardHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress from your lessons, streak and habits on Sipho.'**
+  String get coachEducationCardHint;
 
   /// No description provided for @learnQuestsTitle.
   ///

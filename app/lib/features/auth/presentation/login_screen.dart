@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -10,6 +11,12 @@ import 'package:sipho/core/legal/sipho_legal.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
 import 'package:sipho/features/auth/presentation/auth_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+/// Apple Sign-In is only offered on Apple platforms (not Android / web).
+bool get kShowAppleSignInButton =>
+    !kIsWeb &&
+    (defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS);
 
 /// Gaps from the 393×852 Figma frame, below the system status bar.
 const _wordmarkTopGap = 19.0;
@@ -112,17 +119,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               textAlign: TextAlign.center,
                             ),
                           ),
-                        SiphoButton3D(
-                          label: l10n.signInWithApple,
-                          onPressed: isBusy ? null : _handleAppleSignIn,
-                          isLoading: _isAppleLoading,
-                          color: AppColors.ink,
-                          shadowColor: AppColors.primaryDark,
-                          textColor: Colors.white,
-                          height: 52,
-                          borderRadius: buttonRadius,
-                        ),
-                        const SizedBox(height: _buttonGap),
+                        if (kShowAppleSignInButton) ...[
+                          SiphoButton3D(
+                            label: l10n.signInWithApple,
+                            onPressed: isBusy ? null : _handleAppleSignIn,
+                            isLoading: _isAppleLoading,
+                            color: AppColors.ink,
+                            shadowColor: AppColors.primaryDark,
+                            textColor: Colors.white,
+                            height: 52,
+                            borderRadius: buttonRadius,
+                          ),
+                          const SizedBox(height: _buttonGap),
+                        ],
                         SiphoButton3D(
                           label: l10n.signInWithGoogle,
                           onPressed: isBusy ? null : _handleGoogleSignIn,

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sipho — Invitation</title>
+  <meta name="description" content="Rejoins Sipho avec le code d'un ami." />
+  <style>
+    :root { color-scheme: light; }
+    body {
+      margin: 0; font-family: system-ui, sans-serif;
+      background: #FFF8EC; color: #14342B;
+      display: grid; place-items: center; min-height: 100vh; padding: 24px;
+    }
+    main { max-width: 420px; text-align: center; }
+    h1 { font-size: 1.75rem; margin-bottom: 0.5rem; }
+    p { line-height: 1.5; color: #3d5a4f; }
+    code {
+      display: inline-block; margin-top: 12px; padding: 10px 16px;
+      background: #1F9D55; color: #fff; border-radius: 12px;
+      font-size: 1.25rem; letter-spacing: 0.08em; font-weight: 700;
+    }
+    a.store {
+      display: inline-block; margin: 8px; padding: 12px 18px;
+      background: #14342B; color: #FFF8EC; border-radius: 999px;
+      text-decoration: none; font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Sipho</h1>
+    <p>Ton ami t’invite à construire ton nid financier. Ouvre l’app et entre ce code :</p>
+    <code id="code">————</code>
+    <p style="margin-top:24px">Pas encore l’app ?</p>
+    <a class="store" href="https://apps.apple.com/">App Store</a>
+    <a class="store" href="https://play.google.com/store">Google Play</a>
+  </main>
+  <script>
+    (function () {
+      var path = location.pathname.replace(/\/+$/, "");
+      var parts = path.split("/");
+      var code = parts[parts.length - 1];
+      if (code && code !== "invite") {
+        document.getElementById("code").textContent = code.toUpperCase();
+        // Universal / App Link path: sipho://invite?code=…
+        // Native apps with app_links intercept /invite/{code} before this page.
+      }
+    })();
+  </script>
+</body>
+</html>

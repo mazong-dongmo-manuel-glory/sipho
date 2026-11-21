@@ -9,6 +9,7 @@ import 'package:sipho/app/theme/app_spacing.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
 import 'package:sipho/features/gamification/data/game_state_repository.dart';
 import 'package:sipho/features/insights/data/insight_service.dart';
+import 'package:sipho/features/lessons/domain/country_lesson_catalog.dart';
 import 'package:sipho/features/lessons/domain/lesson_catalog.dart';
 import 'package:sipho/features/lessons/presentation/learn_path.dart';
 import 'package:sipho/features/lessons/presentation/learn_quests_section.dart';
@@ -67,9 +68,15 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
         {};
     final game = ref.watch(gameStateStreamProvider).valueOrNull;
     final advice = ref.watch(activeCoachAdviceProvider);
+    final countryCode =
+        ref.watch(userFinanceProvider).valueOrNull?.countryCode;
     final ids = [for (final lesson in kCatalogLessons) lesson.id];
     final nextId = nextLessonId(ids, completed);
     final units = unitProgressList(kCatalogUnits, completed);
+    final localUnits = unitProgressList(
+      countryUnitsFor(countryCode),
+      completed,
+    );
     if (nextId != null) _scrollToCurrentOnce();
 
     final streakText = game != null ? '${game.streak.current}' : '—';
@@ -150,24 +157,20 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                   onLessonTap: (lesson, state) =>
                       _openLesson(lesson, state, unit, language),
                 ),
-              Container(
-                height: 53,
-                alignment: Alignment.centerLeft,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  '🔒  ${l10n.learnUnit3}',
-                  style: const TextStyle(
-                    fontFamily: 'Nunito',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textSecondary,
+              for (final unit in localUnits)
+                LearnUnitSection(
+                  progress: unit,
+                  // Country modules unlock independently (server gates by country).
+                  completed: completed,
+                  nextId: nextLessonId(
+                    [for (final l in unit.unit.lessons) l.id],
+                    completed,
                   ),
+                  language: language,
+                  currentKey: _currentKey,
+                  onLessonTap: (lesson, state) =>
+                      _openLesson(lesson, state, unit, language),
                 ),
-              ),
             ],
           ),
         ),

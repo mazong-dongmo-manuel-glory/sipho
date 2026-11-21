@@ -13,6 +13,7 @@ import 'package:sipho/core/money/amount_input.dart';
 import 'package:sipho/core/money/money.dart';
 import 'package:sipho/core/money/money_formatter.dart';
 import 'package:sipho/core/time/local_day.dart';
+import 'package:sipho/core/widgets/category_chip.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
 import 'package:sipho/features/auth/presentation/auth_provider.dart';
@@ -285,39 +286,12 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                         ),
                         itemCount: categories.length,
                         itemBuilder: (context, index) {
-                          final selected = index == _selected;
-                          return GestureDetector(
+                          final cat = categories[index];
+                          return CategoryChip(
+                            emoji: cat.emoji,
+                            label: expenseCategoryLabel(l10n, cat.id),
+                            isSelected: index == _selected,
                             onTap: () => setState(() => _selected = index),
-                            child: Column(
-                              children: [
-                                Container(
-                                  width: 44,
-                                  height: 44,
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    color: selected
-                                        ? AppColors.mint
-                                        : AppColors.seedPill,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Text(
-                                    categories[index].emoji,
-                                    style: const TextStyle(fontSize: 22),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  expenseCategoryLabel(
-                                      l10n, categories[index].id),
-                                  style: const TextStyle(
-                                    fontFamily: 'Nunito',
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
                           );
                         },
                       ),

@@ -1,13 +1,11 @@
 // Flutter entry point.
 //
-// The Firebase project follows the Android/iOS flavor the app was built with, so the default
-// target works for every environment:
-//   flutter run --flavor dev
-//   flutter run --flavor staging
-//   flutter build appbundle --flavor prod
-// Without a flavor (or with an unknown one) a RELEASE build uses the `prod` entry and a DEBUG
-// build uses `dev`. Both currently share the same Firebase project (`sipho-f5a01`).
-// `main_dev.dart` and `main_staging.dart` remain as explicit entry points (used by CI).
+// Environments (2 Firebase projects):
+//   debug  → flavor `dev`     → project `sipho-staging` (console « sipho-dev »)
+//   release → flavor `prod`   → project `sipho-f5a01`
+// Explicit targets: `main_dev.dart` / `main_staging.dart` (both → sipho-staging),
+// `main_prod.dart` (→ sipho-f5a01).
+// Never use Firebase project ID `staging` — it does not exist on this account.
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/services.dart' show appFlavor;
 import 'package:sipho/bootstrap.dart';

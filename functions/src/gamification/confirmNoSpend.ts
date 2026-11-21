@@ -4,6 +4,8 @@ import { SECURE_CALLABLE_OPTIONS, enforceRateLimit, requireAuthUid } from "../sh
 import { computeNextStreak, initialGameStatePayload, normalizeGameState } from "../shared/gameState";
 import { localDateKey, resolveUserTime } from "../shared/timezone";
 import { logger } from "../shared/logger";
+import { bumpFriendChallenges } from "../social/challengeProgress";
+import { trackReferralActiveDay } from "../referrals/referralReward";
 
 const db = (): Firestore => getFirestore();
 
@@ -93,6 +95,11 @@ export const confirmNoSpend = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
     }
     return { alreadyConfirmed: false, streak: nextStreak.current };
   });
+
+  if (!result.alreadyConfirmed) {
+    await bumpFriendChallenges(uid, "activity_day", today);
+    await trackReferralActiveDay(uid, today);
+  }
 
   logger.info("no spend confirmed", { uid, today, ...result });
   return { dayKey: today, ...result };

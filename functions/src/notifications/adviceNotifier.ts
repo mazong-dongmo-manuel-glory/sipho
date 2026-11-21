@@ -17,8 +17,9 @@ import {
   LessonResultSummary,
   RecentAdvice,
   buildAdviceContext,
-  chooseAdviceFocus,
+  adviceRoll,
   dateKeyDiffDays,
+  pickAdviceFocus,
 } from "../shared/advice";
 import { logger } from "../shared/logger";
 import { callGeminiJson } from "../ai/geminiClient";
@@ -42,9 +43,11 @@ const ADVICE_WINDOW: [number, number] = [12 * 60, 14 * 60];
  * Personalised advice push, every 15 minutes for the users whose local time is inside the window.
  *
  * Only users who turned "tips" on and finished onboarding are visited. What to talk about comes
- * from rules over their real data (budget, spending, goal, lesson results, what was said
- * recently); the AI only words it, with aggregated figures and no free text or identity. A push
- * is sent at most every {@link ADVICE_MIN_GAP_DAYS} days and counts toward the daily push cap.
+ * from rules over their real data (budget, spending, goal, lesson results, life stage, what was
+ * said recently). One eligible topic is drawn at random, stable for that learner that day; the
+ * AI explains it in light of their progress, with aggregated figures and no free text or
+ * identity. A push is sent at most every {@link ADVICE_MIN_GAP_DAYS} days and counts toward the
+ * daily push cap.
  */
 export const adviceNotifier = onSchedule(
   {
@@ -78,7 +81,9 @@ export async function maybeSendAdvice(
   uid: string,
   profile: UserProfile,
   now: Date,
-  ai: AdviceAi
+  ai: AdviceAi,
+  /** In `[0, 1)`. Omitted: a stable draw from the learner id and the local day. */
+  roll?: number
 ): Promise<void> {
   const raw = profile as unknown as Record<string, unknown>;
   if (profile.notifPrefs?.tips !== true) return;
@@ -103,7 +108,7 @@ export async function maybeSendAdvice(
   ]);
   const { recent, recentTitles } = history;
   const ctx = buildAdviceContext(input);
-  const focus = chooseAdviceFocus(ctx, recent);
+  const focus = pickAdviceFocus(ctx, recent, roll ?? adviceRoll(`${uid}:${today}`));
   if (!focus) return;
 
   if (!(await canConsumeDailyQuota(uid, today))) return;
@@ -208,6 +213,7 @@ async function loadAdviceInput(
   const completed = Array.isArray(userData.completedLessonIds)
     ? userData.completedLessonIds.filter((x): x is string => typeof x === "string")
     : [];
+  const game = normalizeGameState(gameSnap.data());
 
   return {
     incomeCents: readMonthlyIncomeCents(userData),
@@ -220,7 +226,9 @@ async function loadAdviceInput(
     goal: typeof userData.goal === "string" ? userData.goal : "",
     completedLessonIds: completed,
     lessons,
-    streak: normalizeGameState(gameSnap.data()).streak.current,
+    streak: game.streak.current,
+    lifeStage: typeof userData.lifeStage === "string" ? userData.lifeStage : "",
+    level: game.level,
   };
 }
 

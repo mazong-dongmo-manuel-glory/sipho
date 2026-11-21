@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:sipho/core/firebase/firebase_providers.dart';
 import 'package:sipho/core/time/device_timezone.dart';
 import 'package:sipho/features/auth/domain/user_model.dart';
@@ -29,9 +29,21 @@ class AuthRepository {
 
   User? get currentUser => _auth.currentUser;
 
+  /// Uses the iOS OAuth client from the active Firebase options (sipho-staging
+  /// when launched via `main_staging.dart` / `main_dev.dart`).
+  GoogleSignIn _googleSignIn() {
+    final iosClientId = Firebase.app().options.iosClientId;
+    final useIosClient = !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.iOS ||
+            defaultTargetPlatform == TargetPlatform.macOS) &&
+        iosClientId != null &&
+        iosClientId.isNotEmpty;
+    return GoogleSignIn(clientId: useIosClient ? iosClientId : null);
+  }
+
   Future<UserCredential?> signInWithGoogle() async {
     try {
-      final googleUser = await GoogleSignIn().signIn();
+      final googleUser = await _googleSignIn().signIn();
       if (googleUser == null) {
         // User aborted the Google Sign-in flow
         return null;
@@ -53,51 +65,26 @@ class AuthRepository {
   }
 
   Future<UserCredential?> signInWithApple() async {
+    final onApplePlatform = !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.iOS ||
+            defaultTargetPlatform == TargetPlatform.macOS);
+    if (!onApplePlatform) {
+      // Android / other: do not call SignInWithApple (native crash / unsupported).
+      throw UnsupportedError(
+        'Apple Sign-In is only available on iOS and macOS.',
+      );
+    }
+
     try {
-      if (!kIsWeb &&
-          (defaultTargetPlatform == TargetPlatform.iOS ||
-              defaultTargetPlatform == TargetPlatform.macOS)) {
-        // Native Apple sign-in via Firebase on Apple devices
-        final appleProvider = AppleAuthProvider();
-        appleProvider.addScope('email');
-        appleProvider.addScope('name');
-        final result = await _auth.signInWithProvider(appleProvider);
-        if (result.user != null) {
-          await ensureProfile(result.user!);
-        }
-        return result;
-      } else {
-        // Fallback using sign_in_with_apple plugin
-        final appleCredential = await SignInWithApple.getAppleIDCredential(
-          scopes: [
-            AppleIDAuthorizationScopes.email,
-            AppleIDAuthorizationScopes.fullName,
-          ],
-        );
-
-        final OAuthCredential credential =
-            OAuthProvider('apple.com').credential(
-          idToken: appleCredential.identityToken,
-          accessToken: appleCredential.authorizationCode,
-        );
-
-        final result = await _auth.signInWithCredential(credential);
-        final fullName = [
-          appleCredential.givenName,
-          appleCredential.familyName,
-        ].whereType<String>().where((s) => s.isNotEmpty).join(' ');
-
-        if (result.user != null) {
-          await ensureProfile(result.user!, displayName: fullName);
-        }
-        return result;
+      // Native Apple sign-in via Firebase on Apple devices
+      final appleProvider = AppleAuthProvider();
+      appleProvider.addScope('email');
+      appleProvider.addScope('name');
+      final result = await _auth.signInWithProvider(appleProvider);
+      if (result.user != null) {
+        await ensureProfile(result.user!);
       }
-    } on SignInWithAppleAuthorizationException catch (e) {
-      if (e.code == AuthorizationErrorCode.canceled) {
-        return null;
-      }
-      debugPrint('Apple Sign-In Authorization error: $e');
-      rethrow;
+      return result;
     } on FirebaseAuthException catch (e) {
       if (e.code == 'canceled' || e.code == 'web-context-cancelled') {
         return null;
@@ -112,8 +99,9 @@ class AuthRepository {
 
   Future<void> signOut() async {
     try {
-      if (await GoogleSignIn().isSignedIn()) {
-        await GoogleSignIn().signOut();
+      final google = _googleSignIn();
+      if (await google.isSignedIn()) {
+        await google.signOut();
       }
     } catch (e) {
       debugPrint('Google Sign-Out non-critical error: $e');
@@ -228,17 +216,11 @@ class AuthRepository {
       throw StateError('Not signed in');
     }
     await ensureProfile(user);
-    final batch = _firestore.batch();
-    batch.update(_firestore.collection('users').doc(user.uid), {
+    // Client must NOT write `users/{uid}/game/state` (rules: write false).
+    // Setting onboardingDone triggers the server badge sync (onUserOnboardingDone).
+    await _firestore.collection('users').doc(user.uid).update({
       'onboardingDone': true,
     });
-    // Touch game state so `onGameBadgeCheck` can award the "builder" badge.
-    batch.set(
-      _firestore.doc('users/${user.uid}/game/state'),
-      {'updatedAt': FieldValue.serverTimestamp()},
-      SetOptions(merge: true),
-    );
-    await batch.commit();
   }
 
   /// Updates editable profile fields on `users/{uid}`.

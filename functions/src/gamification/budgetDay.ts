@@ -8,6 +8,7 @@ import {
   evaluateBudgetDay,
   readMonthlyIncomeCents,
 } from "../shared/budgetDay";
+import { bumpFriendChallenges } from "../social/challengeProgress";
 
 const db = (): Firestore => getFirestore();
 
@@ -44,9 +45,12 @@ export async function awardBudgetDayIfEarned(
       .get(),
   ]);
 
+  // Bills only: envelopes are category caps whose spend already lives in transactions.
   let fixedCents = 0;
   for (const doc of fixedSnap.docs) {
-    const amount = (doc.data() as { amountCents?: unknown }).amountCents;
+    const data = doc.data() as { amountCents?: unknown; type?: unknown };
+    if (data.type === "envelope") continue;
+    const amount = data.amountCents;
     if (typeof amount === "number" && Number.isFinite(amount)) {
       fixedCents += Math.max(0, Math.trunc(amount));
     }
@@ -116,6 +120,7 @@ export async function awardBudgetDayIfEarned(
   });
 
   if (!awarded) return "already-awarded";
+  await bumpFriendChallenges(uid, "budget_day", dayKey);
   logger.info("budget day awarded", { uid, dayKey, spentCents, fixedCents, xp });
   return "under";
 }

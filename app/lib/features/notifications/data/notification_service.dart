@@ -158,22 +158,38 @@ class NotificationService {
     _ready = true;
   }
 
-  Future<void> _showForeground(RemoteMessage message) async {
-    if (defaultTargetPlatform != TargetPlatform.android) return;
-    final notification = message.notification;
-    if (notification == null) return;
+  /// Immediate local notification (coach tip, foreground FCM mirror, etc.).
+  Future<void> showLocal({
+    required int id,
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
     await _ensureLocal();
     await _local.show(
-      notification.hashCode,
-      notification.title,
-      notification.body,
+      id,
+      title,
+      body,
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'tips',
           'Tips',
           importance: Importance.defaultImportance,
         ),
+        iOS: DarwinNotificationDetails(),
       ),
+      payload: payload,
+    );
+  }
+
+  Future<void> _showForeground(RemoteMessage message) async {
+    if (defaultTargetPlatform != TargetPlatform.android) return;
+    final notification = message.notification;
+    if (notification == null) return;
+    await showLocal(
+      id: notification.hashCode,
+      title: notification.title ?? '',
+      body: notification.body ?? '',
       payload: message.data['route'] is String
           ? message.data['route'] as String
           : null,

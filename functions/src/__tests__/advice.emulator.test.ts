@@ -70,9 +70,15 @@ async function seedUser(uid: string, extra: Record<string, unknown> = {}): Promi
   });
 }
 
-async function send(uid: string, now: Date, ai: (p: string) => Promise<string | null>): Promise<void> {
+async function send(
+  uid: string,
+  now: Date,
+  ai: (p: string) => Promise<string | null>,
+  /** 0 keeps the most urgent topic, so cadence tests stay predictable. */
+  roll?: number
+): Promise<void> {
   const profile = (await db.doc(`users/${uid}`).get()).data() as UserProfile;
-  await maybeSendAdvice(uid, profile, now, ai);
+  await maybeSendAdvice(uid, profile, now, ai, roll);
 }
 
 const noAi = (): Promise<string | null> => Promise.resolve(null);
@@ -147,7 +153,7 @@ describe("maybeSendAdvice", () => {
       return Promise.resolve(
         JSON.stringify({ title: "📚 On la refait ?", body: "Le fonds d'urgence t'a résisté. Rejoue la leçon, 3 minutes." })
       );
-    });
+    }, 0);
 
     expect(prompt).toContain("emergency fund");
     expect(prompt).toContain("score 50");

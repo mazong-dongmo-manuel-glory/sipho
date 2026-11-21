@@ -9,7 +9,9 @@ export type NotifType =
   | "WEEKLY_INSIGHT"
   | "QUEST_EXPIRING"
   | "LEVEL_UP"
-  | "STREAK_BROKEN";
+  | "STREAK_BROKEN"
+  | "ECONOMY_DIGEST"
+  | "ECONOMY_RATE_CHANGE";
 
 export interface NotifTemplate {
   title: string;
@@ -63,6 +65,15 @@ export const TEMPLATES: Record<"fr" | "en", TemplateMap> = {
       { title: "😢 Série perdue...", body: "C'est reparti de zéro, mais tu peux le refaire ! Lance une leçon maintenant." },
       { title: "🔄 Nouveau départ !", body: "Ta série s'est interrompue. Pas grave — chaque jour est une nouvelle chance !" },
     ],
+    ECONOMY_DIGEST: [
+      { title: "📰 Éco {country}", body: "{headline}" },
+      { title: "🌍 Actu du jour · {country}", body: "{headline}" },
+      { title: "💡 Ce qui bouge chez toi", body: "{headline}" },
+    ],
+    ECONOMY_RATE_CHANGE: [
+      { title: "📉 Taux directeur · {country}", body: "Le taux passe de {before}% à {after}% ({source}, {date}). Ouvre Info Éco pour le contexte." },
+      { title: "🏦 Banque centrale · {country}", body: "Nouveau taux : {after}% (avant {before}%). Source : {source}." },
+    ],
   },
 
   en: {
@@ -108,6 +119,15 @@ export const TEMPLATES: Record<"fr" | "en", TemplateMap> = {
       { title: "💔 Your streak ended", body: "Don't give up! Start again today and rebuild your flame." },
       { title: "😢 Streak lost...", body: "Back to zero, but you can do it again! Start a lesson now." },
       { title: "🔄 Fresh start!", body: "Your streak broke. No worries — every day is a new chance!" },
+    ],
+    ECONOMY_DIGEST: [
+      { title: "📰 Economy · {country}", body: "{headline}" },
+      { title: "🌍 Today's local news · {country}", body: "{headline}" },
+      { title: "💡 What's moving where you live", body: "{headline}" },
+    ],
+    ECONOMY_RATE_CHANGE: [
+      { title: "📉 Key rate · {country}", body: "The rate moved from {before}% to {after}% ({source}, {date}). Open Info Eco for context." },
+      { title: "🏦 Central bank · {country}", body: "New rate: {after}% (was {before}%). Source: {source}." },
     ],
   },
 };

@@ -11,6 +11,7 @@ import {
   shiftDateKey,
 } from "../shared/timezone";
 import { logger } from "../shared/logger";
+import { trackReferralActiveDay } from "../referrals/referralReward";
 
 const db = (): Firestore => getFirestore();
 
@@ -92,6 +93,15 @@ export async function processUserRollover(
     await awardBudgetDayIfEarned(uid, userData, yesterdayKey);
   } catch (err) {
     logger.error("budget day evaluation failed", { uid, dayKey: yesterdayKey, err: String(err) });
+  }
+
+  // Delayed referral reward: count yesterday if the user was active that day.
+  const lastActive =
+    typeof gameProbe.data()?.streak?.lastActiveDay === "string"
+      ? (gameProbe.data()?.streak?.lastActiveDay as string)
+      : "";
+  if (lastActive === yesterdayKey || lastActive === todayKey) {
+    await trackReferralActiveDay(uid, lastActive === yesterdayKey ? yesterdayKey : todayKey);
   }
 
   if (!gameProbe.exists) return;

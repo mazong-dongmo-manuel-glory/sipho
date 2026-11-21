@@ -63,8 +63,19 @@ typedef AiHttpTransport = Future<({int statusCode, String body})> Function(
   String body,
 );
 
+/// Optional Gemini Developer API key for staging/dev when Firebase AI Logic
+/// prepaid credits are exhausted. Pass via
+/// `--dart-define=GEMINI_API_KEY=...` (never commit the value).
+const kGeminiApiKeyFromEnvironment =
+    String.fromEnvironment('GEMINI_API_KEY');
+
 final siphoAiClientProvider = Provider<SiphoAiClient>((ref) {
-  return SiphoAiClient();
+  final override = kGeminiApiKeyFromEnvironment.trim();
+  if (override.isEmpty) {
+    return SiphoAiClient();
+  }
+  // Direct Gemini Developer API (bypasses Firebase AI Logic billing pool).
+  return SiphoAiClient(apiKey: override, useDirectGeminiApi: true);
 });
 
 /// Detects image MIME type from magic bytes so PNG/WebP/HEIC gallery screenshots
@@ -139,6 +150,7 @@ class SiphoAiClient {
     String? projectId,
     String? apiKey,
     String? appId,
+    bool useDirectGeminiApi = false,
   })  : _app = app,
         _auth = auth,
         _appCheck = appCheck,
@@ -147,7 +159,8 @@ class SiphoAiClient {
         _candidateModels = candidateModels,
         _projectIdOverride = projectId,
         _apiKeyOverride = apiKey,
-        _appIdOverride = appId;
+        _appIdOverride = appId,
+        _useDirectGeminiApi = useDirectGeminiApi;
 
   final FirebaseApp? _app;
   final FirebaseAuth? _auth;
@@ -158,6 +171,7 @@ class SiphoAiClient {
   final String? _projectIdOverride;
   final String? _apiKeyOverride;
   final String? _appIdOverride;
+  final bool _useDirectGeminiApi;
 
   List<String> _resolveCandidateModels() {
     if (_candidateModels != null && _candidateModels.isNotEmpty) {
@@ -185,13 +199,19 @@ class SiphoAiClient {
     required String projectId,
     required String apiKey,
     required String appId,
+    required bool directGemini,
   }) async {
     final headers = <String, String>{
       'x-goog-api-key': apiKey,
       'x-goog-api-client': 'gl-dart/2.3.0 fire/2.3.0',
       'Content-Type': 'application/json',
-      if (appId.isNotEmpty) 'X-Firebase-AppId': appId,
+      if (!directGemini && appId.isNotEmpty) 'X-Firebase-AppId': appId,
     };
+
+    // Firebase Auth / App Check headers only apply to Firebase AI Logic.
+    if (directGemini) {
+      return headers;
+    }
 
     try {
       final auth =
@@ -229,9 +249,18 @@ class SiphoAiClient {
     final String projectId;
     final String apiKey;
     final String appId;
-    if (_projectIdOverride != null && _apiKeyOverride != null) {
+    final apiKeyOverride = _apiKeyOverride;
+    final bool directGemini = _useDirectGeminiApi &&
+        apiKeyOverride != null &&
+        apiKeyOverride.trim().isNotEmpty;
+    if (directGemini) {
+      projectId = _projectIdOverride ??
+          (Firebase.apps.isNotEmpty ? Firebase.app().options.projectId : 'local');
+      apiKey = apiKeyOverride.trim();
+      appId = _appIdOverride ?? '';
+    } else if (_projectIdOverride != null && apiKeyOverride != null) {
       projectId = _projectIdOverride;
-      apiKey = _apiKeyOverride;
+      apiKey = apiKeyOverride;
       appId = _appIdOverride ?? '';
     } else {
       final FirebaseApp app;
@@ -252,6 +281,7 @@ class SiphoAiClient {
       projectId: projectId,
       apiKey: apiKey,
       appId: appId,
+      directGemini: directGemini,
     );
     final models = _resolveCandidateModels();
     final parts = <Map<String, Object?>>[
@@ -278,10 +308,15 @@ class SiphoAiClient {
     for (final model in models) {
       final normalizedModel =
           model.startsWith('models/') ? model.substring(7) : model;
-      final uri = Uri.https(
-        'firebasevertexai.googleapis.com',
-        '/v1beta/projects/$projectId/models/$normalizedModel:generateContent',
-      );
+      final uri = directGemini
+          ? Uri.https(
+              'generativelanguage.googleapis.com',
+              '/v1beta/models/$normalizedModel:generateContent',
+            )
+          : Uri.https(
+              'firebasevertexai.googleapis.com',
+              '/v1beta/projects/$projectId/models/$normalizedModel:generateContent',
+            );
       final payload = <String, Object?>{
         'model': 'models/$normalizedModel',
         'contents': [

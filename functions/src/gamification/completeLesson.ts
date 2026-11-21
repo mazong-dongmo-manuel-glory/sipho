@@ -1,5 +1,11 @@
 import { HttpsError, onCall } from "firebase-functions/v2/https";
-import { isLessonUnlocked, lessonsToCheck, unitBonusFor } from "../shared/lessonPath";
+import {
+  isCountryLesson,
+  isCountryLessonAllowed,
+  isLessonUnlocked,
+  lessonsToCheck,
+  unitBonusFor,
+} from "../shared/lessonPath";
 import { getFirestore, FieldValue, Firestore } from "firebase-admin/firestore";
 import { CompleteLessonInputSchema } from "../shared/validators";
 import { XP_CONFIG, xpToLevel } from "../shared/xpConfig";
@@ -17,6 +23,8 @@ import {
   normalizeGameState,
 } from "../shared/gameState";
 import { logger } from "../shared/logger";
+import { bumpFriendChallenges } from "../social/challengeProgress";
+import { trackReferralActiveDay } from "../referrals/referralReward";
 
 const db = (): Firestore => getFirestore();
 
@@ -83,9 +91,11 @@ export const completeLesson = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
         levelUp: false,
         newLevel: currentGame.level,
         alreadyCompleted: true,
+        firstCompletion: false,
         unitCompleted: null as string | null,
         unitBonusXp: 0,
         unitBonusSeeds: 0,
+        dayKey: today,
       };
     }
 
@@ -96,6 +106,20 @@ export const completeLesson = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
     // A fresh `attemptId` can never be used to farm XP: first completion pays once per lesson
     // (lessonId is whitelisted), replays only earn a small practice XP capped per local day.
     const alreadyCompletedBefore = existingProgressSnap.exists;
+
+    // Country modules: only for the user's country (or generic `*`).
+    if (isCountryLesson(lessonId)) {
+      const countryCode =
+        typeof userSnap.data()?.countryCode === "string"
+          ? (userSnap.data()?.countryCode as string)
+          : null;
+      if (!isCountryLessonAllowed(lessonId, countryCode)) {
+        throw new HttpsError(
+          "failed-precondition",
+          "This lesson is not available for your country."
+        );
+      }
+    }
 
     // The path is enforced here, not only in the app: a locked lesson earns nothing.
     if (!alreadyCompletedBefore && !isLessonUnlocked(lessonId, completedBefore)) {
@@ -224,14 +248,23 @@ export const completeLesson = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
       levelUp,
       newLevel,
       alreadyCompleted: false,
+      firstCompletion: !alreadyCompletedBefore,
       unitCompleted: unitBonus?.unitId ?? null,
       unitBonusXp: unitBonus?.xp ?? 0,
       unitBonusSeeds: unitBonus?.seeds ?? 0,
+      dayKey: today,
     };
   });
 
   if (!result.alreadyCompleted) {
     await advanceLessonQuests(uid);
+  }
+
+  if (result.firstCompletion) {
+    await bumpFriendChallenges(uid, "lesson_complete");
+  }
+  if (typeof result.dayKey === "string") {
+    await trackReferralActiveDay(uid, result.dayKey);
   }
 
   logger.info("lesson completed", {
@@ -243,7 +276,11 @@ export const completeLesson = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
     unitCompleted: result.unitCompleted,
   });
 
-  return result;
+  // Strip internal hook field from the callable response.
+  const { dayKey: _dayKey, ...clientResult } = result as typeof result & {
+    dayKey?: string;
+  };
+  return clientResult;
 });
 
 async function advanceLessonQuests(uid: string): Promise<void> {

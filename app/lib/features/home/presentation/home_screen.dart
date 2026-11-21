@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
@@ -25,6 +26,9 @@ import 'package:sipho/features/fixed_expenses/presentation/fixed_paid_button.dar
 import 'package:sipho/features/gamification/data/game_state_repository.dart';
 import 'package:sipho/features/gamification/domain/game_extras.dart';
 import 'package:sipho/features/gamification/presentation/no_spend_controller.dart';
+import 'package:sipho/features/economy/domain/economy_tips.dart';
+import 'package:sipho/features/home/presentation/home_country_economy_card.dart';
+import 'package:sipho/features/home/presentation/home_goal_card.dart';
 import 'package:sipho/features/insights/data/insight_service.dart';
 import 'package:sipho/features/insights/domain/insight_text.dart';
 import 'package:sipho/features/insights/presentation/spend_snapshot_builder.dart';
@@ -34,6 +38,9 @@ import 'package:sipho/features/notifications/data/notification_service.dart';
 
 final homeRewardProvider =
     StateProvider<({String amount, String category})?>((ref) => null);
+
+final homeRandomEconomyTipProvider =
+    StateProvider<EconomyTip>((ref) => dailyEconomyTip());
 
 /// Plays [SiphoCue.budgetAlert] at most once per session when remaining goes negative.
 final _budgetAlertPlayedProvider = StateProvider<bool>((ref) => false);
@@ -281,6 +288,10 @@ class HomeScreen extends ConsumerWidget {
                       onTap: () => _confirmNoSpend(context, ref, l10n),
                     ),
                   ),
+                const SizedBox(height: 16),
+                const HomeGoalTrackerSection(),
+                const SizedBox(height: 16),
+                const HomeCountryEconomyCard(),
                 const SizedBox(height: 16),
                 Text(
                   l10n.homeQuests,
@@ -777,7 +788,7 @@ class _QuestRow extends StatelessWidget {
   }
 }
 
-class _EconomyCard extends StatelessWidget {
+class _EconomyCard extends ConsumerWidget {
   const _EconomyCard({
     required this.l10n,
     required this.palette,
@@ -795,12 +806,21 @@ class _EconomyCard extends StatelessWidget {
   final InsightText? insight;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = Localizations.localeOf(context).languageCode;
+    final tip = ref.watch(homeRandomEconomyTipProvider);
+
+    final title = insight != null && insight!.title.isNotEmpty
+        ? '💡  ${insight!.title}'
+        : '${tip.emoji}  ${tip.title.of(locale)}';
+
+    final body = insight?.body ?? tip.body.of(locale);
+
     return GestureDetector(
       onTap: onOpenDetail,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 10, 72, 12),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
         decoration: BoxDecoration(
           color: palette.economyBackground,
           borderRadius: BorderRadius.circular(16),
@@ -809,27 +829,53 @@ class _EconomyCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              insight == null || insight!.title.isEmpty
-                  ? '💡  ${l10n.coachTitle}'
-                  : '💡  ${insight!.title}',
-              style: TextStyle(
-                fontFamily: 'Nunito',
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                height: 1.2,
-                color: palette.title,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      height: 1.2,
+                      color: palette.title,
+                    ),
+                  ),
+                ),
+                if (insight == null) ...[
+                  const SizedBox(width: 6),
+                  InkWell(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      final current = ref.read(homeRandomEconomyTipProvider);
+                      ref.read(homeRandomEconomyTipProvider.notifier).state =
+                          pickRandomEconomyTip(currentId: current.id);
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: AppColors.mint,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text('🎲', style: TextStyle(fontSize: 14)),
+                    ),
+                  ),
+                ],
+              ],
             ),
             const SizedBox(height: 6),
             Text(
-              insight?.body ?? l10n.coachSubtitle,
-              maxLines: 4,
+              body,
+              maxLines: 3,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontFamily: 'Nunito',
                 fontSize: 12,
-                height: 1.2,
+                height: 1.3,
                 color: palette.muted,
               ),
             ),
@@ -845,18 +891,16 @@ class _EconomyCard extends StatelessWidget {
                 ),
               ),
             ],
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Row(
               children: [
                 GestureDetector(
                   onTap:
-                      loading ? null : (insight == null ? onAsk : onOpenDetail),
+                      loading ? null : (insight == null ? onOpenDetail : onOpenDetail),
                   child: Text(
                     loading
                         ? l10n.homeInsightWorking
-                        : (insight == null
-                            ? l10n.homeInsightAsk
-                            : l10n.coachOpenCard),
+                        : l10n.coachOpenCard,
                     style: TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 12,
@@ -865,6 +909,12 @@ class _EconomyCard extends StatelessWidget {
                       color: palette.read,
                     ),
                   ),
+                ),
+                const Spacer(),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 11,
+                  color: AppColors.textSecondary,
                 ),
               ],
             ),

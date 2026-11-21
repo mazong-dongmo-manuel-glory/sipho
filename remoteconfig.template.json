@@ -1,0 +1,18 @@
+{
+  "parameters": {
+    "scan_quota_per_day": {
+      "defaultValue": { "value": "20" },
+      "description": "Displayed scan quota (server SCAN_QUOTA_PER_DAY remains source of truth). Higher on staging for QA.",
+      "valueType": "NUMBER"
+    },
+    "ai_model": {
+      "defaultValue": { "value": "gemini-2.0-flash" },
+      "description": "Client AI Logic model override for receipt/insights.",
+      "valueType": "STRING"
+    }
+  },
+  "parameterGroups": {},
+  "version": {
+    "description": "Sipho staging baseline — mirrors app bootstrap defaults with QA-friendly scan quota"
+  }
+}

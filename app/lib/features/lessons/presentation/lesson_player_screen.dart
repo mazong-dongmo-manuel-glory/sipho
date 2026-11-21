@@ -15,6 +15,7 @@ import 'package:sipho/features/finance/presentation/finance_providers.dart';
 import 'package:sipho/features/insights/presentation/spend_snapshot_builder.dart';
 import 'package:sipho/features/lessons/data/lesson_ai_tutor_service.dart';
 import 'package:sipho/features/lessons/data/lesson_completion_repository.dart';
+import 'package:sipho/features/lessons/domain/country_lesson_catalog.dart';
 import 'package:sipho/features/lessons/domain/lesson_catalog.dart';
 import 'package:sipho/features/lessons/domain/lesson_session.dart';
 import 'package:sipho/features/lessons/presentation/lesson_player_widgets.dart';
@@ -31,7 +32,8 @@ class LessonPlayerScreen extends ConsumerStatefulWidget {
 }
 
 class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
-  late final LessonSession _session = LessonSession(_lesson);
+  CatalogLesson? _lesson;
+  LessonSession? _session;
   late final DateTime _startedAt = DateTime.now();
 
   int? _selected;
@@ -41,11 +43,19 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
   bool _askingTutor = false;
   LessonTutorReply? _tutorReply;
 
-  CatalogLesson get _lesson {
-    for (final lesson in kCatalogLessons) {
-      if (lesson.id == widget.lessonId) return lesson;
+  @override
+  void initState() {
+    super.initState();
+    final id = widget.lessonId;
+    if (id != null && id.isNotEmpty) {
+      for (final lesson in kAllPlayableLessons) {
+        if (lesson.id == id) {
+          _lesson = lesson;
+          _session = LessonSession(lesson);
+          break;
+        }
+      }
     }
-    return kCatalogLessons.first;
   }
 
   void _resetStepState() {
@@ -59,7 +69,7 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
     final correct = _selected == question.correctIndex;
     setState(() {
       _checked = true;
-      if (!correct) _session.recordMiss();
+      if (!correct) _session?.recordMiss();
     });
     unawaited(
       ref.read(feedbackServiceProvider).play(
@@ -71,12 +81,14 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
   void _retry() => setState(_resetStepState);
 
   void _next() => setState(() {
-        _session.advance();
+        _session?.advance();
         _resetStepState();
       });
 
   Future<void> _finish() async {
-    if (_saving) return;
+    final lesson = _lesson;
+    final session = _session;
+    if (_saving || lesson == null || session == null) return;
     setState(() {
       _saving = true;
       _saveFailure = null;
@@ -85,8 +97,8 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
     try {
       final result =
           await ref.read(lessonCompletionRepositoryProvider).complete(
-                lessonId: _lesson.id,
-                score: _session.score,
+                lessonId: lesson.id,
+                score: session.score,
                 durationSeconds: seconds,
               );
       if (!mounted) return;
@@ -113,13 +125,14 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
 
   Future<void> _askAiTutor(LessonQuestionData question, String language) async {
     final selected = _selected;
-    if (_askingTutor || selected == null) return;
+    final lesson = _lesson;
+    if (_askingTutor || selected == null || lesson == null) return;
     final l10n = AppLocalizations.of(context);
     setState(() => _askingTutor = true);
     try {
       final snapshot = buildCurrentSpendSnapshot(ref: ref, context: context);
       final reply = await ref.read(lessonAiTutorServiceProvider).explainForUser(
-            lesson: _lesson,
+            lesson: lesson,
             question: question.prompt,
             selectedAnswer: question.labels[selected],
             answeredCorrectly: selected == question.correctIndex,
@@ -145,7 +158,12 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
 
   /// Leaving mid-lesson loses the progress, so ask first once the learner has started.
   Future<void> _requestLeave() async {
-    final started = _session.index > 0 || _selected != null;
+    final session = _session;
+    if (session == null) {
+      context.go('/learn');
+      return;
+    }
+    final started = session.index > 0 || _selected != null;
     if (!started) {
       context.pop();
       return;
@@ -178,14 +196,55 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final language = Localizations.localeOf(context).languageCode;
+    final lesson = _lesson;
+    final session = _session;
+    if (lesson == null || session == null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.pagePadding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  l10n.lessonNotFoundTitle,
+                  style: const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.primaryDark,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.lessonNotFoundBody,
+                  style: const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const Spacer(),
+                SiphoButton3D(
+                  label: l10n.lessonNotFoundCta,
+                  onPressed: () => context.go('/learn'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     // Keep finance streams hot for the AI tutor context.
     final monthKey = currentMonthKey();
     ref.watch(userFinanceProvider);
     ref.watch(transactionsForMonthProvider(monthKey));
     ref.watch(activeFixedExpensesProvider);
 
-    final lesson = _lesson;
-    final step = _session.step;
+    final step = session.step;
     final question =
         step == null ? null : LessonQuestionData.of(step, l10n, language);
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
@@ -227,7 +286,7 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
               children: [
                 const SizedBox(height: 8),
                 _TopBar(
-                  progress: _session.progress,
+                  progress: session.progress,
                   closeLabel: l10n.lessonLeaveTitle,
                   onClose: _requestLeave,
                   animate: !reduceMotion,
@@ -238,12 +297,12 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
                         ? Duration.zero
                         : const Duration(milliseconds: 220),
                     child: KeyedSubtree(
-                      key: ValueKey(_session.index),
+                      key: ValueKey(session.index),
                       child: page,
                     ),
                   ),
                 ),
-                _footer(l10n, language, question),
+                _footer(l10n, language, question, session),
                 const SizedBox(height: 16),
               ],
             ),
@@ -257,6 +316,7 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
     AppLocalizations l10n,
     String language,
     LessonQuestionData? question,
+    LessonSession session,
   ) {
     SiphoButton3D button(
       String label,
@@ -276,7 +336,7 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
       );
     }
 
-    if (_session.isRecap) {
+    if (session.isRecap) {
       return Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

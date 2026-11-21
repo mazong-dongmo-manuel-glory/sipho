@@ -20,7 +20,9 @@ export const XP_CONFIG = {
   // Max XP from marking fixed expenses as paid per local day.
   fixedPaidMax: 15,
 
-  referralInviter: 50,
+  // Paid only after the invitee is active on 7 distinct local days (referralReward.ts).
+  // Never added to weeklyXp (anti-league farming). README 5.2: 200 XP + rare gift.
+  referralInviter: 200,
   referralInvitee: 25,
 
   // README 5.2: a local day under the daily budget (with at least one expense logged), once a day.

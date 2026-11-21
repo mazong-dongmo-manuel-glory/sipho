@@ -20,6 +20,7 @@ class NotifPrefs {
     budgetAlert: true,
     fixedDue: true,
     tips: true,
+    economy: true,
   );
 
   factory NotifPrefs.fromMap(Map<dynamic, dynamic> raw) {

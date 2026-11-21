@@ -1,15 +1,17 @@
-name: Deploy — Dev (sipho-f5a01)
+name: Deploy — Dev (sipho-staging)
 
+# Dev/QA Firebase project id: `sipho-staging` (console display name: « sipho-dev »)
 on:
   push:
     branches:
       - develop
+  workflow_dispatch:
 
 jobs:
   deploy-dev:
-    name: Build & Deploy to dev
+    name: Build & Deploy to staging (dev)
     runs-on: ubuntu-latest
-    environment: dev
+    environment: staging
 
     steps:
       - name: Checkout
@@ -31,14 +33,16 @@ jobs:
         run: flutter pub run build_runner build --delete-conflicting-outputs
 
       # google-services.json is git-ignored; the Android module reads it from android/app/.
-      - name: Write google-services.json (dev)
+      - name: Write google-services.json (staging/dev)
         working-directory: app
         env:
-          GOOGLE_SERVICES_JSON_DEV: ${{ secrets.GOOGLE_SERVICES_JSON_DEV }}
+          GOOGLE_SERVICES_JSON_STAGING: ${{ secrets.GOOGLE_SERVICES_JSON_STAGING }}
         run: |
-          echo "$GOOGLE_SERVICES_JSON_DEV" | base64 --decode > android/app/google-services.json
+          if [ -n "$GOOGLE_SERVICES_JSON_STAGING" ]; then
+            echo "$GOOGLE_SERVICES_JSON_STAGING" | base64 --decode > android/app/google-services.json
+          fi
 
-      - name: Build Android APK (dev)
+      - name: Build Android APK (dev → staging project)
         working-directory: app
         run: flutter build apk --target lib/main_dev.dart --release
 
@@ -57,10 +61,10 @@ jobs:
         working-directory: functions
         run: npm run build
 
-      - name: Deploy Firestore Rules & Indexes
+      - name: Deploy Firestore, Storage & Functions (staging)
         run: |
           npm install -g firebase-tools
-          firebase deploy --only firestore,functions --project "$FIREBASE_PROJECT_DEV"
+          firebase deploy --only firestore,storage,functions --project "${FIREBASE_PROJECT_STAGING:-sipho-staging}"
         env:
-          FIREBASE_PROJECT_DEV: sipho-f5a01
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN_DEV }}
+          FIREBASE_PROJECT_STAGING: ${{ secrets.FIREBASE_PROJECT_STAGING }}
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN_STAGING }}

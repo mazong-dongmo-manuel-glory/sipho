@@ -7,6 +7,7 @@ import 'package:sipho/core/animations/lottie_widget.dart';
 import 'package:sipho/core/animations/sipho_lotties.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/features/auth/presentation/auth_provider.dart';
+import 'package:sipho/features/finance/presentation/finance_providers.dart';
 import 'package:sipho/features/friends/presentation/friends_panel.dart';
 import 'package:sipho/features/gamification/data/game_state_repository.dart';
 import 'package:sipho/features/leaderboard/domain/league.dart';
@@ -117,8 +118,12 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
               const SizedBox(height: 12),
               if (_tab == 1)
                 const FriendsPanel()
-              else if (_tab != 0)
-                _Message(l10n.leagueSoon)
+              else if (_tab == 2)
+                _CountryLeaguePanel(
+                  countryCode:
+                      ref.watch(userFinanceProvider).valueOrNull?.countryCode ??
+                          '',
+                )
               else
                 ...membership.when(
                   loading: () => const [
@@ -176,6 +181,7 @@ class _LeagueBody extends ConsumerWidget {
                 assetPath: SiphoLotties.podium,
                 width: 52,
                 height: 40,
+                repeat: false,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -466,6 +472,95 @@ class _Row extends StatelessWidget {
               fontWeight: FontWeight.w800,
               color: mine ? AppColors.primary : AppColors.textSecondary,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CountryLeaguePanel extends StatelessWidget {
+  const _CountryLeaguePanel({required this.countryCode});
+
+  final String countryCode;
+
+  String _flag(String code) {
+    if (code.length != 2) return '🌍';
+    const base = 127397;
+    return String.fromCharCode(base + code.codeUnitAt(0)) +
+        String.fromCharCode(base + code.codeUnitAt(1));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final flag = _flag(countryCode.toUpperCase());
+    final isFrench = Localizations.localeOf(context).languageCode == 'fr';
+
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              color: AppColors.seedPill,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              flag,
+              style: const TextStyle(fontSize: 32),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            countryCode.isNotEmpty
+                ? '${l10n.leagueCountry} · $flag'
+                : l10n.leagueCountry,
+            style: const TextStyle(
+              fontFamily: 'Nunito',
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              color: AppColors.primaryDark,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.mint,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              l10n.leagueSoon,
+              style: const TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: AppColors.primaryDark,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            isFrench
+                ? 'Rejoins bientôt les épargnants de ta région pour défendre les couleurs de ton pays dans la ligue nationale.'
+                : 'Soon you will compete alongside savers from your region to represent your country in the national league.',
+            style: const TextStyle(
+              fontFamily: 'Nunito',
+              fontSize: 13,
+              height: 1.4,
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),

@@ -48,6 +48,76 @@ int? spendingChangePercent(int currentCents, int previousCents) {
   return (((currentCents - previousCents) * 100) / previousCents).round();
 }
 
+/// Categories treated as fixed / "socle" when present on a transaction.
+const Set<String> kFixedExpenseCategories = {
+  'rent',
+  'internet',
+  'energy',
+  'phone',
+  'insurance',
+  'electricity',
+  'water',
+};
+
+class FixedVsVariable {
+  const FixedVsVariable({
+    required this.fixedCents,
+    required this.variableCents,
+  });
+
+  final int fixedCents;
+  final int variableCents;
+
+  int get totalCents => fixedCents + variableCents;
+}
+
+FixedVsVariable buildFixedVsVariable(
+  List<({String category, int cents})> rows, {
+  Set<String> fixedCategories = kFixedExpenseCategories,
+}) {
+  var fixed = 0;
+  var variable = 0;
+  for (final row in rows) {
+    if (row.cents <= 0) continue;
+    if (fixedCategories.contains(row.category)) {
+      fixed += row.cents;
+    } else {
+      variable += row.cents;
+    }
+  }
+  return FixedVsVariable(fixedCents: fixed, variableCents: variable);
+}
+
+/// One month on the 6-month trend (oldest → newest).
+class MonthTrendPoint {
+  const MonthTrendPoint({
+    required this.monthKey,
+    required this.totalCents,
+  });
+
+  final String monthKey;
+  final int totalCents;
+}
+
+/// Builds up to [monthCount] points ending at [endMonth] (inclusive).
+/// [totalsByMonth] maps `yyyy-MM` → total cents.
+List<MonthTrendPoint> buildSixMonthTrend({
+  required DateTime endMonth,
+  required Map<String, int> totalsByMonth,
+  int monthCount = 6,
+}) {
+  final points = <MonthTrendPoint>[];
+  for (var i = monthCount - 1; i >= 0; i--) {
+    final m = DateTime(endMonth.year, endMonth.month - i);
+    final key =
+        '${m.year.toString().padLeft(4, '0')}-${m.month.toString().padLeft(2, '0')}';
+    points.add(
+      MonthTrendPoint(monthKey: key, totalCents: totalsByMonth[key] ?? 0),
+    );
+  }
+  return points;
+}
+
 MonthChartData buildMonthChart(
   List<({String category, int cents, String date})> rows,
 ) {

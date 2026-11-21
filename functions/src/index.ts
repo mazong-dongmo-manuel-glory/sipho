@@ -12,7 +12,7 @@ export { confirmNoSpend } from './gamification/confirmNoSpend';
 export { repairStreak } from './gamification/repairStreak';
 export { dailyRollover } from './gamification/dailyRollover';
 export { joinLeague, onGameXpChange, leagueWeekly } from './gamification/league';
-export { onGameBadgeCheck } from './gamification/badges';
+export { onGameBadgeCheck, onUserOnboardingDone } from './gamification/badges';
 export { buyShopItem } from './gamification/shop';
 
 // Stats & Users
@@ -23,6 +23,8 @@ export { generateMonth } from './stats/generateMonth';
 // Notifications
 export { notifyScheduler } from './notifications/notifyScheduler';
 export { adviceNotifier } from './notifications/adviceNotifier';
+export { coachHourly } from './notifications/coachHourly';
+export { economyNotifier } from './notifications/economyNotifier';
 
 // AI
 export { parseReceipt } from './ai/parseReceipt';
@@ -32,12 +34,14 @@ export { economySummaries } from './ai/economySummaries';
 
 // Economy
 export { economyFetch } from './economy/economyFetch';
+export { economyNewsFetch } from './economy/economyNewsFetch';
 export { fxRates } from './economy/fxRates';
 export { economyAlerts } from './economy/economyAlerts';
 
 // Friends & invitations
 export { getInviteCode, sendFriendRequest, respondFriendRequest, removeFriend } from './social/friends';
 export { setContactDiscovery, findContacts, sendContactFriendRequest } from './social/contacts';
+export { createFriendChallenge, respondFriendChallenge } from './social/friendChallenges';
 
 // Account & Referrals
 export { deleteAccount } from './account/deleteAccount';

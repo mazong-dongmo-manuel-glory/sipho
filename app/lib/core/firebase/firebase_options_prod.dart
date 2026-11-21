@@ -1,7 +1,8 @@
-// Firebase options for production / release builds (`lib/main.dart`).
+// Firebase options for production / release builds (`lib/main_prod.dart`,
+// and `lib/main.dart` in release).
 //
-// Same Firebase project as dev (`sipho-f5a01`) until a dedicated prod project is needed.
-// Native Android: `android/app/src/release/google-services.json` (same content as debug).
+// Production Firebase project: `sipho-f5a01`.
+// Packages: com.cargonomade.sipho (no .staging suffix).
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;

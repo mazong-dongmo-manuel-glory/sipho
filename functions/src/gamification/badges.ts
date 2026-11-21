@@ -60,3 +60,23 @@ export const onGameBadgeCheck = onDocumentWritten(
     if (added.length > 0) logger.info("badges awarded", { uid, badges: added });
   }
 );
+
+/**
+ * Client finishes onboarding by setting `users/{uid}.onboardingDone` only (cannot write
+ * `game/state`). Award the builder badge when that flag flips to true.
+ */
+export const onUserOnboardingDone = onDocumentWritten(
+  { document: "users/{uid}", region: "us-central1" },
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!after || after.onboardingDone !== true || before?.onboardingDone === true) {
+      return;
+    }
+    const uid = event.params.uid;
+    const added = await syncBadges(uid);
+    if (added.length > 0) {
+      logger.info("badges awarded after onboarding", { uid, badges: added });
+    }
+  }
+);

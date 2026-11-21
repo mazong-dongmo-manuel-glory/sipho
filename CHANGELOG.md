@@ -7,6 +7,70 @@ et ce projet adhère au [Versionnage Sémantique](https://semver.org/lang/fr/).
 
 ---
 
+## [Unreleased] - 2026-11-20
+
+### Infra — Réplication backend sur `sipho-staging` (prod intacte)
+- Déployé sur **sipho-staging uniquement** : Firestore rules/indexes + **toutes** les Cloud Functions du repo (dont `economyNewsFetch`, triggers, callables, schedulers).
+- Storage staging bloqué tant que « Get Started » n’est pas cliqué dans la console.
+- Template Remote Config QA : `remoteconfig.template.json` (à publier manuellement).
+- **Aucune modification** déployée sur `sipho-f5a01` dans cette opération.
+
+### Corrigé — ID projet Firebase de dev
+- Le projet de **dev/QA** est **`sipho-staging`** (console « sipho-dev »), **pas** `staging` (ID inexistant).
+- Mise à jour : `.firebaserc`, `firebase_environment.dart`, options Flutter, workflows CI, `ENVIRONMENTS.md`, `README.md`, `TRACKER.md`, `DECISIONS.md` (ADR-005), `AGENTS.md`, règle Cursor.
+
+### Ajouté — Actus économiques locales (ADR-016)
+- Scheduler `economyNewsFetch` (quotidien) : titres éco/pouvoir d’achat/logement par pays (CA, FR, CM, CI, SN, WORLD).
+- Provider par défaut : **Google News RSS** (gratuit, sans clé, ~6 requêtes/jour). Option `GNEWS_API_KEY` pour CA/FR/WORLD.
+- Simplification côté serveur : titre plain + takeaway éducatif (aucun chiffre inventé) ; stockage `economyNews/{code}`.
+- App : section « Actus éco locales » dans l’onglet Info Éco (`EconomyDetailScreen`), ouverture source via `url_launcher`.
+
+---
+
+## [Unreleased] - 2026-11-19
+
+### Ajouté — Coach horaire progressif (ADR-015)
+- Scheduler `coachHourly` : tip personnalisé chaque heure locale (08–21), stocké dans `users/{uid}/coach/current` + progression éducative dans `coach/progress` (score 0–100, stages fondations → grow).
+- Catalogue progressif anti-répétition (pas deux fois de suite, fenêtre récente) ; FCM plafonné (max 2 engagement/jour) si « Conseils » opt-in.
+- App : pop-up + notification locale (`CoachPopupHost`), niveau d’éducation sur le profil ; règles Firestore lecture seule pour `coach/*`.
+
+### Sécurité / intégrité — Défis amis serveur + parrainage J+7
+- Défis 1v1 : callables `createFriendChallenge` / `respondFriendChallenge` ; templates et XP serveur ; progression branchée sur leçons, journées sous budget, fixes payées et jours d’activité ; règles Firestore `challenges` en écriture serveur uniquement.
+- Parrainage : plus d’XP immédiate ni de `weeklyXp` à la rédemption ; récompense après 7 jours actifs du filleul (200 XP parrain hors ligue + cadeau rare).
+- Deep links : `assetlinks.json`, `apple-app-site-association`, page `/invite/{code}` (empreintes / Team ID à remplacer).
+- Modules pays : 14 leçons (CA, FR, CM, CI, SN, générique) alignées sur les packs + gating serveur par `countryCode`.
+- Graphiques : courbe 6 mois + répartition vs variables.
+
+### Ajouté — Unité 4 de leçons, Hub Économie & Indicateurs, Conseils Aléatoires, Traqueur d'Objectifs sur l'Accueil
+- **Unité 4 de leçons « Faire grandir son argent »** : 3 nouvelles leçons interactives (`investing_basics`, `compound_interest`, `smart_budget_503020`), avec étapes pédagogiques, quiz, vrai/faux et points à retenir en français et anglais.
+- **Synchronisation backend/frontend** : `LESSON_UNITS`, `ALL_LESSON_IDS`, `LESSON_TOPICS`, `BADGE_RULES` et `kBadges` intègrent l'unité 4 et le nouveau badge « Investisseur avisé » (`unit_4`).
+- **Moteur de conseils et astuces variés et aléatoires** (`EconomyTip`, `kEconomyTips`) : 12+ astuces réparties en 6 catégories (Budget, Épargne, Économie, Sécurité, Investissement, Quotidien), avec tirage déterministe quotidien et bouton dé 🎲 pour renouveler et explorer aléatoirement.
+- **Hub Économie & Indicateurs macro enrichi** (`EconomyDetailScreen`) : affichage des indicateurs officiels (inflation, taux directeurs, épargne sécurisée), sélecteur de pays avec drapeaux (CA, FR, CM, CI, SN, Monde), explication « Ce que ça change pour toi » et onglets dédiés.
+- **Traqueur d'objectifs sur l'écran d'accueil** (`HomeGoalTrackerSection`) : jauge visuelle de progression vers l'objectif d'épargne prioritaire, montant restant, bouton direct « + Épargner » et invitation à fixer un premier objectif.
+
+---
+
+### Ajouté — Option 1 : Écran Conseils IA Sipho (Frame 23 Figma)
+- Écran complet des conseils personnalisés Sipho (`InsightDetailScreen`) accessible via `/insights`.
+- Bannière mascotte contextuelle, sélecteurs thématiques (Général, Dépenses, Charges fixes, Épargne).
+- Carte active de conseil avec boutons « ACCEPTER LA QUÊTE » et « Plus tard ».
+- Historique des conseils passés et mention légale d'information financière.
+
+### Ajouté — Option 2 : Défis 1v1 et Séries entre amis (Social V2)
+- Modèle `FriendChallenge` et templates de défis prédéfinis (`Marathon Savoir`, `3 Jours Zéro Écart`, `Boost Épargne`, `Semaine Champion`).
+- Repository `FriendChallengesRepository` avec lecture et mise à jour temps réel sous `friendships/{pairId}/challenges/{challengeId}`.
+- Règles de sécurité Firestore sécurisant la sous-collection `challenges` pour les membres de l'amitié.
+- Widget `FriendChallengeCard` avec comparatif face-à-face 1v1 (jauges Toi vs Ami, récompense XP, statut, boutons d'acceptation/déclin).
+- Bottom sheet `ChallengeFriendSheet` pour défier un ami en 1 tap avec retour haptique et sonore.
+- Séries partagées (`sharedStreak`) avec badge flamme 🔥 `X j partagés` dans la liste d'amis.
+
+### Ajouté — Option 3 : Préparation des environnements Staging & Production
+- Point d'entrée explicite pour la production : `app/lib/main_prod.dart`.
+- Workflows CI/CD GitHub Actions dédiés : `.github/workflows/deploy_staging.yml` (branche `staging`) et `.github/workflows/deploy_prod.yml` (tags de version `v*.*.*`).
+- Guide complet d'architecture et de mise en service multi-environnements : `ENVIRONMENTS.md`.
+
+---
+
 ## [Unreleased] - 2026-11-12
 
 ### Ajouté — Fonctionnalités MVP manquantes (i18n, géoloc, packs, unité 3, FX, série, badges, quotas)

@@ -167,6 +167,7 @@ Contiennent : devise, régions et taxes, comptes d'épargne, retraite, crédit, 
 - **Carte économique du jour** (20 s, +5 XP), **impact personnalisé** calculé côté client (« inflation alimentaire 4 % → ~16 $/mois de plus sur ton budget épicerie »), ajustement des budgets et simulateurs, alertes (taux directeur, change), quiz hebdo.
 - Toujours afficher **source + date** ; signaler les données anciennes.
 - Pipeline : `economyFetch` (quotidien, connecteurs `EconomySource`, repli Banque mondiale / FMI) → `economy/{code}` → `economySummaries` (Gemini résume **sans inventer de chiffres**) ; `fxRates` → `fx/latest`.
+- **Actus éco locales** (ADR-016) : `economyNewsFetch` (1×/jour) lit Google News RSS **gratuit** (pays CA/FR/CM/CI/SN) → `economyNews/{code}` avec titres + takeaways simples ; option `GNEWS_API_KEY`. Affichage dans l’onglet Info Éco.
 
 ### 4.4 Multi-devises
 - Chaque transaction a sa `currency` ; `amountMainCents` = conversion dans la devise principale au taux du jour.
@@ -222,6 +223,8 @@ Déclencheur (notification Sipho) → action courte (≤ 90 s) → récompense (
 
 **Règles :** max **2 notifications d'engagement/jour** ; heure personnalisée (~30 min avant l'ouverture habituelle) ; heures calmes 21 h 30 – 8 h ; escalade puis **pause** (J+1 → J+3 → J+7 → J+14 « je mets les rappels en pause » → 1/mois) ; 10–20 variantes bilingues par type, pas de répétition en 7 jours ; A/B tests via Remote Config ; préférences par type ; deep link `data.route`.
 **Conseils personnalisés (`adviceNotifier`) :** le sujet est choisi par des règles serveur (budget dépassé > leçon mal réussie > catégorie dominante > aucune dépense notée > prochaine leçon > objectif > général), avec un délai avant de reparler du même sujet ; l'IA ne fait que rédiger à partir de totaux agrégés (aucun nom, aucun texte libre), son texte est refusé s'il cite un chiffre absent des faits ou parle de placement, crédit ou impôt, et un modèle de texte prend alors le relais (ADR-014).
+
+**Coach horaire (`coachHourly`, ADR-015) :** tip progressif chaque heure locale (catalogue stage-gated, anti-répétition) écrit dans `users/{uid}/coach/current` ; score d’éducation financière dans `coach/progress` ; pop-up + notif locale côté app ; FCM seulement si plafond d’engagement restant et opt-in « Conseils ».
 **Canaux Android :** `streak, budget, social, tips, recap, economy`.
 
 ---
@@ -409,11 +412,13 @@ Quêtes du jour : `daily_{templateId}_{yyyy-MM-dd}` (jour local), créées par `
 | `sendFriendRequest` · `respondFriendRequest` · `removeFriend` | Callable | Demandes d'ami par code ; accepter / refuser ; retirer (écritures serveur uniquement) |
 | `setContactDiscovery` · `findContacts` · `sendContactFriendRequest` | Callable | Retrouver ses amis dans ses contacts (empreintes SHA-256 d'e-mails et de numéros vérifiés, opt-in réciproque) et leur envoyer une demande (ADR-010) |
 | `notifyScheduler` | Scheduler (15 min) | Rappels personnalisés, plafond, escalade |
+| `coachHourly` | Scheduler (1 h) | Tip coach progressif + progression éducative (ADR-015) |
 | `joinLeague` | Callable | Inscrit le joueur dans le groupe de sa ligue pour la semaine (idempotent) |
 | `onGameXpChange` | Trigger `users/{uid}/game/state` | Convertit tout gain d'XP en points de ligue (un seul point d'entrée pour toutes les sources d'XP) |
 | `leagueWeekly` | Scheduler (toutes les heures) | Clôt les groupes terminés : classement, top 7 promus, 5 derniers relégués (groupes ≥ 15), remise à zéro |
 | `weeklyInsights` | Scheduler | Contexte agrégé → Gemini → conseils + quêtes |
 | `economyFetch` · `economySummaries` · `fxRates` · `economyAlerts` | Scheduler / trigger | Données économiques et change |
+| `economyNewsFetch` | Scheduler (quotidien) | Actus éco locales (RSS Google News / option GNews) → `economyNews/{code}` |
 | `referralRedeem` | Callable + trigger | Parrainage validé après 7 jours |
 | `deleteAccount` | Callable | Suppression totale (Firestore, Storage, Auth) |
 | `bankWebhook` | HTTPS (V3) | Transactions des agrégateurs |
@@ -463,7 +468,7 @@ Quotas par utilisateur/jour vérifiés avant appel, compression d'image, alertes
 - Le client ne peut **jamais** écrire : XP, niveau, séries, graines, quêtes, ligues, `plan`, transactions `source: bank`.
 - Storage : `receipts/{uid}/{id}.jpg`, propriétaire seulement, ≤ 5 Mo, `image/*` ou `application/pdf`.
 - Jetons bancaires uniquement côté serveur (Secret Manager).
-- 3 projets Firebase : `sipho-f5a01` (dev), `sipho-staging`, `sipho-prod` (ces deux derniers restent à créer).
+- **2 projets Firebase actifs :** prod = `sipho-f5a01` ; dev/QA = `sipho-staging` (nom affiché « sipho-dev »). **Jamais** l’ID nu `staging` (n’existe pas). Détail : [ENVIRONMENTS.md](./ENVIRONMENTS.md).
 - Aucune donnée personnelle (montant, marchand, nom) dans les logs/Crashlytics.
 - Conformité : RGPD, UK GDPR, Loi 25 + LPRPDE, lois US par État (CCPA…), lois africaines de protection des données ; régulateurs financiers par pays (positionnement **éducatif**) ; Sign in with Apple ; suppression de compte in-app ; Data safety (Play) et Privacy labels (Apple) ; âge minimum recommandé 16 ans (à valider).
 
@@ -489,10 +494,15 @@ Prérequis : Flutter stable, Dart 3, Node LTS, Firebase CLI, FlutterFire CLI, Xc
 ```bash
 # Configuration Firebase (une fois par environnement) — écrit lib/core/firebase/firebase_options_<env>.dart
 cd app
-flutterfire configure --project=sipho-f5a01 --out=lib/core/firebase/firebase_options_dev.dart      # dev
-flutterfire configure --project=sipho-staging --out=lib/core/firebase/firebase_options_staging.dart # staging
-flutterfire configure --project=sipho-prod --out=lib/core/firebase/firebase_options_prod.dart       # prod
-# Android : télécharger le google-services.json du projet dev dans android/app/ (pas de flavors)
+# Dev/QA (project ID sipho-staging — console « sipho-dev »)
+flutterfire configure --project=sipho-staging --out=lib/core/firebase/firebase_options_dev.dart \
+  --ios-bundle-id=com.cargonomade.sipho.staging --android-package-name=com.cargonomade.sipho.staging
+flutterfire configure --project=sipho-staging --out=lib/core/firebase/firebase_options_staging.dart \
+  --ios-bundle-id=com.cargonomade.sipho.staging --android-package-name=com.cargonomade.sipho.staging
+# Prod
+flutterfire configure --project=sipho-f5a01 --out=lib/core/firebase/firebase_options_prod.dart \
+  --ios-bundle-id=com.cargonomade.sipho --android-package-name=com.cargonomade.sipho
+# Ne pas utiliser --project=staging (ID inexistant sur ce compte).
 
 # App
 flutter pub get
@@ -512,10 +522,15 @@ cd functions && npm run test:emulator  # règles Firestore + gamification (déma
 cd functions && npm run test:all
 
 # Contenus (packs pays, leçons, templates)
-cd content && npm run import -- --project=sipho-f5a01
+GCLOUD_PROJECT=sipho-staging npx --prefix functions ts-node content/scripts/import.ts
 ```
 
-Environnements : `dev` (`sipho-f5a01`), `staging` (`sipho-staging`), `prod` (`sipho-prod`) — un projet Firebase chacun, choisis côté Dart (`main.dart` / `main_dev.dart` / `main_staging.dart`). Il n'y a plus de flavors Android ni de schémas Xcode (ADR-005). Les fichiers `firebase_options_staging.dart` / `firebase_options_prod.dart` contiennent des valeurs `REPLACE_ME` tant que `flutterfire configure` n'a pas été lancé : l'app refuse alors de démarrer (`assertFirebaseConfigured`) au lieu d'écrire dans le projet de dev. Déploiement : `firebase deploy --project <alias>` (`.firebaserc` : `dev`, `staging`, `prod`).
+Environnements (**2 projets**) : flavors Dart `dev`/`staging` → Firebase **`sipho-staging`** (console « sipho-dev ») ; flavor `prod` / release → **`sipho-f5a01`**. Voir [ENVIRONMENTS.md](./ENVIRONMENTS.md) et [AGENTS.md](./AGENTS.md). Pas de flavors Android (ADR-005). `firebase_options_dev/staging.dart` restent `REPLACE_ME` tant que `flutterfire configure --project=sipho-staging` n’a pas été lancé. Déploiements :
+
+```bash
+firebase deploy --only firestore,storage,functions --project sipho-staging   # dev
+firebase deploy --only firestore,storage,functions --project sipho-f5a01     # prod
+```
 
 ---
 

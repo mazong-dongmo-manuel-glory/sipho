@@ -5,6 +5,7 @@ class FriendshipRecord {
     required this.users,
     required this.status,
     required this.requesterUid,
+    this.sharedStreak = 0,
   });
 
   factory FriendshipRecord.fromMap(String id, Map<String, dynamic> data) {
@@ -14,6 +15,7 @@ class FriendshipRecord {
       users: rawUsers is List ? [for (final u in rawUsers) u.toString()] : [],
       status: (data['status'] as String?) ?? 'pending',
       requesterUid: (data['requesterUid'] as String?) ?? '',
+      sharedStreak: (data['sharedStreak'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -21,6 +23,7 @@ class FriendshipRecord {
   final List<String> users;
   final String status; // pending | accepted
   final String requesterUid;
+  final int sharedStreak;
 
   bool get isAccepted => status == 'accepted';
 
@@ -36,12 +39,19 @@ class FriendshipRecord {
 
 /// One friendship seen from the signed-in user's side.
 class FriendLink {
-  const FriendLink({required this.pairId, required this.uid});
+  const FriendLink({
+    required this.pairId,
+    required this.uid,
+    this.sharedStreak = 0,
+  });
 
   final String pairId;
 
   /// The friend (or the person who asked / was asked).
   final String uid;
+
+  /// Consecutive active days together.
+  final int sharedStreak;
 }
 
 class FriendLinks {
@@ -71,7 +81,11 @@ FriendLinks splitFriendships(List<FriendshipRecord> records, String me) {
   for (final r in records) {
     final other = r.otherUid(me);
     if (other == null) continue;
-    final link = FriendLink(pairId: r.pairId, uid: other);
+    final link = FriendLink(
+      pairId: r.pairId,
+      uid: other,
+      sharedStreak: r.sharedStreak,
+    );
     if (r.isAccepted) {
       friends.add(link);
     } else if (r.requesterUid == me) {

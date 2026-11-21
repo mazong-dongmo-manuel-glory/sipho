@@ -1,7 +1,6 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue, Firestore } from "firebase-admin/firestore";
 import { ReferralRedeemInputSchema } from "../shared/validators";
-import { XP_CONFIG, xpToLevel } from "../shared/xpConfig";
 import {
   SECURE_CALLABLE_OPTIONS,
   enforceRateLimit,
@@ -10,6 +9,7 @@ import {
 } from "../shared/security";
 import { initialGameStatePayload, normalizeGameState } from "../shared/gameState";
 import { friendPairId } from "../shared/friends";
+import { REFERRAL_ACTIVE_DAYS_REQUIRED } from "./referralReward";
 import { logger } from "../shared/logger";
 
 const db = (): Firestore => getFirestore();
@@ -17,11 +17,11 @@ const db = (): Firestore => getFirestore();
 /**
  * Callable (v2, authenticated): redeem a referral code atomically.
  * - Cannot redeem your own code
- * - Each user can redeem at most ONE referral code ever. The source of truth is the
- *   server-only marker `users/{uid}/referral/redemption` (clients cannot write it); the
- *   `redeemedReferralCode` profile field is a convenience copy that clients cannot modify either
- *   (see firestore.rules `touchesServerOnlyUserFields`).
- * - Awards server-side XP to both inviter and invitee
+ * - Each user can redeem at most ONE referral code ever
+ * - Creates friendship immediately
+ * - Welcome seeds only (no XP). The real XP reward unlocks after the invitee is active
+ *   on REFERRAL_ACTIVE_DAYS_REQUIRED distinct local days (see referralReward.ts), and
+ *   that XP never enters weeklyXp (anti-league farming).
  */
 export const referralRedeem = onCall(SECURE_CALLABLE_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
@@ -82,18 +82,9 @@ export const referralRedeem = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
       throw new HttpsError("resource-exhausted", "Referral code has reached its limit.");
     }
 
-    const inviterGameRef = db().doc(`users/${ownerUid}/game/state`);
-    const inviterGameSnap = await tx.get(inviterGameRef);
-
     const inviteeBase = inviteeGameSnap.exists
       ? normalizeGameState(inviteeGameSnap.data())
       : normalizeGameState(initialGameStatePayload());
-    const inviterBase = inviterGameSnap.exists
-      ? normalizeGameState(inviterGameSnap.data())
-      : normalizeGameState(initialGameStatePayload());
-
-    const inviteeXp = inviteeBase.xp + XP_CONFIG.referralInvitee;
-    const inviterXp = inviterBase.xp + XP_CONFIG.referralInviter;
 
     tx.update(referralRef, {
       uses: FieldValue.arrayUnion(uid),
@@ -103,13 +94,20 @@ export const referralRedeem = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
     tx.set(redemptionRef, {
       referralCode,
       ownerUid,
+      status: "pending",
+      activeDays: [],
+      activeDayCount: 0,
+      requiredActiveDays: REFERRAL_ACTIVE_DAYS_REQUIRED,
       redeemedAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
-    // Inviter and invitee become friends right away (no request needed: the invitation was it).
     if (friendRef && friendSnap?.data()?.status !== "accepted") {
       if (friendSnap?.exists) {
-        tx.update(friendRef, { status: "accepted", acceptedAt: FieldValue.serverTimestamp() });
+        tx.update(friendRef, {
+          status: "accepted",
+          acceptedAt: FieldValue.serverTimestamp(),
+        });
       } else {
         tx.set(friendRef, {
           users: [uid, ownerUid].sort(),
@@ -132,13 +130,14 @@ export const referralRedeem = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
       { merge: true }
     );
 
+    // Welcome seeds only — no XP, no weeklyXp.
     tx.set(
       inviteeGameRef,
       {
-        xp: inviteeXp,
-        level: xpToLevel(inviteeXp),
+        xp: inviteeBase.xp,
+        level: inviteeBase.level,
         gems: inviteeBase.gems + 5,
-        weeklyXp: inviteeBase.weeklyXp + XP_CONFIG.referralInvitee,
+        weeklyXp: inviteeBase.weeklyXp,
         streak: inviteeBase.streak,
         leagueId: inviteeBase.leagueId,
         badges: inviteeBase.badges,
@@ -146,26 +145,17 @@ export const referralRedeem = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
       },
       { merge: true }
     );
-
-    tx.set(
-      inviterGameRef,
-      {
-        xp: inviterXp,
-        level: xpToLevel(inviterXp),
-        gems: inviterBase.gems + 10,
-        weeklyXp: inviterBase.weeklyXp + XP_CONFIG.referralInviter,
-        streak: inviterBase.streak,
-        leagueId: inviterBase.leagueId,
-        badges: inviterBase.badges,
-        updatedAt: FieldValue.serverTimestamp(),
-      },
-      { merge: true }
-    );
   });
 
-  logger.info("referral redeemed successfully", { uid, referralCode });
+  logger.info("referral redeemed (reward pending active days)", {
+    uid,
+    referralCode,
+    requiredActiveDays: REFERRAL_ACTIVE_DAYS_REQUIRED,
+  });
   return {
     success: true,
-    xpGained: XP_CONFIG.referralInvitee,
+    xpGained: 0,
+    gemsGained: 5,
+    pendingActiveDays: REFERRAL_ACTIVE_DAYS_REQUIRED,
   };
 });
