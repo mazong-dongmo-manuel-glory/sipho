@@ -9,7 +9,8 @@ import 'package:sipho/app/theme/app_spacing.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
 import 'package:sipho/features/gamification/data/game_state_repository.dart';
 import 'package:sipho/features/insights/data/insight_service.dart';
-import 'package:sipho/features/lessons/domain/country_lesson_catalog.dart';
+import 'package:sipho/features/lessons/data/ai_country_lessons_repository.dart';
+import 'package:sipho/features/lessons/domain/country_lesson_catalog_extra.dart';
 import 'package:sipho/features/lessons/domain/lesson_catalog.dart';
 import 'package:sipho/features/lessons/presentation/learn_path.dart';
 import 'package:sipho/features/lessons/presentation/learn_quests_section.dart';
@@ -26,6 +27,32 @@ class LearnScreen extends ConsumerStatefulWidget {
 class _LearnScreenState extends ConsumerState<LearnScreen> {
   final _currentKey = GlobalKey();
   bool _scrolledToCurrent = false;
+  bool _requestedAiLessons = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _ensureAiLessons());
+  }
+
+  Future<void> _ensureAiLessons() async {
+    if (_requestedAiLessons || !mounted) return;
+    _requestedAiLessons = true;
+    try {
+      final country =
+          ref.read(userFinanceProvider).valueOrNull?.countryCode;
+      final filled =
+          ref.read(aiCountryLessonsProvider).valueOrNull?.keys.toSet() ??
+              {};
+      await ref.read(aiCountryLessonsRepositoryProvider).ensureEmptySlotsFilled(
+            countryCode: country,
+            filledSlotIds: filled,
+            limit: 3,
+          );
+    } catch (_) {
+      // Slot placeholders remain visible; generation retries on open.
+    }
+  }
 
   void _scrollToCurrentOnce() {
     if (_scrolledToCurrent) return;
@@ -43,6 +70,20 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
     UnitProgress unit,
     String language,
   ) async {
+    // Country slots: fill monolingual AI content before playing (reuse if present).
+    if (isCountrySlotId(lesson.id)) {
+      final ai = ref.read(aiCountryLessonsProvider).valueOrNull ?? {};
+      if (ai[lesson.id]?.isPlayable != true) {
+        try {
+          await ref
+              .read(aiCountryLessonsRepositoryProvider)
+              .ensureGenerated(slotId: lesson.id, forceNew: false);
+        } catch (_) {
+          // Player will show placeholder / not-found; user can retry.
+        }
+      }
+    }
+    if (!mounted) return;
     final start = await showLessonSheet(
       context,
       lesson: lesson,
@@ -52,6 +93,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
       language: language,
     );
     if (start == true && mounted) {
+      // completeLesson(slotId) awards XP for country slots.
       unawaited(context.push('/lesson/${lesson.id}'));
     }
   }
@@ -68,13 +110,11 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
         {};
     final game = ref.watch(gameStateStreamProvider).valueOrNull;
     final advice = ref.watch(activeCoachAdviceProvider);
-    final countryCode =
-        ref.watch(userFinanceProvider).valueOrNull?.countryCode;
     final ids = [for (final lesson in kCatalogLessons) lesson.id];
     final nextId = nextLessonId(ids, completed);
     final units = unitProgressList(kCatalogUnits, completed);
     final localUnits = unitProgressList(
-      countryUnitsFor(countryCode),
+      ref.watch(personalizedCountryUnitsProvider),
       completed,
     );
     if (nextId != null) _scrollToCurrentOnce();

@@ -1,4 +1,20 @@
 import { XP_CONFIG } from "./xpConfig";
+import {
+  COUNTRY_LESSON_MODULES,
+  type CountryLessonId,
+} from "./countryLessonTopics";
+
+export { COUNTRY_LESSON_MODULES, type CountryLessonId };
+export {
+  COUNTRY_SLOTS,
+  TOPIC_BANK,
+  isAwardableSlot,
+  pickRandomTopic,
+  slotsForCountry,
+  topicsForCountry,
+  topicById,
+  slotById,
+} from "./countryLessonTopics";
 
 /**
  * The lesson path: ordered units of ordered lessons. The server is the single authority on it.
@@ -8,6 +24,9 @@ import { XP_CONFIG } from "./xpConfig";
  *
  * Keep in sync with `kCatalogUnits` in the Flutter app
  * (app/lib/features/lessons/domain/lesson_catalog.dart). An unknown id must never earn XP.
+ *
+ * Country modules: awardable **slots** from `countryLessonTopics.ts` (`ca_slot_01`…).
+ * AI content is generated into those slots; topic seeds are not awardable.
  */
 export const LESSON_UNITS = [
   {
@@ -28,31 +47,8 @@ export const LESSON_UNITS = [
   },
 ] as const;
 
-/**
- * Country modules referenced by `content/countries/*.json` (`lessonId`).
- * Not part of the linear unlock path: unlocked when the user's country matches.
- * Educational only — no rates, ceilings or tax advice hardcoded.
- */
-export const COUNTRY_LESSON_MODULES = [
-  { id: "ca_tfsa_101", countries: ["CA"] },
-  { id: "ca_rrsp_101", countries: ["CA"] },
-  { id: "ca_fhsa_101", countries: ["CA"] },
-  { id: "fr_livreta_101", countries: ["FR"] },
-  { id: "fr_pea_101", countries: ["FR"] },
-  { id: "fr_per_101", countries: ["FR"] },
-  { id: "fr_av_101", countries: ["FR"] },
-  { id: "cm_tontine_101", countries: ["CM"] },
-  { id: "cm_momo_101", countries: ["CM"] },
-  { id: "ci_tontine_101", countries: ["CI"] },
-  { id: "ci_momo_101", countries: ["CI"] },
-  { id: "sn_tontine_101", countries: ["SN"] },
-  { id: "sn_momo_101", countries: ["SN"] },
-  { id: "gen_savings_101", countries: ["*"] },
-] as const;
-
 export type LessonUnitId = (typeof LESSON_UNITS)[number]["id"];
 export type LessonId = (typeof LESSON_UNITS)[number]["lessons"][number];
-export type CountryLessonId = (typeof COUNTRY_LESSON_MODULES)[number]["id"];
 
 /** All lessons in path order, typed as a non-empty tuple so zod can build an enum from it. */
 export const ALL_LESSON_IDS = LESSON_UNITS.flatMap((unit) => [

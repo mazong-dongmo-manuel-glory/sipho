@@ -41,18 +41,19 @@ describe("referral delayed reward", () => {
 });
 
 describe("country lesson modules", () => {
-  test("pack lesson ids are awardable and gated by country", () => {
-    expect(ALL_AWARDABLE_LESSON_IDS).toContain("ca_tfsa_101");
-    expect(ALL_AWARDABLE_LESSON_IDS).toContain("ci_tontine_101");
-    expect(isCountryLessonAllowed("ca_tfsa_101", "CA")).toBe(true);
-    expect(isCountryLessonAllowed("ca_tfsa_101", "FR")).toBe(false);
-    expect(isCountryLessonAllowed("gen_savings_101", "ZZ")).toBe(true);
-    expect(isLessonUnlocked("ca_tfsa_101", new Set())).toBe(true);
+  test("slot ids are awardable and gated by country", () => {
+    expect(ALL_AWARDABLE_LESSON_IDS).toContain("ca_slot_01");
+    expect(ALL_AWARDABLE_LESSON_IDS).toContain("ci_slot_01");
+    expect(isCountryLessonAllowed("ca_slot_01", "CA")).toBe(true);
+    expect(isCountryLessonAllowed("ca_slot_01", "FR")).toBe(false);
+    expect(isCountryLessonAllowed("gen_slot_01", "ZZ")).toBe(true);
+    expect(isLessonUnlocked("ca_slot_01", new Set())).toBe(true);
   });
 
   test("every country module lists at least one country or *", () => {
     for (const mod of COUNTRY_LESSON_MODULES) {
       expect(mod.countries.length).toBeGreaterThan(0);
+      expect(mod.id).toMatch(/_slot_\d{2}$/);
     }
   });
 });

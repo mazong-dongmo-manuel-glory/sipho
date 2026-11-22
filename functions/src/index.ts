@@ -5,6 +5,7 @@ admin.initializeApp();
 // Gamification
 export { onTransactionWrite } from './gamification/onTransactionWrite';
 export { completeLesson } from './gamification/completeLesson';
+export { generateCountryLessons } from './lessons/generateCountryLessons';
 export { markFixedPaid } from './gamification/markFixedPaid';
 export { claimQuest } from './gamification/claimQuest';
 export { refreshDailyQuests } from './gamification/refreshDailyQuests';

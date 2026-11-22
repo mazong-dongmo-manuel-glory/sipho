@@ -112,7 +112,8 @@ describe("Server security & gamification logic", () => {
     expect(CompleteLessonInputSchema.safeParse({ ...base, lessonId: "small_amounts" }).success).toBe(
       true
     );
-    expect(ALLOWED_LESSON_IDS).toEqual([
+    // Path lessons stay fixed; country awardables are stable slots (not topic seeds).
+    expect(ALLOWED_LESSON_IDS.slice(0, 12)).toEqual([
       "emergency_fund",
       "needs_wants",
       "track_spending",
@@ -125,21 +126,13 @@ describe("Server security & gamification logic", () => {
       "investing_basics",
       "compound_interest",
       "smart_budget_503020",
-      "ca_tfsa_101",
-      "ca_rrsp_101",
-      "ca_fhsa_101",
-      "fr_livreta_101",
-      "fr_pea_101",
-      "fr_per_101",
-      "fr_av_101",
-      "cm_tontine_101",
-      "cm_momo_101",
-      "ci_tontine_101",
-      "ci_momo_101",
-      "sn_tontine_101",
-      "sn_momo_101",
-      "gen_savings_101",
     ]);
+    expect(ALLOWED_LESSON_IDS).toContain("ca_slot_01");
+    expect(ALLOWED_LESSON_IDS).toContain("gen_slot_01");
+    expect(ALLOWED_LESSON_IDS).not.toContain("ca_tfsa_101");
+    expect(
+      CompleteLessonInputSchema.safeParse({ ...base, lessonId: "ca_slot_01" }).success
+    ).toBe(true);
   });
 
   test("callGeminiJson uses active Gemini 3.5+ models, omits temperature, and skips thought parts", async () => {

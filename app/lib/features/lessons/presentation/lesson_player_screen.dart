@@ -13,9 +13,12 @@ import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
 import 'package:sipho/features/insights/presentation/spend_snapshot_builder.dart';
+import 'package:sipho/features/lessons/data/ai_country_lessons_repository.dart';
 import 'package:sipho/features/lessons/data/lesson_ai_tutor_service.dart';
 import 'package:sipho/features/lessons/data/lesson_completion_repository.dart';
+import 'package:sipho/features/lessons/domain/ai_country_lesson.dart';
 import 'package:sipho/features/lessons/domain/country_lesson_catalog.dart';
+import 'package:sipho/features/lessons/domain/country_lesson_catalog_extra.dart';
 import 'package:sipho/features/lessons/domain/lesson_catalog.dart';
 import 'package:sipho/features/lessons/domain/lesson_session.dart';
 import 'package:sipho/features/lessons/presentation/lesson_player_widgets.dart';
@@ -35,6 +38,8 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
   CatalogLesson? _lesson;
   LessonSession? _session;
   late final DateTime _startedAt = DateTime.now();
+  String? _boundSignature;
+  bool _requestedSlotFill = false;
 
   int? _selected;
   bool _checked = false;
@@ -43,19 +48,59 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
   bool _askingTutor = false;
   LessonTutorReply? _tutorReply;
 
-  @override
-  void initState() {
-    super.initState();
+  CatalogLesson? _resolveLesson(Map<String, AiCountryLesson> ai) {
     final id = widget.lessonId;
-    if (id != null && id.isNotEmpty) {
-      for (final lesson in kAllPlayableLessons) {
-        if (lesson.id == id) {
-          _lesson = lesson;
-          _session = LessonSession(lesson);
-          break;
-        }
+    if (id == null || id.isEmpty) return null;
+    // Country slots: play monolingual AI under aiLessons/{slotId}; XP via completeLesson(slotId).
+    if (isCountrySlotId(id)) {
+      final aiLesson = ai[id];
+      if (aiLesson != null && aiLesson.isPlayable) {
+        return aiLesson.toCatalogLesson(
+          fallback: kCountryCatalogLessons.cast<CatalogLesson?>().firstWhere(
+                (l) => l?.id == id,
+                orElse: () => null,
+              ),
+        );
       }
+      return null;
     }
+    return playableLessonById(id, ai) ??
+        kAllPlayableLessons.cast<CatalogLesson?>().firstWhere(
+              (l) => l?.id == id,
+              orElse: () => null,
+            );
+  }
+
+  Future<void> _ensureSlotFilled(String slotId) async {
+    if (_requestedSlotFill) return;
+    _requestedSlotFill = true;
+    try {
+      await ref
+          .read(aiCountryLessonsRepositoryProvider)
+          .ensureGenerated(slotId: slotId, forceNew: false);
+    } catch (_) {
+      // Not-found UI stays; user can leave and retry.
+    }
+  }
+
+  void _ensureBound(CatalogLesson lesson, {required bool preferAiSwap}) {
+    final signature =
+        '${lesson.id}:${lesson.titleFr}:${lesson.steps.length}:${lesson.objective.fr}';
+    if (_boundSignature == signature && _session != null) return;
+    // Don't reset mid-quiz when AI overlay arrives later.
+    if (_session != null &&
+        _lesson?.id == lesson.id &&
+        !preferAiSwap &&
+        (_checked || (_session!.index > 0))) {
+      return;
+    }
+    _boundSignature = signature;
+    _lesson = lesson;
+    _session = LessonSession(lesson);
+    _selected = null;
+    _checked = false;
+    _tutorReply = null;
+    _askingTutor = false;
   }
 
   void _resetStepState() {
@@ -196,9 +241,64 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final language = Localizations.localeOf(context).languageCode;
+    final ai = ref.watch(aiCountryLessonsProvider).valueOrNull ?? const {};
+    final slotId = widget.lessonId;
+    if (slotId != null &&
+        isCountrySlotId(slotId) &&
+        (ai[slotId]?.isPlayable != true)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(_ensureSlotFilled(slotId));
+      });
+    }
+    final resolved = _resolveLesson(ai);
+    if (resolved != null) {
+      final signature =
+          '${resolved.id}:${resolved.titleFr}:${resolved.steps.length}:${resolved.objective.fr}';
+      if (_boundSignature != signature) {
+        final preferAi = ai.containsKey(resolved.id);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          setState(() {
+            _ensureBound(
+              resolved,
+              preferAiSwap: preferAi && (_session?.index ?? 0) == 0,
+            );
+          });
+        });
+      }
+    }
     final lesson = _lesson;
     final session = _session;
     if (lesson == null || session == null) {
+      final waitingForSlot = slotId != null &&
+          isCountrySlotId(slotId) &&
+          ai[slotId]?.isPlayable != true;
+      if (waitingForSlot) {
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          body: SafeArea(
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(color: AppColors.primary),
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.learnTitle,
+                    style: const TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primaryDark,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
       return Scaffold(
         backgroundColor: AppColors.background,
         body: SafeArea(

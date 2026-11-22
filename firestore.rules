@@ -240,6 +240,17 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      // ── AI-personalized country lessons: Functions write ────────────────
+      match /aiLessons/{lessonId} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
+      match /aiLessonsMeta/{docId} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
       // ── Insights: Functions write, client can only dismiss ──────────────
       match /insights/{insightId} {
         allow read: if isOwner(uid);
