@@ -15,6 +15,7 @@ import 'package:sipho/features/expenses/presentation/edit_expense_sheet.dart';
 import 'package:sipho/features/expenses/presentation/expense_category_label.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
 import 'package:sipho/features/fixed_expenses/presentation/fixed_expenses_list_screen.dart';
+import 'package:sipho/features/gamification/data/game_state_repository.dart';
 
 class ExpensesListScreen extends ConsumerStatefulWidget {
   const ExpensesListScreen({super.key});
@@ -45,6 +46,7 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
     final transactions = ref.watch(transactionsForMonthProvider(monthKey));
     final currency =
         ref.watch(userFinanceProvider).valueOrNull?.currency ?? 'CAD';
+    final game = ref.watch(gameStateStreamProvider).valueOrNull;
     final now = DateTime.now();
     final isCurrent = month.year == now.year && month.month == now.month;
 
@@ -70,7 +72,11 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
                   24,
                 ),
                 children: [
-                  _Pills(level: l10n.homeLevelPill(7)),
+                  _Pills(
+                    streak: game?.streak.current,
+                    seeds: game?.gems,
+                    level: l10n.homeLevelPill(game?.level ?? 1),
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     l10n.expensesTitle,
@@ -315,17 +321,23 @@ const _monthArrow = TextStyle(
 );
 
 class _Pills extends StatelessWidget {
-  const _Pills({required this.level});
+  const _Pills({
+    required this.level,
+    this.streak,
+    this.seeds,
+  });
 
   final String level;
+  final int? streak;
+  final int? seeds;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const _Pill(AppColors.flamePill, AppColors.flameText, '🔥  12'),
+        _Pill(AppColors.flamePill, AppColors.flameText, '🔥  ${streak ?? '—'}'),
         const SizedBox(width: 16),
-        const _Pill(AppColors.seedPill, AppColors.seedText, '🌾  340'),
+        _Pill(AppColors.seedPill, AppColors.seedText, '🌾  ${seeds ?? '—'}'),
         const SizedBox(width: 16),
         _Pill(AppColors.mint, AppColors.primaryDark, level),
       ],

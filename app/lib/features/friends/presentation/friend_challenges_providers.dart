@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sipho/features/auth/presentation/auth_provider.dart';
 import 'package:sipho/features/friends/data/friend_challenges_repository.dart';
 import 'package:sipho/features/friends/domain/friend_challenge.dart';
 import 'package:sipho/features/friends/presentation/friends_providers.dart';

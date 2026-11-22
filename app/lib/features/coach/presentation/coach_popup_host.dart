@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
+import 'package:sipho/app/router.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/core/feedback/feedback_cue.dart';
 import 'package:sipho/core/feedback/feedback_service.dart';
@@ -70,7 +70,9 @@ class _CoachPopupHostState extends ConsumerState<CoachPopupHost>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _dialogOpen) return;
       if (tip.tipId == _lastShownTipId) return;
-      final route = GoRouterState.of(context).uri.path;
+      // CoachPopupHost sits in MaterialApp.router's builder (above the navigator),
+      // so GoRouterState.of(context) would throw. Use the Riverpod router instead.
+      final route = ref.read(routerProvider).state.uri.path;
       if (route.startsWith('/splash') ||
           route.startsWith('/login') ||
           route.startsWith('/onboarding')) {

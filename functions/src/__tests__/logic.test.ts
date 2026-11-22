@@ -87,6 +87,7 @@ describe("Server security & gamification logic", () => {
         lessonId: "emergency_fund",
         score: 100,
         durationSeconds: 0,
+        attemptId: "attempt_abc12",
       }).success
     ).toBe(false);
 
@@ -102,7 +103,7 @@ describe("Server security & gamification logic", () => {
   });
 
   test("completeLesson only accepts catalog lesson ids (fake ids earn nothing)", () => {
-    const base = { score: 100, durationSeconds: 30 };
+    const base = { score: 100, durationSeconds: 30, attemptId: "attempt_abc12" };
     expect(CompleteLessonInputSchema.safeParse({ ...base, lessonId: "fake_lesson_1" }).success).toBe(
       false
     );
@@ -112,6 +113,13 @@ describe("Server security & gamification logic", () => {
     expect(CompleteLessonInputSchema.safeParse({ ...base, lessonId: "small_amounts" }).success).toBe(
       true
     );
+    expect(
+      CompleteLessonInputSchema.safeParse({
+        lessonId: "track_spending",
+        score: 100,
+        durationSeconds: 30,
+      }).success
+    ).toBe(false);
     // Path lessons stay fixed; country awardables are stable slots (not topic seeds).
     expect(ALLOWED_LESSON_IDS.slice(0, 12)).toEqual([
       "emergency_fund",

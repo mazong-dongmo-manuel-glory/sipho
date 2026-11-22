@@ -96,6 +96,14 @@ async function trackReferralActiveDayUnsafe(
 
     const inviteeXp = inviteeBase.xp + XP_CONFIG.referralInvitee;
     const inviterXp = inviterBase.xp + XP_CONFIG.referralInviter;
+    const inviteeExempt =
+      (typeof inviteeGameSnap.data()?.leagueExemptXp === "number"
+        ? Math.max(0, Math.trunc(inviteeGameSnap.data()!.leagueExemptXp as number))
+        : 0) + XP_CONFIG.referralInvitee;
+    const inviterExempt =
+      (typeof inviterGameSnap.data()?.leagueExemptXp === "number"
+        ? Math.max(0, Math.trunc(inviterGameSnap.data()!.leagueExemptXp as number))
+        : 0) + XP_CONFIG.referralInviter;
 
     tx.set(
       inviteeGameRef,
@@ -104,8 +112,8 @@ async function trackReferralActiveDayUnsafe(
         level: xpToLevel(inviteeXp),
         gems: inviteeBase.gems + 5,
         // Intentionally NOT touching weeklyXp (anti-league farming).
-        // onGameXpChange subtracts skipLeagueXp from the league delta.
-        skipLeagueXp: XP_CONFIG.referralInvitee,
+        // onGameXpChange subtracts leagueExemptXp growth from the league delta.
+        leagueExemptXp: inviteeExempt,
         streak: inviteeBase.streak,
         badges: inviteeBase.badges,
         leagueId: inviteeBase.leagueId,
@@ -119,7 +127,7 @@ async function trackReferralActiveDayUnsafe(
         xp: inviterXp,
         level: xpToLevel(inviterXp),
         gems: inviterBase.gems + 20,
-        skipLeagueXp: XP_CONFIG.referralInviter,
+        leagueExemptXp: inviterExempt,
         streak: inviterBase.streak,
         badges: inviterBase.badges,
         leagueId: inviterBase.leagueId,

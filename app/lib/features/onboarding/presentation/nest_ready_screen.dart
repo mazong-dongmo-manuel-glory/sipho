@@ -77,16 +77,6 @@ class NestReadyScreen extends StatelessWidget {
                   color: AppColors.primaryDark,
                 ),
               ),
-              Text(
-                l10n.nestReadyXp,
-                style: const TextStyle(
-                  fontFamily: 'Nunito',
-                  fontSize: 40,
-                  fontWeight: FontWeight.w900,
-                  height: 1.2,
-                  color: AppColors.primary,
-                ),
-              ),
               const SizedBox(height: 12),
               Container(
                 height: 56,

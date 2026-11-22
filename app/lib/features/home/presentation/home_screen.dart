@@ -27,6 +27,7 @@ import 'package:sipho/features/gamification/data/game_state_repository.dart';
 import 'package:sipho/features/gamification/domain/game_extras.dart';
 import 'package:sipho/features/gamification/presentation/no_spend_controller.dart';
 import 'package:sipho/features/economy/domain/economy_tips.dart';
+import 'package:sipho/features/home/domain/home_add_expense_fab.dart';
 import 'package:sipho/features/home/presentation/home_country_economy_card.dart';
 import 'package:sipho/features/home/presentation/home_goal_card.dart';
 import 'package:sipho/features/insights/data/insight_service.dart';
@@ -73,6 +74,7 @@ Future<void> _askInsight(
 
 /// Opens the add-expense form and, when an expense was saved, shows the reward card on Home.
 Future<void> _addExpense(BuildContext context, WidgetRef ref) async {
+  ref.read(homeRewardProvider.notifier).state = null;
   final added = await context.push<({String amount, String category})>(
     '/expenses/add',
   );
@@ -111,6 +113,14 @@ class HomeScreen extends ConsumerWidget {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final palette = _HomePalette(dark);
     final reward = ref.watch(homeRewardProvider);
+    ref.listen(homeRewardProvider, (previous, next) {
+      if (next == null) return;
+      Future<void>.delayed(kHomeRewardDisplayDuration, () {
+        if (ref.read(homeRewardProvider) == next) {
+          ref.read(homeRewardProvider.notifier).state = null;
+        }
+      });
+    });
     ref.watch(ensureUserProfileProvider);
     ref.watch(dailyQuestsRefreshProvider);
     final monthKey = currentMonthKey();
@@ -324,7 +334,7 @@ class HomeScreen extends ConsumerWidget {
                   const _RewardToast(),
               ],
             ),
-            if (reward == null)
+            if (shouldShowHomeAddExpenseFab(hasPendingReward: reward != null))
               Positioned(
                 right: 20,
                 bottom: 16,
@@ -967,16 +977,6 @@ class _RewardCard extends StatelessWidget {
                   ),
                 ),
               ],
-            ),
-          ),
-          Text(
-            l10n.rewardXp,
-            style: const TextStyle(
-              fontFamily: 'Nunito',
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              height: 1.2,
-              color: AppColors.primary,
             ),
           ),
         ],

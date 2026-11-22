@@ -23,6 +23,7 @@ import 'package:sipho/features/expenses/domain/transaction.dart';
 import 'package:sipho/features/expenses/presentation/expense_category_label.dart';
 import 'package:sipho/features/finance/data/fx_rates_repository.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
+import 'package:sipho/features/gamification/data/game_state_repository.dart';
 
 class AddExpenseSheet extends ConsumerStatefulWidget {
   const AddExpenseSheet({super.key});
@@ -133,6 +134,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
     const categories = kQuickExpenseCategories;
     final mainCurrency =
         ref.watch(userFinanceProvider).valueOrNull?.currency ?? 'CAD';
+    final game = ref.watch(gameStateStreamProvider).valueOrNull;
     final currency = _txCurrency ?? mainCurrency;
     final shown = _digits.isEmpty ? '0' : _digits;
     final symbol = MoneyFormatter.currencySymbol(currency);
@@ -155,14 +157,23 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                 children: [
                   Row(
                     children: [
-                      const _MiniPill(
-                          AppColors.flamePill, AppColors.flameText, '🔥  12'),
+                      _MiniPill(
+                        AppColors.flamePill,
+                        AppColors.flameText,
+                        '🔥  ${game?.streak.current ?? '—'}',
+                      ),
                       const SizedBox(width: 16),
-                      const _MiniPill(
-                          AppColors.seedPill, AppColors.seedText, '🌾  340'),
+                      _MiniPill(
+                        AppColors.seedPill,
+                        AppColors.seedText,
+                        '🌾  ${game?.gems ?? '—'}',
+                      ),
                       const SizedBox(width: 16),
-                      _MiniPill(AppColors.mint, AppColors.primaryDark,
-                          l10n.homeLevelPill(7)),
+                      _MiniPill(
+                        AppColors.mint,
+                        AppColors.primaryDark,
+                        l10n.homeLevelPill(game?.level ?? 1),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 16),

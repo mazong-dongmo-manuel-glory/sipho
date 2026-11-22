@@ -193,16 +193,32 @@ export async function closeLeagueGroup(
     .map((m) => ({ uid: m.id, weeklyXp: Math.max(0, Number(m.data().weeklyXp) || 0) }));
   const outcomes = planLeagueOutcomes(scored, tierIndex);
 
+  const closedWeek = String(data.week);
+  const membershipRefs = outcomes.map((o) => db.doc(`users/${o.uid}/league/current`));
+  const membershipSnaps =
+    membershipRefs.length > 0 ? await db.getAll(...membershipRefs) : [];
+  const membershipWeekByUid = new Map<string, string>();
+  for (const snap of membershipSnaps) {
+    const uid = snap.ref.parent.parent?.id;
+    if (!uid) continue;
+    const week = snap.data()?.week;
+    if (typeof week === "string") membershipWeekByUid.set(uid, week);
+  }
+
   const batch = db.batch();
   for (const o of outcomes) {
+    // Only zero game/state.weeklyXp if the player has not already joined a newer week.
+    const stillOnClosedWeek = membershipWeekByUid.get(o.uid) === closedWeek;
     batch.set(
       db.doc(`users/${o.uid}/game/state`),
-      { leagueId: o.toTier, weeklyXp: 0 },
+      stillOnClosedWeek
+        ? { leagueId: o.toTier, weeklyXp: 0 }
+        : { leagueId: o.toTier },
       { merge: true }
     );
     batch.set(db.doc(`publicProfiles/${o.uid}`), { league: o.toTier }, { merge: true });
     batch.set(db.doc(`users/${o.uid}/league/lastResult`), {
-      week: String(data.week),
+      week: closedWeek,
       rank: o.rank,
       groupSize: outcomes.length,
       weeklyXp: o.weeklyXp,

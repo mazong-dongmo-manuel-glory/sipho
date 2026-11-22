@@ -9,6 +9,7 @@ import {
 } from "../shared/security";
 import { initialGameStatePayload, normalizeGameState } from "../shared/gameState";
 import { friendPairId } from "../shared/friends";
+import { assertFriendCapacity } from "../social/friends";
 import { REFERRAL_ACTIVE_DAYS_REQUIRED } from "./referralReward";
 import { logger } from "../shared/logger";
 
@@ -38,6 +39,15 @@ export const referralRedeem = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
   const inviteeUserRef = db().doc(`users/${uid}`);
   const inviteeGameRef = db().doc(`users/${uid}/game/state`);
   const redemptionRef = db().doc(`users/${uid}/referral/redemption`);
+
+  const referralProbe = await referralRef.get();
+  if (!referralProbe.exists) {
+    throw new HttpsError("not-found", "Referral code not found.");
+  }
+  const ownerProbe = (referralProbe.data() as { ownerUid?: unknown }).ownerUid;
+  if (typeof ownerProbe === "string" && ownerProbe && ownerProbe !== uid) {
+    await assertFriendCapacity(uid, ownerProbe);
+  }
 
   await db().runTransaction(async (tx) => {
     const [referralSnap, inviteeUserSnap, inviteeGameSnap, redemptionSnap] = await Promise.all([

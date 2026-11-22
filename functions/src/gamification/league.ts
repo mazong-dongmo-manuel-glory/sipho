@@ -29,8 +29,8 @@ export const joinLeague = onCall(SECURE_CALLABLE_OPTIONS, async (request) => {
 });
 
 /**
- * Every XP award (lessons, expenses, quests, bills, referrals) writes `users/{uid}/game/state`.
- * This single trigger turns the XP delta into league points, so no award path can forget it.
+ * Every XP award writes `users/{uid}/game/state`. This trigger turns the XP delta into league
+ * points, minus any growth of `leagueExemptXp` (referral rewards — anti-league farming).
  */
 export const onGameXpChange = onDocumentWritten(
   { document: "users/{uid}/game/state", region: "us-central1" },
@@ -43,10 +43,20 @@ export const onGameXpChange = onDocumentWritten(
     const delta = afterXp - beforeXp;
     if (delta <= 0) return;
 
+    const afterExempt =
+      typeof after.leagueExemptXp === "number" ? Math.max(0, Math.trunc(after.leagueExemptXp)) : 0;
+    const beforeExempt =
+      typeof before?.leagueExemptXp === "number"
+        ? Math.max(0, Math.trunc(before.leagueExemptXp))
+        : 0;
+    const exemptDelta = Math.max(0, afterExempt - beforeExempt);
+    const leagueDelta = delta - exemptDelta;
+    if (leagueDelta <= 0) return;
+
     await addLeagueXp(
       db(),
       event.params.uid,
-      delta,
+      leagueDelta,
       typeof after.level === "number" ? after.level : 1,
       event.id
     );

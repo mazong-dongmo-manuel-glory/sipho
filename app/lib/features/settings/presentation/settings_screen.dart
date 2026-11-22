@@ -14,7 +14,7 @@ import 'package:sipho/core/legal/sipho_legal.dart';
 import 'package:sipho/core/sound/sound_service.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
-import 'package:sipho/features/auth/data/auth_repository.dart';
+import 'package:sipho/features/auth/presentation/auth_provider.dart';
 import 'package:sipho/features/profile/presentation/profile_edit_sheet.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -321,7 +321,7 @@ class _SignOutButton extends ConsumerWidget {
       color: AppColors.primaryDark,
       shadowColor: AppColors.ink,
       onPressed: () async {
-        await ref.read(authRepositoryProvider).signOut();
+        await ref.read(authNotifierProvider.notifier).signOut();
         if (context.mounted) context.go('/login');
       },
     );

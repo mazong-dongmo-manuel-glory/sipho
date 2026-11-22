@@ -40,6 +40,18 @@ void main() {
       // Nothing left to play: everything is done.
       expect(of('a', {'a'}, null), LessonNodeState.done);
     });
+
+    test('country slots unlock independently of nextLessonId', () {
+      LessonNodeState of(String id, Set<String> done) => lessonNodeState(
+            lessonId: id,
+            completed: done,
+            nextId: null,
+            unlockIndependently: true,
+          );
+      expect(of('ca_slot_01', {}), LessonNodeState.current);
+      expect(of('ca_slot_02', {}), LessonNodeState.current);
+      expect(of('ca_slot_01', {'ca_slot_01'}), LessonNodeState.done);
+    });
   });
 
   group('LearnScreen', () {

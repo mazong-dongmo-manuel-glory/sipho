@@ -12,6 +12,7 @@ import 'package:sipho/core/widgets/sipho_button_3d.dart';
 import 'package:sipho/features/expenses/domain/transaction.dart';
 import 'package:sipho/features/expenses/presentation/expense_category_label.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
+import 'package:sipho/features/gamification/data/game_state_repository.dart';
 import 'package:sipho/features/fixed_expenses/domain/fixed_expense.dart';
 import 'package:sipho/features/fixed_expenses/domain/fixed_expense_draft.dart';
 import 'package:sipho/features/fixed_expenses/domain/fixed_expense_schedule.dart';
@@ -42,6 +43,7 @@ class SocleView extends ConsumerWidget {
     final fixed = ref.watch(activeFixedExpensesProvider);
     final currency =
         ref.watch(userFinanceProvider).valueOrNull?.currency ?? 'CAD';
+    final game = ref.watch(gameStateStreamProvider).valueOrNull;
     final transactions = ref
             .watch(transactionsForMonthProvider(currentMonthKey()))
             .valueOrNull ??
@@ -64,17 +66,28 @@ class SocleView extends ConsumerWidget {
       children: [
         Row(
           children: [
-            const Expanded(
-                child:
-                    _Pill(AppColors.flamePill, AppColors.flameText, '🔥  12')),
-            const SizedBox(width: 16),
-            const Expanded(
-                child:
-                    _Pill(AppColors.seedPill, AppColors.seedText, '🌾  340')),
+            Expanded(
+              child: _Pill(
+                AppColors.flamePill,
+                AppColors.flameText,
+                '🔥  ${game?.streak.current ?? '—'}',
+              ),
+            ),
             const SizedBox(width: 16),
             Expanded(
               child: _Pill(
-                  AppColors.mint, AppColors.primaryDark, l10n.homeLevelPill(7)),
+                AppColors.seedPill,
+                AppColors.seedText,
+                '🌾  ${game?.gems ?? '—'}',
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _Pill(
+                AppColors.mint,
+                AppColors.primaryDark,
+                l10n.homeLevelPill(game?.level ?? 1),
+              ),
             ),
           ],
         ),

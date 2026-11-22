@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
+import 'package:sipho/core/firebase/callable_data.dart';
 import 'package:sipho/core/firebase/firebase_providers.dart';
 import 'package:sipho/features/auth/presentation/auth_provider.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
@@ -133,9 +134,9 @@ class QuestClaimController extends Notifier<String?> {
       final result = await ref
           .read(firebaseFunctionsProvider)
           .httpsCallable('claimQuest')
-          .call<Map<String, dynamic>>({'questId': serverQuestId});
+          .call({'questId': serverQuestId});
       state = null;
-      return QuestReward.fromCallable(result.data);
+      return QuestReward.fromCallable(callableDataMap(result.data));
     } catch (_) {
       state = null;
       return null;

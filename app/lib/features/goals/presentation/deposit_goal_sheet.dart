@@ -89,6 +89,11 @@ class _DepositGoalSheetState extends ConsumerState<DepositGoalSheet> {
       }
 
       if (mounted) Navigator.of(context).pop();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).errorGeneric)),
+      );
     } finally {
       if (mounted) setState(() => _saving = false);
     }

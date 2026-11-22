@@ -4,8 +4,8 @@ import { logger } from "../shared/logger";
 import { XP_CONFIG, xpToLevel } from "../shared/xpConfig";
 import {
   idempotencyKey,
-  checkAndMarkIdempotencyKey,
-  clearIdempotencyKey,
+  isIdempotencyKeyProcessed,
+  markIdempotencyKey,
 } from "../shared/idempotency";
 import {
   computeNextStreak,
@@ -45,85 +45,85 @@ export const onTransactionWrite = onDocumentWritten(
     const uid = event.params.uid;
     const txId = event.params.txId;
     const eventKey = idempotencyKey("onTransactionWrite", event.id);
-    if (await checkAndMarkIdempotencyKey(eventKey)) return;
+    // Mark only after success so a mid-handler failure can be retried.
+    if (await isIdempotencyKeyProcessed(eventKey)) return;
 
-    try {
-      const beforeData = event.data?.before.exists
-        ? (event.data.before.data() as StoredTransaction)
-        : undefined;
-      const afterData = event.data?.after.exists
-        ? (event.data.after.data() as StoredTransaction)
-        : undefined;
+    const beforeData = event.data?.before.exists
+      ? (event.data.before.data() as StoredTransaction)
+      : undefined;
+    const afterData = event.data?.after.exists
+      ? (event.data.after.data() as StoredTransaction)
+      : undefined;
 
-      if (!beforeData && !afterData) return;
-
-      const isCreate = !beforeData && Boolean(afterData);
-      const batch = db().batch();
-
-      // ── 1. Monthly aggregates (supports create, update across categories/months, delete) ─
-      const touchedCategoryMonths = new Set<string>();
-
-      if (beforeData) {
-        const prevCents = effectiveCents(beforeData);
-        const prevCat = safeCategory(beforeData.category);
-        const prevMonth = extractMonthKey(beforeData.date);
-        if (prevCents > 0 && prevMonth) {
-          const prevMonthRef = db().doc(`users/${uid}/months/${prevMonth}`);
-          batch.set(
-            prevMonthRef,
-            {
-              totalVariableCents: FieldValue.increment(-prevCents),
-              expenses: { [prevCat]: FieldValue.increment(-prevCents) },
-              updatedAt: FieldValue.serverTimestamp(),
-            },
-            { merge: true }
-          );
-        }
-      }
-
-      if (afterData) {
-        const nextCents = effectiveCents(afterData);
-        const nextCat = safeCategory(afterData.category);
-        const nextMonth = extractMonthKey(afterData.date);
-        if (nextCents > 0 && nextMonth) {
-          const nextMonthRef = db().doc(`users/${uid}/months/${nextMonth}`);
-          batch.set(
-            nextMonthRef,
-            {
-              totalVariableCents: FieldValue.increment(nextCents),
-              expenses: { [nextCat]: FieldValue.increment(nextCents) },
-              updatedAt: FieldValue.serverTimestamp(),
-            },
-            { merge: true }
-          );
-          touchedCategoryMonths.add(`${nextMonth}::${nextCat}`);
-        }
-      }
-
-      await batch.commit();
-
-      // ── 2. XP + quest progress on new transaction only ───────────────────────
-      if (isCreate && afterData) {
-        const dayKey = await recordTransactionActivity(uid, txId, new Date());
-        await updateQuestProgress(uid, "ADD_TRANSACTION", 1);
-        if (dayKey) {
-          await bumpFriendChallenges(uid, "activity_day", dayKey);
-          await trackReferralActiveDay(uid, dayKey);
-        }
-      }
-
-      // ── 3. Budget / envelope alert check ─────────────────────────────────────
-      for (const pair of touchedCategoryMonths) {
-        const [monthKey, category] = pair.split("::");
-        if (monthKey && category) {
-          await checkBudgetAlert(uid, monthKey, category);
-        }
-      }
-    } catch (err) {
-      // Allow Cloud Functions retries to re-run work if we failed mid-handler.
-      await clearIdempotencyKey(eventKey);
-      throw err;
+    if (!beforeData && !afterData) {
+      await markIdempotencyKey(eventKey);
+      return;
     }
+
+    const isCreate = !beforeData && Boolean(afterData);
+    const batch = db().batch();
+
+    // ── 1. Monthly aggregates (supports create, update across categories/months, delete) ─
+    const touchedCategoryMonths = new Set<string>();
+
+    if (beforeData) {
+      const prevCents = effectiveCents(beforeData);
+      const prevCat = safeCategory(beforeData.category);
+      const prevMonth = extractMonthKey(beforeData.date);
+      if (prevCents > 0 && prevMonth) {
+        const prevMonthRef = db().doc(`users/${uid}/months/${prevMonth}`);
+        batch.set(
+          prevMonthRef,
+          {
+            totalVariableCents: FieldValue.increment(-prevCents),
+            expenses: { [prevCat]: FieldValue.increment(-prevCents) },
+            updatedAt: FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+    }
+
+    if (afterData) {
+      const nextCents = effectiveCents(afterData);
+      const nextCat = safeCategory(afterData.category);
+      const nextMonth = extractMonthKey(afterData.date);
+      if (nextCents > 0 && nextMonth) {
+        const nextMonthRef = db().doc(`users/${uid}/months/${nextMonth}`);
+        batch.set(
+          nextMonthRef,
+          {
+            totalVariableCents: FieldValue.increment(nextCents),
+            expenses: { [nextCat]: FieldValue.increment(nextCents) },
+            updatedAt: FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+        touchedCategoryMonths.add(`${nextMonth}::${nextCat}`);
+      }
+    }
+
+    await batch.commit();
+
+    // ── 2. XP + quest progress on new transaction only ───────────────────────
+    if (isCreate && afterData) {
+      const dayKey = await recordTransactionActivity(uid, txId, new Date());
+      await updateQuestProgress(uid, "ADD_TRANSACTION", 1);
+      if (dayKey) {
+        await bumpFriendChallenges(uid, "activity_day", dayKey);
+        await trackReferralActiveDay(uid, dayKey);
+      }
+    }
+
+    // ── 3. Budget / envelope alert check ─────────────────────────────────────
+    for (const pair of touchedCategoryMonths) {
+      const [monthKey, category] = pair.split("::");
+      if (monthKey && category) {
+        await checkBudgetAlert(uid, monthKey, category);
+      }
+    }
+
+    await markIdempotencyKey(eventKey);
   }
 );
 
@@ -264,21 +264,30 @@ async function updateQuestProgress(uid: string, type: string, increment: number)
   if (questsSnap.empty) return;
 
   const nowMs = Date.now();
-  const batch = db().batch();
-  let touched = 0;
-  for (const doc of questsSnap.docs) {
-    const quest = doc.data() as { target?: number; progress?: number; expiresAt?: Timestamp };
-    if (quest.expiresAt && quest.expiresAt.toMillis() <= nowMs) continue;
-    touched += 1;
-    const target = Math.max(1, quest.target ?? 1);
-    const newProgress = Math.min(target, (quest.progress ?? 0) + increment);
-    const done = newProgress >= target;
-    batch.update(doc.ref, {
-      progress: newProgress,
-      ...(done ? { status: "completed", completedAt: FieldValue.serverTimestamp() } : {}),
-    });
-  }
-  if (touched > 0) await batch.commit();
+  // One transaction per quest so concurrent expense writes cannot lose progress updates.
+  await Promise.all(
+    questsSnap.docs.map((doc) =>
+      db().runTransaction(async (tx) => {
+        const snap = await tx.get(doc.ref);
+        if (!snap.exists) return;
+        const quest = snap.data() as {
+          status?: string;
+          target?: number;
+          progress?: number;
+          expiresAt?: Timestamp;
+        };
+        if (quest.status !== "active") return;
+        if (quest.expiresAt && quest.expiresAt.toMillis() <= nowMs) return;
+        const target = Math.max(1, quest.target ?? 1);
+        const newProgress = Math.min(target, (quest.progress ?? 0) + increment);
+        const done = newProgress >= target;
+        tx.update(doc.ref, {
+          progress: newProgress,
+          ...(done ? { status: "completed", completedAt: FieldValue.serverTimestamp() } : {}),
+        });
+      })
+    )
+  );
 }
 
 async function resolveCategoryLimitCents(uid: string, category: string): Promise<number | null> {

@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sipho/core/firebase/callable_data.dart';
 import 'package:sipho/core/firebase/firebase_providers.dart';
 import 'package:sipho/features/auth/presentation/auth_provider.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
@@ -24,7 +26,11 @@ final aiCountryLessonsProvider =
   if (uid == null || uid.isEmpty) {
     return Stream.value(const {});
   }
-  return ref.watch(aiCountryLessonsRepositoryProvider).watchAll(uid);
+  final locale =
+      WidgetsBinding.instance.platformDispatcher.locale.languageCode;
+  return ref
+      .watch(aiCountryLessonsRepositoryProvider)
+      .watchAll(uid, preferredLocale: locale);
 });
 
 /// `users/{uid}/aiLessonsMeta/state` (lastTopicId, recentTopicIds, …).
@@ -88,7 +94,10 @@ class AiCountryLessonsRepository {
   final FirebaseFirestore _firestore;
   final FirebaseFunctions _functions;
 
-  Stream<Map<String, AiCountryLesson>> watchAll(String uid) {
+  Stream<Map<String, AiCountryLesson>> watchAll(
+    String uid, {
+    String preferredLocale = 'fr',
+  }) {
     return _firestore
         .collection('users')
         .doc(uid)
@@ -97,7 +106,11 @@ class AiCountryLessonsRepository {
         .map((snap) {
       final out = <String, AiCountryLesson>{};
       for (final doc in snap.docs) {
-        final parsed = AiCountryLesson.fromJson(doc.id, doc.data());
+        final parsed = AiCountryLesson.fromJson(
+          doc.id,
+          doc.data(),
+          preferredLocale: preferredLocale,
+        );
         if (parsed.isPlayable) out[parsed.slotId] = parsed;
       }
       return out;
@@ -123,11 +136,7 @@ class AiCountryLessonsRepository {
       if (slotId != null && slotId.isNotEmpty) 'slotId': slotId,
       'forceNew': forceNew,
     });
-    final data = result.data;
-    if (data is Map) {
-      return Map<String, dynamic>.from(data);
-    }
-    return const {};
+    return callableDataMap(result.data);
   }
 
   /// Generates content for the first [limit] empty slots of [countryCode].

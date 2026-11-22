@@ -19,6 +19,7 @@ import 'package:sipho/features/lessons/data/lesson_completion_repository.dart';
 import 'package:sipho/features/lessons/domain/ai_country_lesson.dart';
 import 'package:sipho/features/lessons/domain/country_lesson_catalog.dart';
 import 'package:sipho/features/lessons/domain/country_lesson_catalog_extra.dart';
+import 'package:sipho/features/lessons/domain/country_slot_player.dart';
 import 'package:sipho/features/lessons/domain/lesson_catalog.dart';
 import 'package:sipho/features/lessons/domain/lesson_session.dart';
 import 'package:sipho/features/lessons/presentation/lesson_player_widgets.dart';
@@ -40,6 +41,7 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
   late final DateTime _startedAt = DateTime.now();
   String? _boundSignature;
   bool _requestedSlotFill = false;
+  bool _slotFillFailed = false;
 
   int? _selected;
   bool _checked = false;
@@ -72,14 +74,27 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
   }
 
   Future<void> _ensureSlotFilled(String slotId) async {
-    if (_requestedSlotFill) return;
+    if (_requestedSlotFill || _slotFillFailed) return;
     _requestedSlotFill = true;
     try {
       await ref
           .read(aiCountryLessonsRepositoryProvider)
           .ensureGenerated(slotId: slotId, forceNew: false);
+      if (!mounted) return;
+      final ai = ref.read(aiCountryLessonsProvider).valueOrNull ?? {};
+      if (ai[slotId]?.isPlayable != true) {
+        setState(() {
+          _slotFillFailed = true;
+          _requestedSlotFill = false;
+        });
+      }
     } catch (_) {
-      // Not-found UI stays; user can leave and retry.
+      if (!mounted) return;
+      // Show not-found instead of an infinite spinner; allow a later retry.
+      setState(() {
+        _slotFillFailed = true;
+        _requestedSlotFill = false;
+      });
     }
   }
 
@@ -271,9 +286,11 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
     final lesson = _lesson;
     final session = _session;
     if (lesson == null || session == null) {
-      final waitingForSlot = slotId != null &&
-          isCountrySlotId(slotId) &&
-          ai[slotId]?.isPlayable != true;
+      final waitingForSlot = shouldShowCountrySlotSpinner(
+        isCountrySlot: slotId != null && isCountrySlotId(slotId),
+        isPlayable: ai[slotId]?.isPlayable == true,
+        slotFillFailed: _slotFillFailed,
+      );
       if (waitingForSlot) {
         return Scaffold(
           backgroundColor: AppColors.background,

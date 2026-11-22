@@ -6,17 +6,25 @@ LText _mono(String value) {
   return LText(t, t);
 }
 
-String _str(dynamic raw) {
+/// Resolves a string field that may be monolingual or legacy bilingual `{fr,en}`.
+String resolveLocalizedField(
+  dynamic raw, {
+  required String preferredLocale,
+}) {
   if (raw is String) return raw.trim();
-  // Legacy bilingual docs: prefer fr, then en.
   if (raw is Map) {
-    final fr = '${raw['fr'] ?? ''}'.trim();
-    final en = '${raw['en'] ?? ''}'.trim();
-    if (fr.isNotEmpty) return fr;
-    return en;
+    final preferEn = preferredLocale.toLowerCase().startsWith('en');
+    final primary = preferEn ? 'en' : 'fr';
+    final secondary = preferEn ? 'fr' : 'en';
+    final a = '${raw[primary] ?? ''}'.trim();
+    if (a.isNotEmpty) return a;
+    return '${raw[secondary] ?? ''}'.trim();
   }
   return '';
 }
+
+String _str(dynamic raw, {required String preferredLocale}) =>
+    resolveLocalizedField(raw, preferredLocale: preferredLocale);
 
 /// Personalized country lesson stored under `users/{uid}/aiLessons/{slotId}`.
 /// Content is monolingual (`locale` = user language); awardable id = [slotId].
@@ -49,7 +57,12 @@ class AiCountryLesson {
 
   String get id => slotId;
 
-  factory AiCountryLesson.fromJson(String slotId, Map<String, dynamic> json) {
+  factory AiCountryLesson.fromJson(
+    String slotId,
+    Map<String, dynamic> json, {
+    String preferredLocale = 'fr',
+  }) {
+    final prefer = preferredLocale.trim().isEmpty ? 'fr' : preferredLocale;
     final steps = <LessonStep>[];
     final rawSteps = json['steps'];
     if (rawSteps is List) {
@@ -62,15 +75,15 @@ class AiCountryLesson {
           final points = <LText>[];
           if (pointsRaw is List) {
             for (final p in pointsRaw) {
-              final text = _str(p);
+              final text = _str(p, preferredLocale: prefer);
               if (text.isNotEmpty) points.add(_mono(text));
             }
           }
           steps.add(
             InfoStep(
               emoji: '${map['emoji'] ?? '📘'}',
-              title: _mono(_str(map['title'])),
-              body: _mono(_str(map['body'])),
+              title: _mono(_str(map['title'], preferredLocale: prefer)),
+              body: _mono(_str(map['body'], preferredLocale: prefer)),
               points: points,
             ),
           );
@@ -81,9 +94,9 @@ class AiCountryLesson {
             for (final c in choicesRaw) {
               if (c is! Map) continue;
               // Monolingual: `text`; legacy bilingual: fr/en.
-              final label = _str(c['text']).isNotEmpty
-                  ? _str(c['text'])
-                  : _str(c);
+              final label = _str(c['text'], preferredLocale: prefer).isNotEmpty
+                  ? _str(c['text'], preferredLocale: prefer)
+                  : _str(c, preferredLocale: prefer);
               if (label.isEmpty) continue;
               choices.add(
                 LessonChoice(
@@ -97,18 +110,21 @@ class AiCountryLesson {
           if (choices.length >= 2) {
             steps.add(
               QuizStep(
-                question: _mono(_str(map['question'])),
+                question: _mono(_str(map['question'], preferredLocale: prefer)),
                 choices: choices,
-                explanation: _mono(_str(map['explanation'])),
+                explanation:
+                    _mono(_str(map['explanation'], preferredLocale: prefer)),
               ),
             );
           }
         } else if (type == 'trueFalse') {
           steps.add(
             TrueFalseStep(
-              statement: _mono(_str(map['statement'])),
+              statement:
+                  _mono(_str(map['statement'], preferredLocale: prefer)),
               answer: map['answer'] == true,
-              explanation: _mono(_str(map['explanation'])),
+              explanation:
+                  _mono(_str(map['explanation'], preferredLocale: prefer)),
             ),
           );
         }
@@ -119,25 +135,25 @@ class AiCountryLesson {
     final rawTake = json['takeaways'];
     if (rawTake is List) {
       for (final t in rawTake) {
-        final text = _str(t);
+        final text = _str(t, preferredLocale: prefer);
         if (text.isNotEmpty) takeaways.add(_mono(text));
       }
     }
 
-    final title = _str(json['title']);
+    final title = _str(json['title'], preferredLocale: prefer);
     return AiCountryLesson(
       slotId: (json['slotId'] as String?)?.trim().isNotEmpty == true
           ? (json['slotId'] as String).trim()
           : slotId,
       emoji: '${json['emoji'] ?? '🌍'}',
       title: title,
-      objective: _str(json['objective']),
+      objective: _str(json['objective'], preferredLocale: prefer),
       steps: steps,
       takeaways: takeaways,
       topicId: json['topicId'] as String?,
       theme: json['theme'] as String?,
       angle: json['angle'] as String?,
-      locale: json['locale'] == 'en' ? 'en' : 'fr',
+      locale: prefer.toLowerCase().startsWith('en') ? 'en' : 'fr',
       personalized: json['personalized'] != false,
     );
   }

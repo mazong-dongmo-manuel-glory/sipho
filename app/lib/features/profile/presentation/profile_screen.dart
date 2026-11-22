@@ -9,7 +9,6 @@ import 'package:sipho/core/money/money.dart';
 import 'package:sipho/core/money/money_formatter.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
-import 'package:sipho/features/auth/data/auth_repository.dart';
 import 'package:sipho/features/auth/presentation/auth_provider.dart';
 import 'package:sipho/features/coach/data/coach_repository.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
@@ -378,7 +377,7 @@ class ProfileScreen extends ConsumerWidget {
               color: AppColors.primaryDark,
               shadowColor: AppColors.ink,
               onPressed: () async {
-                await ref.read(authRepositoryProvider).signOut();
+                await ref.read(authNotifierProvider.notifier).signOut();
                 if (context.mounted) context.go('/login');
               },
             ),

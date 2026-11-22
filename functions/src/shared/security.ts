@@ -7,9 +7,10 @@ import { logger } from "./logger";
 const db = (): Firestore => getFirestore();
 
 /**
- * Default options for authenticated v2 callables. App Check is NOT enforced (removed on
- * 2026-11-15, see DECISIONS.md ADR-005): protection comes from Firebase Auth, `requireAuthUid`,
- * per-user rate limits (`enforceRateLimit`) and Firestore rules.
+ * Default options for authenticated v2 callables.
+ * App Check: not enforced globally (ADR-005). Sensitive Gemini-cost callables
+ * (`parseReceipt`, `generateCountryLessons`) set `enforceAppCheck: true` themselves.
+ * Protection otherwise: Firebase Auth, `requireAuthUid`, rate limits, Firestore rules.
  */
 export const SECURE_CALLABLE_OPTIONS = {
   region: "us-central1",

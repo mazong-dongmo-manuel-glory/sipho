@@ -11,6 +11,8 @@ import 'package:sipho/features/expenses/data/transaction_repository.dart';
 import 'package:sipho/features/expenses/domain/expense_category.dart';
 import 'package:sipho/features/expenses/domain/transaction.dart';
 import 'package:sipho/features/expenses/presentation/expense_category_label.dart';
+import 'package:sipho/features/finance/data/fx_rates_repository.dart';
+import 'package:sipho/features/finance/presentation/finance_providers.dart';
 
 Future<void> showEditExpenseSheet(
   BuildContext context,
@@ -90,20 +92,47 @@ class _EditExpenseSheetState extends ConsumerState<_EditExpenseSheet> {
     final uid = ref.read(authStateProvider).valueOrNull?.uid;
     if (cents <= 0 || uid == null || _saving) return;
 
+    final mainCurrency =
+        ref.read(userFinanceProvider).valueOrNull?.currency ?? 'CAD';
+    final currency = widget.transaction.currency;
+    final fx = ref.read(fxRatesProvider).valueOrNull;
+    final rate = fx?.rateTo(from: currency, to: mainCurrency);
+    final mainCents = fx?.convertCents(
+          amountCents: cents,
+          from: currency,
+          to: mainCurrency,
+        ) ??
+        (currency == mainCurrency ? cents : null);
+    if (mainCents == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.expenseFxUnavailable)),
+      );
+      return;
+    }
+
     setState(() => _saving = true);
     try {
       final safeDate = RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(_date)
           ? _date
           : LocalDay.now().isoDate;
+      final tx = widget.transaction;
       await ref.read(transactionRepositoryProvider).updateTransaction(
             uid,
-            widget.transaction.copyWith(
+            SiphoTransaction(
+              id: tx.id,
               amountCents: cents,
-              amountMainCents: cents,
+              currency: currency,
+              amountMainCents: mainCents,
+              fxRate: rate,
               category: _category,
-              date: safeDate,
               merchant: _merchant.text.trim(),
               note: _note.text.trim(),
+              date: safeDate,
+              source: tx.source,
+              receiptPath: tx.receiptPath,
+              fixedExpenseId: tx.fixedExpenseId,
+              createdAt: tx.createdAt,
             ),
           );
       if (!mounted) return;

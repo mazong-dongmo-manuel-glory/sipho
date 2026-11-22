@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sipho/app/auth_redirect.dart';
 import 'package:sipho/core/widgets/bottom_nav.dart';
 import 'package:sipho/features/auth/presentation/auth_provider.dart';
 import 'package:sipho/features/auth/presentation/login_screen.dart';
@@ -50,17 +51,19 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/home',
     refreshListenable: refresh,
     redirect: (context, state) {
-      final loggedIn = ref.read(authStateProvider).valueOrNull != null;
-      final onboardingDone = ref.read(onboardingGateProvider);
+      final auth = ref.read(authStateProvider);
       final location = state.matchedLocation;
+      final anon = anonymousAuthRedirect(auth: auth, location: location);
+      if (anon != null) return anon;
+      // Cold start or still anonymous on splash/login/onboarding — stay put.
+      if (authIsStillLoading(auth) || !authIsLoggedIn(auth)) return null;
+      final onboardingDone = ref.read(onboardingGateProvider);
       final onboarding = location.startsWith('/onboarding');
       final onboardingFlow = onboarding ||
           location.startsWith('/fixed-expenses/amount') ||
           location.startsWith('/fixed-expenses/swipe');
       final splash = location.startsWith('/splash');
       final login = location.startsWith('/login');
-      if (!loggedIn && !onboarding && !splash && !login) return '/splash';
-      if (!loggedIn) return null;
       if (onboardingDone == null) return null;
       if (!onboardingDone && !onboardingFlow) return '/onboarding';
       if (onboardingDone && (onboarding || splash || login)) return '/home';

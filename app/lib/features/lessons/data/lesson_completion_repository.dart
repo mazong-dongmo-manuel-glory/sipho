@@ -1,6 +1,7 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sipho/core/firebase/callable_data.dart';
 import 'package:sipho/core/firebase/firebase_providers.dart';
 import 'package:sipho/features/lessons/domain/lesson_result.dart';
 
@@ -62,16 +63,18 @@ class CallableLessonCompletionRepository implements LessonCompletionRepository {
     }
 
     try {
-      final response = await _functions
-          .httpsCallable('completeLesson')
-          .call<Map<String, dynamic>>({
+      // Unique per attempt so Cloud Function retries can finish post-TX hooks safely.
+      final attemptId =
+          '${DateTime.now().microsecondsSinceEpoch}_${lessonId.hashCode.abs()}';
+      final response = await _functions.httpsCallable('completeLesson').call({
         'lessonId': lessonId,
         'score': score,
         // The server refuses durations under 2 s or over an hour.
         'durationSeconds': durationSeconds.clamp(2, 3600),
+        'attemptId': attemptId,
       });
       return LessonResult.fromCallable(
-        response.data,
+        callableDataMap(response.data),
         accuracy: score,
         durationSeconds: durationSeconds,
       );

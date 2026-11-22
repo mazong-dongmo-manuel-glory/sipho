@@ -30,7 +30,8 @@ const InputSchema = z.object({
     .regex(/^[a-z0-9_]+$/)
     .optional(),
   /** When true, always regenerate even if a lesson already exists for the slot. */
-  forceNew: z.boolean().optional().default(true),
+  /** When true, regenerate even if a lesson already exists for the slot. Default: reuse. */
+  forceNew: z.boolean().optional().default(false),
 });
 
 /** Monolingual lesson payload (language = user locale). */
@@ -86,16 +87,25 @@ interface EconomyHeadline {
  * Fills one awardable country **slot** with a fresh monolingual AI lesson.
  * Topic is picked at random (≠ lastTopicId). XP is claimed later via `completeLesson(slotId)`.
  */
-export const generateCountryLessons = onCall(SECURE_CALLABLE_OPTIONS, async (request) => {
-  const uid = requireAuthUid(request);
-  const { slotId: requestedSlotId, forceNew } = parseInput(InputSchema, request.data ?? {});
+export const generateCountryLessons = onCall(
+  {
+    ...SECURE_CALLABLE_OPTIONS,
+    // ADR-005: enforce App Check on Gemini-cost callables once tokens are wired.
+    enforceAppCheck: true,
+  },
+  async (request) => {
+    const uid = requireAuthUid(request);
+    const { slotId: requestedSlotId, forceNew } = parseInput(
+      InputSchema,
+      request.data ?? {}
+    );
 
-  await enforceRateLimit({
-    uid,
-    action: "generateCountryLessons",
-    maxRequests: 12,
-    windowMs: 60 * 60 * 1000,
-  });
+    await enforceRateLimit({
+      uid,
+      action: "generateCountryLessons",
+      maxRequests: 12,
+      windowMs: 60 * 60 * 1000,
+    });
 
   const userSnap = await db().doc(`users/${uid}`).get();
   const user = userSnap.data() ?? {};

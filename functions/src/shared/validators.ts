@@ -78,13 +78,13 @@ export const CompleteLessonInputSchema = z.object({
   }),
   score: z.number().int().min(0).max(100),
   durationSeconds: z.number().int().min(2, "Duration too short").max(3600),
+  /** Client-generated id per attempt — required so retries can finish post-TX hooks. */
   attemptId: z
     .string()
     .trim()
-    .min(1)
+    .min(8)
     .max(80)
-    .regex(/^[a-zA-Z0-9_-]+$/)
-    .optional(),
+    .regex(/^[a-zA-Z0-9_-]+$/),
 });
 
 export type CompleteLessonInput = z.infer<typeof CompleteLessonInputSchema>;

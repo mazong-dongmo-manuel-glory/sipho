@@ -13,8 +13,11 @@ LessonNodeState lessonNodeState({
   required String lessonId,
   required Set<String> completed,
   required String? nextId,
+  /// Country slots: every incomplete lesson is playable (server has no path gate).
+  bool unlockIndependently = false,
 }) {
   if (completed.contains(lessonId)) return LessonNodeState.done;
+  if (unlockIndependently) return LessonNodeState.current;
   if (lessonId == nextId) return LessonNodeState.current;
   return LessonNodeState.locked;
 }
@@ -40,6 +43,7 @@ class LearnUnitSection extends StatelessWidget {
     required this.language,
     required this.onLessonTap,
     this.currentKey,
+    this.unlockIndependently = false,
   });
 
   final UnitProgress progress;
@@ -47,6 +51,7 @@ class LearnUnitSection extends StatelessWidget {
   final String? nextId;
   final String language;
   final void Function(CatalogLesson lesson, LessonNodeState state) onLessonTap;
+  final bool unlockIndependently;
 
   /// Attached to the current node so the screen can scroll to it.
   final GlobalKey? currentKey;
@@ -66,6 +71,7 @@ class LearnUnitSection extends StatelessWidget {
               lessonId: lesson.id,
               completed: completed,
               nextId: nextId,
+              unlockIndependently: unlockIndependently,
             );
             return LessonPathNode(
               key: ValueKey('path-node-${lesson.id}'),

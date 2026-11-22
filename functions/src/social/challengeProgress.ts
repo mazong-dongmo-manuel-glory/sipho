@@ -64,16 +64,7 @@ async function bumpFriendChallengesUnsafe(
       typeof data.challengeId === "string" ? data.challengeId : pointer.id;
     if (!pairId || !challengeId) continue;
 
-    // activity_day / budget_day: at most once per local day per challenge.
-    if (
-      dayKey &&
-      (metric === "activity_day" || metric === "budget_day") &&
-      data.lastDayKey === dayKey
-    ) {
-      continue;
-    }
-
-    await applyProgress(uid, pairId, challengeId, dayKey);
+    await applyProgress(uid, pairId, challengeId, dayKey, metric);
   }
 }
 
@@ -81,16 +72,30 @@ async function applyProgress(
   uid: string,
   pairId: string,
   challengeId: string,
-  dayKey?: string
+  dayKey?: string,
+  metric?: ChallengeMetric
 ): Promise<void> {
   const challengeRef = db().doc(
     `friendships/${pairId}/challenges/${challengeId}`
   );
+  const pointerRef = db().doc(`users/${uid}/challengePointers/${challengeId}`);
 
   await db().runTransaction(async (tx) => {
-    const snap = await tx.get(challengeRef);
+    const [snap, pointerSnap] = await Promise.all([
+      tx.get(challengeRef),
+      tx.get(pointerRef),
+    ]);
     if (!snap.exists) {
-      tx.delete(db().doc(`users/${uid}/challengePointers/${challengeId}`));
+      tx.delete(pointerRef);
+      return;
+    }
+
+    // activity_day / budget_day: at most once per local day (checked inside the TX).
+    if (
+      dayKey &&
+      (metric === "activity_day" || metric === "budget_day") &&
+      pointerSnap.data()?.lastDayKey === dayKey
+    ) {
       return;
     }
 
@@ -108,7 +113,7 @@ async function applyProgress(
     };
 
     if (c.status !== "active") {
-      tx.delete(db().doc(`users/${uid}/challengePointers/${challengeId}`));
+      tx.delete(pointerRef);
       return;
     }
 

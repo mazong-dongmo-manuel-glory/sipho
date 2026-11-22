@@ -19,6 +19,7 @@ import 'package:sipho/features/expenses/domain/expense_category.dart';
 import 'package:sipho/features/expenses/domain/parsed_receipt.dart';
 import 'package:sipho/features/expenses/domain/transaction.dart';
 import 'package:sipho/features/expenses/presentation/expense_category_label.dart';
+import 'package:sipho/features/finance/data/fx_rates_repository.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
 
 class ReceiptValidationScreen extends ConsumerStatefulWidget {
@@ -66,9 +67,26 @@ class _ReceiptValidationScreenState
     final cents = AmountInput.parseCents(_amount.text.trim());
     final uid = ref.read(authStateProvider).valueOrNull?.uid;
     if (cents <= 0 || uid == null || _saving) return;
-    final currency = widget.draft.currency ??
-        ref.read(userFinanceProvider).valueOrNull?.currency ??
-        'CAD';
+    final mainCurrency =
+        ref.read(userFinanceProvider).valueOrNull?.currency ?? 'CAD';
+    final currency = widget.draft.currency ?? mainCurrency;
+    final fx = ref.read(fxRatesProvider).valueOrNull;
+    final rate = fx?.rateTo(from: currency, to: mainCurrency);
+    final mainCents = fx?.convertCents(
+          amountCents: cents,
+          from: currency,
+          to: mainCurrency,
+        ) ??
+        (currency == mainCurrency ? cents : null);
+    if (mainCents == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).expenseFxUnavailable),
+        ),
+      );
+      return;
+    }
     final date = RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(_date.text.trim())
         ? _date.text.trim()
         : LocalDay.now().isoDate;
@@ -81,7 +99,8 @@ class _ReceiptValidationScreenState
               id: '',
               amountCents: cents,
               currency: currency,
-              amountMainCents: cents,
+              amountMainCents: mainCents,
+              fxRate: rate,
               category: _category,
               merchant: merchant.isEmpty ? null : merchant,
               date: date,

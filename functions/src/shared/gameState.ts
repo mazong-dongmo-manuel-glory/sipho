@@ -104,10 +104,28 @@ export function initialGameStatePayload(): Record<string, unknown> {
   };
 }
 
+/** True while a broken streak is still inside the 24h repair window (freeze not required). */
+export function isWithinStreakRepairWindow(
+  streak: StreakInfoDoc,
+  nowMs: number = Date.now()
+): boolean {
+  if (!streak.brokenAt || streak.brokenCurrent <= 0) return false;
+  const brokenMs = Date.parse(streak.brokenAt);
+  if (!Number.isFinite(brokenMs)) return false;
+  return nowMs - brokenMs <= 24 * 60 * 60 * 1000;
+}
+
 export function computeNextStreak(
   current: StreakInfoDoc,
-  todayIso: string
+  todayIso: string,
+  nowMs: number = Date.now()
 ): { nextStreak: StreakInfoDoc; streakBonus: boolean } {
+  // After a break, do not start a new streak that would wipe brokenCurrent during the
+  // 24h repair window (user may still buy/use a freeze via repairStreak).
+  if (isWithinStreakRepairWindow(current, nowMs)) {
+    return { nextStreak: current, streakBonus: false };
+  }
+
   if (!current.lastActiveDay) {
     return {
       nextStreak: {
@@ -131,7 +149,8 @@ export function computeNextStreak(
   }
 
   if (diffDays === 1) {
-    const nextCurrent = current.current + 1;
+    // current may be 0 after an expired unrepaired break — treat as a fresh start day.
+    const nextCurrent = Math.max(0, current.current) + 1;
     return {
       nextStreak: {
         current: nextCurrent,
@@ -151,8 +170,8 @@ export function computeNextStreak(
       best: Math.max(1, current.best),
       lastActiveDay: todayIso,
       freezes: current.freezes,
-      brokenAt: new Date().toISOString(),
-      brokenCurrent: current.current,
+      brokenAt: new Date(nowMs).toISOString(),
+      brokenCurrent: Math.max(0, current.current),
     },
     streakBonus: false,
   };
@@ -166,11 +185,8 @@ export function canRepairStreak(
   streak: StreakInfoDoc,
   nowMs: number = Date.now()
 ): boolean {
-  if (!streak.brokenAt || streak.brokenCurrent <= 0) return false;
   if (streak.freezes < 1) return false;
-  const brokenMs = Date.parse(streak.brokenAt);
-  if (!Number.isFinite(brokenMs)) return false;
-  return nowMs - brokenMs <= 24 * 60 * 60 * 1000;
+  return isWithinStreakRepairWindow(streak, nowMs);
 }
 
 export function repairStreakState(

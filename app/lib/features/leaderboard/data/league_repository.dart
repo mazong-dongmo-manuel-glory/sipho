@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sipho/core/firebase/callable_data.dart';
 import 'package:sipho/core/firebase/firebase_providers.dart';
 import 'package:sipho/features/leaderboard/domain/league.dart';
 
@@ -21,10 +22,8 @@ class LeagueRepository {
   /// Asks the server for this week's group (it joins one if needed). Idempotent.
   Future<LeagueMembership> join() async {
     try {
-      final result = await _functions
-          .httpsCallable('joinLeague')
-          .call<Map<Object?, Object?>>();
-      return LeagueMembership.fromCallable(result.data);
+      final result = await _functions.httpsCallable('joinLeague').call();
+      return LeagueMembership.fromCallable(callableDataMap(result.data));
     } catch (error) {
       // `unauthenticated` usually means App Check rejected this build (debug token not
       // registered in Firebase Console > App Check) or the user is signed out.

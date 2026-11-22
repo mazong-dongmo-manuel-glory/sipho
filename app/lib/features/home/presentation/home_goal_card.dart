@@ -18,7 +18,6 @@ class HomeGoalTrackerSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
     final finance = ref.watch(userFinanceProvider).valueOrNull;
     final currency = (finance?.currency.isNotEmpty ?? false) ? finance!.currency : 'CAD';
     final goalsAsync = ref.watch(userGoalsProvider);
@@ -146,7 +145,6 @@ class _ActiveGoalTrackerCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context).languageCode;
-    final isFr = locale.startsWith('fr');
 
     final savedStr = MoneyFormatter.format(
       Money(cents: goal.savedCents, currency: currency),
@@ -210,7 +208,7 @@ class _ActiveGoalTrackerCard extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              isFr ? 'Atteint ✓' : 'Done ✓',
+                              l10n.goalReachedBadge,
                               style: const TextStyle(
                                 fontFamily: 'Nunito',
                                 fontSize: 9,
@@ -252,7 +250,7 @@ class _ActiveGoalTrackerCard extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    isFr ? '+ Épargner' : '+ Save',
+                    l10n.goalSaveQuick,
                     style: const TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 12,
@@ -282,9 +280,7 @@ class _ActiveGoalTrackerCard extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text(
-                  isFr
-                      ? '+$totalGoalsCount objectifs configurés'
-                      : '+$totalGoalsCount goals configured',
+                  l10n.goalTrackerCount(totalGoalsCount),
                   style: const TextStyle(
                     fontFamily: 'Nunito',
                     fontSize: 10,

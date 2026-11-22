@@ -34,6 +34,13 @@ class AuthNotifier extends Notifier<AsyncValue<User?>> {
   }
 
   Future<void> signOut() async {
-    await ref.read(authRepositoryProvider).signOut();
+    state = const AsyncValue.loading();
+    try {
+      await ref.read(authRepositoryProvider).signOut();
+      state = const AsyncValue.data(null);
+    } catch (error, stack) {
+      state = AsyncValue.error(error, stack);
+      rethrow;
+    }
   }
 }

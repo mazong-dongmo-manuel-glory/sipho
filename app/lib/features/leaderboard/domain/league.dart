@@ -41,7 +41,7 @@ class LeagueMembership {
   final String week;
   final DateTime endsAt;
 
-  factory LeagueMembership.fromCallable(Map<Object?, Object?> raw) {
+  factory LeagueMembership.fromCallable(Map<String, dynamic> raw) {
     final key = raw['leagueKey'];
     if (key is! String || key.isEmpty) {
       throw const FormatException('joinLeague returned no leagueKey');

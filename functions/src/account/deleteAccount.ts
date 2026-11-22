@@ -72,11 +72,13 @@ export const deleteAccount = onCall(
       .limit(200)
       .get();
 
+    // Delete challenge subcollections before friendship docs (GDPR / no orphans).
+    for (const friendDoc of friendshipsSnap.docs) {
+      await db.recursiveDelete(friendDoc.ref).catch(() => undefined);
+    }
+
     const cleanupBatch = db.batch();
     cleanupBatch.delete(db.doc(`publicProfiles/${uid}`));
-    for (const friendDoc of friendshipsSnap.docs) {
-      cleanupBatch.delete(friendDoc.ref);
-    }
     for (const refDoc of referralsSnap.docs) {
       cleanupBatch.delete(refDoc.ref);
     }

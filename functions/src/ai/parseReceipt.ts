@@ -4,7 +4,11 @@ import { getStorage } from "firebase-admin/storage";
 import { z } from "zod";
 import { ALLOWED_EXPENSE_CATEGORIES, ParseReceiptInputSchema } from "../shared/validators";
 import { logger } from "../shared/logger";
-import { idempotencyKey, checkAndMarkIdempotencyKey } from "../shared/idempotency";
+import {
+  idempotencyKey,
+  isIdempotencyKeyProcessed,
+  markIdempotencyKey,
+} from "../shared/idempotency";
 import {
   SECURE_CALLABLE_OPTIONS,
   enforceRateLimit,
@@ -41,6 +45,8 @@ export type ParsedReceiptResult = z.infer<typeof GeminiReceiptResponseSchema>;
 export const parseReceipt = onCall(
   {
     ...SECURE_CALLABLE_OPTIONS,
+    // ADR-005: enforce App Check on Gemini-cost callables once tokens are wired.
+    enforceAppCheck: true,
     timeoutSeconds: 60,
   },
   async (request) => {
@@ -61,7 +67,7 @@ export const parseReceipt = onCall(
     });
 
     const ikey = idempotencyKey("parseReceipt", uid, storagePath);
-    if (await checkAndMarkIdempotencyKey(ikey, 60 * 60 * 1000)) {
+    if (await isIdempotencyKeyProcessed(ikey)) {
       logger.info("parseReceipt: duplicate request", { uid });
       throw new HttpsError("already-exists", "Receipt already processed.");
     }
@@ -97,6 +103,8 @@ export const parseReceipt = onCall(
       },
       { merge: true }
     );
+
+    await markIdempotencyKey(ikey, 60 * 60 * 1000);
 
     logger.info("parseReceipt completed", { uid, receiptId, category: result.category });
     return result;

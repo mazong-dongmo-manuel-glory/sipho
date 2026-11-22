@@ -31,13 +31,21 @@ const RespondInputSchema = z.object({ pairId: PairIdSchema, accept: z.boolean() 
 const RemoveInputSchema = z.object({ pairId: PairIdSchema });
 
 /** Friend links (pending + accepted) the user already has. */
-async function countFriendLinks(uid: string): Promise<number> {
+export async function countFriendLinks(uid: string): Promise<number> {
   const snap = await db()
     .collection("friendships")
     .where("users", "array-contains", uid)
     .count()
     .get();
   return snap.data().count;
+}
+
+export async function assertFriendCapacity(...uids: string[]): Promise<void> {
+  for (const id of uids) {
+    if ((await countFriendLinks(id)) >= MAX_FRIEND_LINKS) {
+      throw new HttpsError("resource-exhausted", "Friend list is full.");
+    }
+  }
 }
 
 /**
@@ -124,9 +132,7 @@ export async function createFriendRequest(
     throw new HttpsError("invalid-argument", "You cannot add yourself.");
   }
 
-  if ((await countFriendLinks(uid)) >= MAX_FRIEND_LINKS) {
-    throw new HttpsError("resource-exhausted", "Friend list is full.");
-  }
+  await assertFriendCapacity(uid, otherUid);
 
   const pairId = friendPairId(uid, otherUid);
   const pairRef = db().doc(`friendships/${pairId}`);
@@ -174,6 +180,16 @@ export const respondFriendRequest = onCall(SECURE_CALLABLE_OPTIONS, async (reque
   });
 
   const pairRef = db().doc(`friendships/${pairId}`);
+
+  if (accept) {
+    const snap = await pairRef.get();
+    const users = (snap.data() as { users?: unknown } | undefined)?.users;
+    const otherUid =
+      Array.isArray(users) && typeof users.find((u) => u !== uid) === "string"
+        ? (users.find((u) => u !== uid) as string)
+        : "";
+    await assertFriendCapacity(uid, ...(otherUid ? [otherUid] : []));
+  }
 
   await db().runTransaction(async (tx) => {
     const snap = await tx.get(pairRef);

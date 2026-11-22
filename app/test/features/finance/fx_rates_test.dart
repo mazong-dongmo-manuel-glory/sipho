@@ -25,4 +25,19 @@ void main() {
     expect(fx.convertCents(amountCents: 100, from: 'GBP', to: 'CAD'), isNull);
     expect(fx.rateTo(from: 'GBP', to: 'USD'), isNull);
   });
+
+  test('edit/receipt paths convert amountCents to amountMainCents via FX', () {
+    // Mirrors edit_expense_sheet / receipt_validation_screen: never assign
+    // amountMainCents = amountCents when currencies differ.
+    const amountCents = 10000; // 100 USD
+    const txCurrency = 'USD';
+    const mainCurrency = 'CAD';
+    final mainCents = fx.convertCents(
+      amountCents: amountCents,
+      from: txCurrency,
+      to: mainCurrency,
+    );
+    expect(mainCents, 14000);
+    expect(mainCents, isNot(amountCents));
+  });
 }

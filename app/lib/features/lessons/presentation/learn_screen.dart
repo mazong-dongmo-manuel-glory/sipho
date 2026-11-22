@@ -11,6 +11,7 @@ import 'package:sipho/features/gamification/data/game_state_repository.dart';
 import 'package:sipho/features/insights/data/insight_service.dart';
 import 'package:sipho/features/lessons/data/ai_country_lessons_repository.dart';
 import 'package:sipho/features/lessons/domain/country_lesson_catalog_extra.dart';
+import 'package:sipho/features/lessons/domain/country_slot_player.dart';
 import 'package:sipho/features/lessons/domain/lesson_catalog.dart';
 import 'package:sipho/features/lessons/presentation/learn_path.dart';
 import 'package:sipho/features/lessons/presentation/learn_quests_section.dart';
@@ -36,11 +37,17 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
   }
 
   Future<void> _ensureAiLessons() async {
-    if (_requestedAiLessons || !mounted) return;
+    if (!mounted) return;
+    final country =
+        ref.read(userFinanceProvider).valueOrNull?.countryCode.trim() ?? '';
+    if (!canRequestAiLessonFill(
+      alreadyRequested: _requestedAiLessons,
+      countryCode: country,
+    )) {
+      return;
+    }
     _requestedAiLessons = true;
     try {
-      final country =
-          ref.read(userFinanceProvider).valueOrNull?.countryCode;
       final filled =
           ref.read(aiCountryLessonsProvider).valueOrNull?.keys.toSet() ??
               {};
@@ -117,6 +124,12 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
       ref.watch(personalizedCountryUnitsProvider),
       completed,
     );
+    ref.listen(userFinanceProvider, (previous, next) {
+      final code = next.valueOrNull?.countryCode.trim() ?? '';
+      if (code.isNotEmpty && !_requestedAiLessons) {
+        unawaited(_ensureAiLessons());
+      }
+    });
     if (nextId != null) _scrollToCurrentOnce();
 
     final streakText = game != null ? '${game.streak.current}' : '—';
@@ -200,12 +213,10 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
               for (final unit in localUnits)
                 LearnUnitSection(
                   progress: unit,
-                  // Country modules unlock independently (server gates by country).
+                  // Country slots: all incomplete are playable (matches server).
                   completed: completed,
-                  nextId: nextLessonId(
-                    [for (final l in unit.unit.lessons) l.id],
-                    completed,
-                  ),
+                  nextId: null,
+                  unlockIndependently: true,
                   language: language,
                   currentKey: _currentKey,
                   onLessonTap: (lesson, state) =>
