@@ -1,39 +1,90 @@
-class Money {
-  const Money({
-    required this.cents,
-    required this.currency,
-  });
+import 'package:intl/intl.dart';
 
+/// Règle non négociable : Montants en cents (int), jamais de double pour manipuler l'argent.
+class Money {
   final int cents;
   final String currency;
 
-  static const Money zero = Money(cents: 0, currency: 'CAD');
+  const Money({
+    required this.cents,
+    this.currency = 'CAD',
+  });
+
+  const Money.zero([String currency = 'CAD']) : this(cents: 0, currency: currency);
+
+  factory Money.fromMajor(num amount, [String currency = 'CAD']) {
+    return Money(
+      cents: (amount * 100).round(),
+      currency: currency,
+    );
+  }
+
+  double toMajor() => cents / 100.0;
 
   Money operator +(Money other) {
-    assert(currency == other.currency, 'Cannot add different currencies');
+    assert(currency == other.currency, 'Cannot add amounts of different currencies');
     return Money(cents: cents + other.cents, currency: currency);
   }
 
   Money operator -(Money other) {
-    assert(currency == other.currency, 'Cannot subtract different currencies');
+    assert(currency == other.currency, 'Cannot subtract amounts of different currencies');
     return Money(cents: cents - other.cents, currency: currency);
   }
 
+  Money operator *(num factor) {
+    return Money(cents: (cents * factor).round(), currency: currency);
+  }
+
   bool get isNegative => cents < 0;
+  bool get isPositive => cents > 0;
   bool get isZero => cents == 0;
-  double get amount => cents / 100.0;
 
-  Money abs() => Money(cents: cents.abs(), currency: currency);
+  /// Formate le montant selon la locale (ex: "18,50 $ CAD" ou "$18.50")
+  String format([String? locale]) {
+    final format = NumberFormat.currency(
+      locale: locale ?? 'fr_CA',
+      name: currency,
+      symbol: _getCurrencySymbol(currency),
+      decimalDigits: (cents % 100 == 0) ? 0 : 2,
+    );
+    return format.format(cents / 100.0);
+  }
 
-  /// Returns cents clamped to [min, max].
-  Money clamp(int minCents, int maxCents) =>
-      Money(cents: cents.clamp(minCents, maxCents), currency: currency);
+  /// Format compact sans décimales (ex: "950 $")
+  String formatWhole([String? locale]) {
+    final format = NumberFormat.currency(
+      locale: locale ?? 'fr_CA',
+      name: currency,
+      symbol: _getCurrencySymbol(currency),
+      decimalDigits: 0,
+    );
+    return format.format((cents / 100.0).round());
+  }
+
+  static String _getCurrencySymbol(String currencyCode) {
+    switch (currencyCode.toUpperCase()) {
+      case 'CAD':
+        return '\$';
+      case 'USD':
+        return 'US\$';
+      case 'EUR':
+        return '€';
+      case 'XAF':
+      case 'XOF':
+        return 'FCFA';
+      default:
+        return currencyCode;
+    }
+  }
+
+  @override
+  String toString() => '$cents cents ($currency)';
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is Money && other.cents == cents && other.currency == currency;
+      other is Money && runtimeType == other.runtimeType && cents == other.cents && currency == other.currency;
 
   @override
-  int get hashCode => Object.hash(cents, currency);
+  int get hashCode => cents.hashCode ^ currency.hashCode;
 }

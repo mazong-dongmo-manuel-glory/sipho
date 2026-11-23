@@ -24,26 +24,8 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<!-- sipho-staging iOS OAuth (matches GoogleService-Info.plist REVERSED_CLIENT_ID) -->
-				<string>com.googleusercontent.apps.246057291906-8s8j9qik7m29iff7btp8rbmvt6m2pihc</string>
-			</array>
-		</dict>
-	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSCameraUsageDescription</key>
-	<string>Sipho uses the camera to read a receipt you choose to scan.</string>
-	<key>NSContactsUsageDescription</key>
-	<string>Sipho looks for friends among your contacts, only when you ask. Addresses are compared as encrypted fingerprints and are never stored.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Sipho reads a receipt photo you choose from your library.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -378,7 +379,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String homeRemainingBreakdownValues(
-      String income, String fixed, String spent) {
+    String income,
+    String fixed,
+    String spent,
+  ) {
     return 'Revenu $income · Fixes $fixed · Dépensé $spent';
   }
 

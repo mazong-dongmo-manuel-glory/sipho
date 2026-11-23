@@ -150,3 +150,6 @@ captures/
 *.cer
 *.p8
 AuthKey_*.p8
+
+.cursor/
+.firebase/

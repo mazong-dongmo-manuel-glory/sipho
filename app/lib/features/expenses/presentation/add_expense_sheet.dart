@@ -1,30 +1,15 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sipho/app/l10n/app_localizations.dart';
-import 'package:sipho/app/theme/app_colors.dart';
-import 'package:sipho/app/theme/app_spacing.dart';
-import 'package:sipho/core/analytics/analytics_service.dart';
-import 'package:sipho/core/feedback/feedback_cue.dart';
-import 'package:sipho/core/feedback/feedback_service.dart';
-import 'package:sipho/core/money/amount_input.dart';
-import 'package:sipho/core/money/money.dart';
-import 'package:sipho/core/money/money_formatter.dart';
-import 'package:sipho/core/time/local_day.dart';
-import 'package:sipho/core/widgets/category_chip.dart';
-import 'package:sipho/core/widgets/sipho_art.dart';
-import 'package:sipho/core/widgets/sipho_button_3d.dart';
-import 'package:sipho/features/auth/presentation/auth_provider.dart';
-import 'package:sipho/features/expenses/data/transaction_repository.dart';
-import 'package:sipho/features/expenses/domain/expense_category.dart';
-import 'package:sipho/features/expenses/domain/transaction.dart';
-import 'package:sipho/features/expenses/presentation/expense_category_label.dart';
-import 'package:sipho/features/finance/data/fx_rates_repository.dart';
-import 'package:sipho/features/finance/presentation/finance_providers.dart';
-import 'package:sipho/features/gamification/data/game_state_repository.dart';
+import '../../../core/money/money.dart';
+import '../../../core/theme/sipho_colors.dart';
+import '../../../core/theme/sipho_typography.dart';
+import '../../../core/widgets/category_chip.dart';
+import '../../../core/widgets/sipho_button_3d.dart';
+import '../../expenses/data/expenses_provider.dart';
+import '../../gamification/data/game_state_provider.dart';
 
+/// Frame 09 · Ajout express connecté à Riverpod.
 class AddExpenseSheet extends ConsumerStatefulWidget {
   const AddExpenseSheet({super.key});
 
@@ -33,430 +18,134 @@ class AddExpenseSheet extends ConsumerStatefulWidget {
 }
 
 class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
-  String _digits = '';
-  int _selected = 6;
-  bool _saving = false;
-  String? _txCurrency;
-  final _recipient = TextEditingController();
-  String _feeDigits = '';
+  String _amountString = '0';
+  String _selectedCategory = 'Restos';
+  String _selectedEmoji = '🍔';
 
-  static const _currencies = ['CAD', 'USD', 'EUR', 'XAF', 'XOF', 'GBP'];
+  final List<(String, String)> _categories = const [
+    ('Restos', '🍔'),
+    ('Épicerie', '🛒'),
+    ('Transport', '🚌'),
+    ('Shopping', '🛍️'),
+    ('Loisirs', '🎮'),
+    ('Santé', '💊'),
+    ('Famille', '💌'),
+    ('Autre', '✨'),
+  ];
 
-  @override
-  void dispose() {
-    _recipient.dispose();
-    super.dispose();
-  }
-
-  void _tap(String key) {
+  void _onKeyTap(String key) {
     setState(() {
       if (key == '⌫') {
-        if (_digits.isNotEmpty) {
-          _digits = _digits.substring(0, _digits.length - 1);
+        if (_amountString.length > 1) {
+          _amountString = _amountString.substring(0, _amountString.length - 1);
+        } else {
+          _amountString = '0';
         }
-        return;
+      } else if (key == ',') {
+        if (!_amountString.contains(',')) {
+          _amountString += ',';
+        }
+      } else {
+        if (_amountString == '0') {
+          _amountString = key;
+        } else {
+          _amountString += key;
+        }
       }
-      if (!AmountInput.canAppend(_digits, key)) return;
-      _digits += key;
     });
   }
 
-  String _greetingName(WidgetRef ref, AppLocalizations l10n) {
-    final name = ref.watch(userFinanceProvider).valueOrNull?.firstName ?? '';
-    return name.isEmpty ? l10n.homeGuestName : name;
-  }
+  void _submit() {
+    final cleanAmount = _amountString.replaceAll(',', '.');
+    final doubleAmount = double.tryParse(cleanAmount) ?? 0.0;
+    if (doubleAmount <= 0) return;
 
-  Future<void> _save(AppLocalizations l10n) async {
-    final cents = AmountInput.parseCents(_digits);
-    final uid = ref.read(authStateProvider).valueOrNull?.uid;
-    if (cents <= 0 || uid == null || _saving) return;
+    final money = Money.fromMajor(doubleAmount, 'CAD');
 
-    final mainCurrency =
-        ref.read(userFinanceProvider).valueOrNull?.currency ?? 'CAD';
-    final currency = _txCurrency ?? mainCurrency;
-    final fx = ref.read(fxRatesProvider).valueOrNull;
-    final rate = fx?.rateTo(from: currency, to: mainCurrency);
-    final mainCents = fx?.convertCents(
-          amountCents: cents,
-          from: currency,
-          to: mainCurrency,
-        ) ??
-        (currency == mainCurrency ? cents : null);
-    if (mainCents == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.expenseFxUnavailable)),
-      );
-      return;
-    }
-    final category = kQuickExpenseCategories[_selected];
-    final recipient = _recipient.text.trim();
-    final feeRaw =
-        category.id == 'family' ? AmountInput.parseCents(_feeDigits) : 0;
-    int? feeMain;
-    if (feeRaw > 0) {
-      feeMain = fx?.convertCents(
-            amountCents: feeRaw,
-            from: currency,
-            to: mainCurrency,
-          ) ??
-          (currency == mainCurrency ? feeRaw : null);
-      if (feeMain == null) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.expenseFxUnavailable)),
+    // 1. Ajouter la dépense
+    ref.read(expensesProvider.notifier).addExpense(
+          title: '$_selectedCategory rapide',
+          category: _selectedCategory,
+          emoji: _selectedEmoji,
+          amount: money,
         );
-        return;
-      }
-    }
-    setState(() => _saving = true);
-    try {
-      await ref.read(transactionRepositoryProvider).addTransaction(
-            uid,
-            SiphoTransaction(
-              id: '',
-              amountCents: cents,
-              currency: currency,
-              amountMainCents: mainCents,
-              fxRate: rate,
-              category: category.id,
-              merchant: category.id == 'family' && recipient.isNotEmpty
-                  ? recipient
-                  : null,
-              feeCents: feeMain != null && feeMain > 0 ? feeMain : null,
-              date: LocalDay.now().isoDate,
-              source: 'manual',
-              createdAt: DateTime.now(),
-            ),
-          );
-      try {
-        await ref.read(analyticsServiceProvider).logExpenseAdded(
-              category: category.id,
-              amountCents: cents,
-              currency: currency,
-              source: 'manual',
-            );
-      } catch (error) {
-        debugPrint('Analytics expense_added skipped: $error');
-      }
-      if (!mounted) return;
-      unawaited(ref.read(feedbackServiceProvider).play(SiphoCue.expenseAdded));
-      final formatted = MoneyFormatter.format(
-        Money(cents: cents, currency: currency),
-        locale: Localizations.localeOf(context).toString(),
-      );
-      context.pop((
-        amount: formatted,
-        category: expenseCategoryLabel(l10n, category.id),
-      ));
-    } catch (error) {
-      debugPrint('Add expense failed: $error');
-      if (!mounted) return;
-      setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.expenseSaveError)),
-      );
-    }
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    const categories = kQuickExpenseCategories;
-    final mainCurrency =
-        ref.watch(userFinanceProvider).valueOrNull?.currency ?? 'CAD';
-    final game = ref.watch(gameStateStreamProvider).valueOrNull;
-    final currency = _txCurrency ?? mainCurrency;
-    final shown = _digits.isEmpty ? '0' : _digits;
-    final symbol = MoneyFormatter.currencySymbol(currency);
-    final cents = AmountInput.parseCents(_digits);
+    // 2. Attribuer l'XP
+    ref.read(gameStateProvider.notifier).addXp(5);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.pagePadding,
-                8,
-                AppSpacing.pagePadding,
-                0,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      _MiniPill(
-                        AppColors.flamePill,
-                        AppColors.flameText,
-                        '🔥  ${game?.streak.current ?? '—'}',
-                      ),
-                      const SizedBox(width: 16),
-                      _MiniPill(
-                        AppColors.seedPill,
-                        AppColors.seedText,
-                        '🌾  ${game?.gems ?? '—'}',
-                      ),
-                      const SizedBox(width: 16),
-                      _MiniPill(
-                        AppColors.mint,
-                        AppColors.primaryDark,
-                        l10n.homeLevelPill(game?.level ?? 1),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    l10n.homeHello(_greetingName(ref, l10n)),
-                    style: const TextStyle(
-                      fontFamily: 'Nunito',
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                      height: 1.2,
-                      color: AppColors.primaryDark,
-                    ),
-                  ),
-                  const Center(child: SiphoArt.happy(frame: 120)),
-                ],
-              ),
-            ),
-            const Positioned.fill(
-              child: ColoredBox(color: Color(0x2614342B)),
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              top: 168,
-              bottom: 0,
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-                decoration: const BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 49,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFD9D6CB),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            l10n.addExpenseTitle,
-                            style: const TextStyle(
-                              fontFamily: 'Nunito',
-                              fontSize: 28,
-                              fontWeight: FontWeight.w800,
-                              height: 1.3,
-                              color: AppColors.primaryDark,
-                            ),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () => context.pop(),
-                          child: const Icon(Icons.close,
-                              color: AppColors.textSecondary),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      l10n.addExpenseSteps,
-                      style: const TextStyle(
-                        fontFamily: 'Nunito',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        height: 1.3,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '$shown $symbol',
-                      style: const TextStyle(
-                        fontFamily: 'Nunito',
-                        fontSize: 56,
-                        fontWeight: FontWeight.w900,
-                        height: 1.3,
-                        color: AppColors.primaryDark,
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        Text(
-                          l10n.expenseCurrencyLabel,
-                          style: const TextStyle(
-                            fontFamily: 'Nunito',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            height: 1.3,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        DropdownButton<String>(
-                          value: currency,
-                          underline: const SizedBox.shrink(),
-                          items: [
-                            for (final code in {
-                              mainCurrency,
-                              ..._currencies,
-                            })
-                              DropdownMenuItem(
-                                value: code,
-                                child: Text(
-                                  code,
-                                  style: const TextStyle(
-                                    fontFamily: 'Nunito',
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                          ],
-                          onChanged: (value) {
-                            if (value == null) return;
-                            setState(() => _txCurrency = value);
-                          },
-                        ),
-                      ],
-                    ),
-                    if (kQuickExpenseCategories[_selected].id == 'family') ...[
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _recipient,
-                        textCapitalization: TextCapitalization.words,
-                        decoration: InputDecoration(
-                          hintText: l10n.familyRecipientHint,
-                          isDense: true,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          l10n.familyFeeLabel,
-                          style: const TextStyle(
-                            fontFamily: 'Nunito',
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                      TextField(
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: l10n.familyFeeHint,
-                          isDense: true,
-                        ),
-                        onChanged: (value) => _feeDigits = value,
-                      ),
-                    ],
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: GridView.builder(
-                        physics: const ClampingScrollPhysics(),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4,
-                          mainAxisExtent: 72,
-                        ),
-                        itemCount: categories.length,
-                        itemBuilder: (context, index) {
-                          final cat = categories[index];
-                          return CategoryChip(
-                            emoji: cat.emoji,
-                            label: expenseCategoryLabel(l10n, cat.id),
-                            isSelected: index == _selected,
-                            onTap: () => setState(() => _selected = index),
-                          );
-                        },
-                      ),
-                    ),
-                    _Keypad(onTap: _tap),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: SiphoButton3D(
-                            label: l10n.addExpenseCta,
-                            color: AppColors.primary,
-                            shadowColor: AppColors.primaryDark,
-                            isLoading: _saving,
-                            enabled: cents > 0 && !_saving,
-                            onPressed: () => _save(l10n),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        GestureDetector(
-                          onTap: () => context.push('/expenses/scan'),
-                          child: Column(
-                            children: [
-                              const Icon(
-                                Icons.photo_camera_outlined,
-                                color: AppColors.primary,
-                                size: 24,
-                              ),
-                              Text(
-                                l10n.addExpenseScan,
-                                style: const TextStyle(
-                                  fontFamily: 'Nunito',
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+    // 3. Fermer et informer
+    context.pop();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${money.format()} ajoutés en $_selectedCategory ! +5 XP 🎉'),
+        backgroundColor: SiphoColors.primary,
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }
-}
-
-class _MiniPill extends StatelessWidget {
-  const _MiniPill(this.background, this.foreground, this.label);
-
-  final Color background;
-  final Color foreground;
-  final String label;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        height: 36,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: background,
-          borderRadius: BorderRadius.circular(999),
+    return Scaffold(
+      backgroundColor: SiphoColors.surface,
+      appBar: AppBar(
+        title: const Text('Ajouter une dépense', style: SiphoTypography.title),
+        leading: IconButton(
+          icon: const Icon(Icons.close_rounded),
+          onPressed: () => context.pop(),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Nunito',
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-            color: foreground,
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Column(
+            children: [
+              // Montant géant
+              Center(
+                child: Text(
+                  '$_amountString \$ CAD',
+                  style: SiphoTypography.amountHero.copyWith(
+                    color: SiphoColors.primary,
+                    fontSize: 48,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Catégories
+              SizedBox(
+                height: 48,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _categories.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final cat = _categories[index];
+                    return CategoryChip(
+                      label: cat.$1,
+                      emoji: cat.$2,
+                      isSelected: _selectedCategory == cat.$1,
+                      onTap: () => setState(() {
+                        _selectedCategory = cat.$1;
+                        _selectedEmoji = cat.$2;
+                      }),
+                    );
+                  },
+                ),
+              ),
+              const Spacer(),
+
+              // Clavier numérique géant
+              _Keypad(onKeyTap: _onKeyTap),
+              const SizedBox(height: 20),
+
+              // Bouton 3D AJOUTER
+              SiphoButton3D(
+                label: 'AJOUTER (+5 XP)',
+                onPressed: _submit,
+              ),
+              const SizedBox(height: 10),
+            ],
           ),
         ),
       ),
@@ -465,62 +154,51 @@ class _MiniPill extends StatelessWidget {
 }
 
 class _Keypad extends StatelessWidget {
-  const _Keypad({required this.onTap});
+  final ValueChanged<String> onKeyTap;
 
-  final ValueChanged<String> onTap;
-
-  static const _keys = [
-    ['1', '2', '3'],
-    ['4', '5', '6'],
-    ['7', '8', '9'],
-    [',', '0', '⌫'],
-  ];
+  const _Keypad({required this.onKeyTap});
 
   @override
   Widget build(BuildContext context) {
+    const keys = [
+      ['1', '2', '3'],
+      ['4', '5', '6'],
+      ['7', '8', '9'],
+      [',', '0', '⌫'],
+    ];
+
     return Column(
-      children: [
-        for (final row in _keys)
-          Row(
-            children: [
-              for (var i = 0; i < row.length; i++) ...[
-                if (i > 0) const SizedBox(width: 7),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Material(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(14),
-                      child: InkWell(
-                        onTap: () => onTap(row[i]),
-                        borderRadius: BorderRadius.circular(14),
-                        child: SizedBox(
-                          height: 47,
-                          child: Center(
-                            child: row[i] == '⌫'
-                                ? const Icon(
-                                    Icons.backspace_outlined,
-                                    color: AppColors.primaryDark,
-                                  )
-                                : Text(
-                                    row[i],
-                                    style: const TextStyle(
-                                      fontFamily: 'Nunito',
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.primaryDark,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                      ),
+      children: keys.map((row) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: row.map((k) {
+              return SizedBox(
+                width: 80,
+                height: 56,
+                child: TextButton(
+                  onPressed: () => onKeyTap(k),
+                  style: TextButton.styleFrom(
+                    backgroundColor: const Color(0xFFF8FAFC),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: const BorderSide(color: SiphoColors.border, width: 1.5),
+                    ),
+                  ),
+                  child: Text(
+                    k,
+                    style: SiphoTypography.amountHero.copyWith(
+                      fontSize: 24,
+                      color: SiphoColors.textPrimary,
                     ),
                   ),
                 ),
-              ],
-            ],
+              );
+            }).toList(),
           ),
-      ],
+        );
+      }).toList(),
     );
   }
 }

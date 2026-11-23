@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sipho/app/l10n/app_localizations.dart';
-import 'package:sipho/app/theme/app_colors.dart';
-import 'package:sipho/core/money/amount_input.dart';
-import 'package:sipho/core/widgets/sipho_art.dart';
-import 'package:sipho/core/widgets/sipho_button_3d.dart';
-import 'package:sipho/features/auth/data/auth_repository.dart';
-import 'package:sipho/features/onboarding/presentation/onboarding_country_step.dart';
-import 'package:sipho/features/onboarding/presentation/onboarding_goal_step.dart';
-import 'package:sipho/features/onboarding/presentation/onboarding_income_step.dart';
-import 'package:sipho/features/onboarding/presentation/onboarding_life_stage_step.dart';
-import 'package:sipho/features/onboarding/presentation/onboarding_name_step.dart';
+import '../../../core/theme/sipho_colors.dart';
+import '../../../core/theme/sipho_typography.dart';
+import '../../../core/widgets/sipho_bubble.dart';
+import '../../../core/widgets/sipho_button_3d.dart';
+import '../../auth/data/user_profile_provider.dart';
+import '../../gamification/data/game_state_provider.dart';
 
+/// Frames 03a-06 · Onboarding conversationnel avec Sipho.
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -21,209 +18,277 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 }
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
-  int _currentStep = 0;
-  String _name = '';
-  String _country = 'CA';
-  String _currency = 'CAD';
-  String _region = 'Québec';
-  String _goal = 'save_for_project';
-  String _lifeStage = 'first_job';
-  String _incomeDigits = '';
-  bool _saving = false;
+  int _step = 0;
+  final TextEditingController _nameController = TextEditingController(text: 'Amina');
+  String _selectedCountry = 'Canada';
+  String _selectedCurrency = 'CAD';
+  String _selectedGoal = 'Arrêter d\'être à découvert';
 
-  /// name → country → life stage → goal → income (README §3.1).
-  static const _totalSteps = 5;
+  final List<(String, String, String)> _countries = const [
+    ('Canada', '🇨🇦', 'CAD'),
+    ('France', '🇫🇷', 'EUR'),
+    ('Cameroun', '🇨🇲', 'XAF'),
+    ('Côte d\'Ivoire', '🇨🇮', 'XOF'),
+    ('Sénégal', '🇸🇳', 'XOF'),
+    ('Belgique', '🇧🇪', 'EUR'),
+  ];
 
-  Future<void> _finish({required bool skipIncome}) async {
-    if (_saving) return;
-    setState(() => _saving = true);
-    final incomeCents =
-        skipIncome ? 0 : AmountInput.parseCents(_incomeDigits);
-    try {
-      await ref.read(authRepositoryProvider).saveOnboardingProfile(
-            displayName: _name.trim(),
-            countryCode: _country,
-            currency: _currency,
-            region: _region,
-            goal: _goal,
-            lifeStage: _lifeStage,
-            monthlyIncomeCents: incomeCents,
+  final List<(String, String)> _goals = const [
+    ('Arrêter d\'être à découvert', '🛡️'),
+    ('Épargner pour un projet', '🎯'),
+    ('Comprendre mon argent', '💡'),
+    ('Préparer ma retraite', '🌴'),
+  ];
+
+  void _nextStep() {
+    if (_step < 3) {
+      setState(() => _step++);
+    } else {
+      // Fin d'onboarding : enregistrer le profil & attribuer +50 XP
+      ref.read(userProfileProvider.notifier).updateProfile(
+            displayName: _nameController.text.trim().isEmpty ? 'Amina' : _nameController.text.trim(),
+            countryCode: _selectedCountry,
+            currency: _selectedCurrency,
+            mainGoal: _selectedGoal,
           );
-      if (!mounted) return;
-      context.go('/onboarding/nest', extra: _name.trim());
-    } catch (error, stack) {
-      debugPrint('onboarding saveOnboardingProfile failed: $error\n$stack');
-      // Profile may already be saved (retry / race). Continue if so.
-      try {
-        final uid = ref.read(authRepositoryProvider).currentUser?.uid;
-        if (uid != null) {
-          final existing = await ref.read(authRepositoryProvider).getUser(uid);
-          if (existing != null && existing.displayName.trim().isNotEmpty) {
-            if (!mounted) return;
-            context.go('/onboarding/nest', extra: _name.trim());
-            return;
-          }
-        }
-      } catch (recoverError) {
-        debugPrint('onboarding recover-after-save failed: $recoverError');
-      }
-      if (!mounted) return;
-      setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context).onboardingSaveError),
-        ),
-      );
-    }
-  }
+      ref.read(userProfileProvider.notifier).completeOnboarding();
+      ref.read(gameStateProvider.notifier).addXp(50);
+      ref.read(gameStateProvider.notifier).addBadge('Bâtisseur');
 
-  Future<void> _nextStep() async {
-    if (_currentStep == 0 && _name.trim().isEmpty) return;
-    if (_currentStep < _totalSteps - 1) {
-      setState(() => _currentStep++);
-      return;
+      context.go('/home');
     }
-    await _finish(skipIncome: false);
-  }
-
-  void _back() {
-    if (_currentStep == 0) return;
-    setState(() => _currentStep--);
   }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final heading = switch (_currentStep) {
-      0 => l10n.onboardingNameHeading,
-      1 => l10n.onboardingCountryHeading,
-      2 => l10n.onboardingLifeHeading,
-      3 => l10n.onboardingGoalHeading,
-      _ => l10n.onboardingIncomeHeading,
-    };
-    final stepLabel = (_currentStep + 1).toString().padLeft(2, '0');
-    final totalLabel = _totalSteps.toString().padLeft(2, '0');
-    final lead = l10n.onboardingStepLead(stepLabel, totalLabel);
-    final onIncome = _currentStep == 4;
-    final button =
-        onIncome ? l10n.onboardingBuildNest : l10n.continueBtn;
-
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: SiphoColors.background,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (_currentStep > 0)
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: IconButton(
-                    onPressed: _back,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 44,
-                      minHeight: 44,
-                    ),
-                    icon: const Icon(
-                      Icons.chevron_left_rounded,
-                      size: 32,
-                      color: AppColors.textSecondary,
-                    ),
-                    tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-                  ),
+              // Barre de progression
+              LinearProgressIndicator(
+                value: (_step + 1) / 4.0,
+                backgroundColor: SiphoColors.border,
+                valueColor: const AlwaysStoppedAnimation<Color>(SiphoColors.primary),
+                minHeight: 8,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              const SizedBox(height: 24),
+
+              // Mascotte Sipho
+              SizedBox(
+                width: 100,
+                height: 100,
+                child: SvgPicture.asset(
+                  _step == 3 ? 'assets/images/sipho_celebrating.svg' : 'assets/images/sipho_waving.svg',
+                  fit: BoxFit.contain,
                 ),
-              if (_currentStep > 0) const SizedBox(height: 4),
-              Text(heading, style: _heading),
-              const SizedBox(height: 20),
-              Text(lead, style: _lead),
-              const SizedBox(height: 20),
+              ),
+              const SizedBox(height: 16),
+
+              // Contenu par étape
               Expanded(
-                child: IndexedStack(
-                  index: _currentStep,
-                  children: [
-                    OnboardingNameStep(
-                      initialName: _name,
-                      onNameChanged: (value) => setState(() => _name = value),
-                    ),
-                    OnboardingCountryStep(
-                      selectedCountry: _country,
-                      region: _region,
-                      currency: _currency,
-                      onCountrySelected: (code, currency, region) {
-                        setState(() {
-                          _country = code;
-                          _currency = currency;
-                          _region = region;
-                        });
-                      },
-                    ),
-                    OnboardingLifeStageStep(
-                      selected: _lifeStage,
-                      onSelected: (stage) =>
-                          setState(() => _lifeStage = stage),
-                    ),
-                    OnboardingGoalStep(
-                      selectedGoal: _goal,
-                      onGoalSelected: (goal) => setState(() => _goal = goal),
-                    ),
-                    OnboardingIncomeStep(
-                      currency: _currency,
-                      digits: _incomeDigits,
-                      onDigitsChanged: (value) =>
-                          setState(() => _incomeDigits = value),
-                    ),
-                  ],
-                ),
+                child: _buildStepContent(),
               ),
+
+              // Bouton 3D Suivant
               SiphoButton3D(
-                label: button,
+                label: _step == 3 ? 'TERMINER (+50 XP)' : 'CONTINUER',
+                variant: _step == 3 ? SiphoButtonVariant.secondary : SiphoButtonVariant.primary,
                 onPressed: _nextStep,
-                enabled: _currentStep > 0 || _name.trim().isNotEmpty,
-                isLoading: _saving,
-                color: AppColors.primaryDark,
-                shadowColor: AppColors.primaryDark,
-                height: 52,
-                borderRadius: figmaButtonRadius,
               ),
-              if (onIncome) ...[
-                const SizedBox(height: 10),
-                TextButton(
-                  onPressed: _saving
-                      ? null
-                      : () => _finish(skipIncome: true),
-                  child: Text(
-                    l10n.onboardingIncomeSkip,
-                    style: const TextStyle(
-                      fontFamily: 'Nunito',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ),
-              ],
+              const SizedBox(height: 8),
             ],
           ),
         ),
       ),
     );
   }
+
+  Widget _buildStepContent() {
+    switch (_step) {
+      case 0:
+        return Column(
+          children: [
+            const SiphoBubble(
+              title: 'Salut ! Moi c\'est Sipho 🐥',
+              text: 'Comment tu t\'appelles ? Je serai ton compagnon financier.',
+            ),
+            const SizedBox(height: 32),
+            TextField(
+              controller: _nameController,
+              style: SiphoTypography.title.copyWith(fontSize: 22),
+              textAlign: TextAlign.center,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: SiphoColors.surface,
+                hintText: 'Ton prénom',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: SiphoColors.border, width: 2),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: SiphoColors.border, width: 2),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: SiphoColors.primary, width: 2),
+                ),
+              ),
+            ),
+          ],
+        );
+
+      case 1:
+        return Column(
+          children: [
+            const SiphoBubble(
+              title: 'Tu vis où ? 🌍',
+              text: 'J\'adapte les devises, la fiscalité et les conseils à ton pays.',
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: ListView(
+                children: _countries.map((c) {
+                  final isSelected = _selectedCountry == c.$1;
+                  return GestureDetector(
+                    onTap: () => setState(() {
+                      _selectedCountry = c.$1;
+                      _selectedCurrency = c.$3;
+                    }),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: isSelected ? SiphoColors.primaryLight : SiphoColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isSelected ? SiphoColors.primary : SiphoColors.border,
+                          width: isSelected ? 2.0 : 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Text(c.$2, style: const TextStyle(fontSize: 24)),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Text(
+                              c.$1,
+                              style: SiphoTypography.bodyBold.copyWith(
+                                color: isSelected ? SiphoColors.primary : SiphoColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            c.$3,
+                            style: SiphoTypography.label.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: isSelected ? SiphoColors.primary : SiphoColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        );
+
+      case 2:
+        return Column(
+          children: [
+            const SiphoBubble(
+              title: 'Quel est ton objectif ? 🎯',
+              text: 'Chaque pas compte pour bâtir ton nid financier.',
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: ListView(
+                children: _goals.map((g) {
+                  final isSelected = _selectedGoal == g.$1;
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedGoal = g.$1),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: isSelected ? SiphoColors.primaryLight : SiphoColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isSelected ? SiphoColors.primary : SiphoColors.border,
+                          width: isSelected ? 2.0 : 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Text(g.$2, style: const TextStyle(fontSize: 24)),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Text(
+                              g.$1,
+                              style: SiphoTypography.bodyBold.copyWith(
+                                color: isSelected ? SiphoColors.primary : SiphoColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          if (isSelected) const Icon(Icons.check_circle, color: SiphoColors.primary),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        );
+
+      case 3:
+      default:
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Ton nid est prêt ! 🪺',
+              textAlign: TextAlign.center,
+              style: SiphoTypography.title.copyWith(fontSize: 28, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Félicitations ${_nameController.text.trim()} ! Tu as gagné ton premier badge Bâtisseur et +50 XP pour démarrer.',
+              textAlign: TextAlign.center,
+              style: SiphoTypography.body.copyWith(color: SiphoColors.textSecondary),
+            ),
+            const SizedBox(height: 28),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: SiphoColors.primaryLight,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: SiphoColors.primary, width: 2),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('🏡', style: TextStyle(fontSize: 32)),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Badge Bâtisseur débloqué', style: SiphoTypography.bodyBold),
+                      Text('+50 XP · 50 Graines d\'or', style: SiphoTypography.label.copyWith(color: SiphoColors.primary)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+    }
+  }
 }
-
-const _heading = TextStyle(
-  fontFamily: 'Nunito',
-  fontSize: 28,
-  fontWeight: FontWeight.w800,
-  height: 1.3,
-  color: AppColors.primaryDark,
-);
-
-const _lead = TextStyle(
-  fontFamily: 'Nunito',
-  fontSize: 16,
-  fontWeight: FontWeight.w400,
-  height: 1.3,
-  color: AppColors.textSecondary,
-);

@@ -1,74 +1,93 @@
 import 'package:flutter/material.dart';
-import 'package:sipho/app/theme/app_colors.dart';
-import 'package:sipho/app/theme/app_text_styles.dart';
+import '../theme/sipho_colors.dart';
+import '../theme/sipho_typography.dart';
 
-/// Top game bar showing streak flame, seeds (currency), and XP level.
-class GameBar extends StatelessWidget implements PreferredSizeWidget {
-  const GameBar({
-    super.key,
-    required this.streakDays,
-    int? seeds,
-    int? gems,
-    required this.level,
-  }) : seeds = seeds ?? gems ?? 0;
-
+/// Barre de statut de jeu affichée en haut de l'écran (FIGMA.md §42) :
+/// - Flamme de série (🔥)
+/// - Graines d'or (🌾)
+/// - Niveau du joueur (⚡)
+class GameBar extends StatelessWidget {
   final int streakDays;
   final int seeds;
   final int level;
+  final VoidCallback? onStreakTap;
+  final VoidCallback? onSeedsTap;
+  final VoidCallback? onLevelTap;
 
-  @override
-  Size get preferredSize => const Size.fromHeight(44);
+  const GameBar({
+    super.key,
+    this.streakDays = 0,
+    this.seeds = 0,
+    this.level = 1,
+    this.onStreakTap,
+    this.onSeedsTap,
+    this.onLevelTap,
+  });
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: preferredSize.height,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      color: Theme.of(context).colorScheme.surface,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _GameStat(
-            icon: Icons.local_fire_department,
-            iconColor: AppColors.flameStart,
-            value: '$streakDays',
+  Widget _buildPill({
+    required Widget icon,
+    required String value,
+    required VoidCallback? onTap,
+    Color? backgroundColor,
+    Color? borderColor,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: backgroundColor ?? SiphoColors.surface,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: borderColor ?? SiphoColors.border,
+            width: 1.5,
           ),
-          _GameStat(
-            icon: Icons.spa_outlined,
-            iconColor: AppColors.primary,
-            value: '$seeds',
-          ),
-          _GameStat(
-            icon: Icons.bolt,
-            iconColor: AppColors.accent,
-            value: 'Lv $level',
-          ),
-        ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            icon,
+            const SizedBox(width: 5),
+            Text(
+              value,
+              style: SiphoTypography.label.copyWith(
+                fontWeight: FontWeight.w800,
+                color: SiphoColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
-}
-
-class _GameStat extends StatelessWidget {
-  const _GameStat({
-    required this.icon,
-    required this.iconColor,
-    required this.value,
-  });
-
-  final IconData icon;
-  final Color iconColor;
-  final String value;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: iconColor, size: 20),
-        const SizedBox(width: 4),
-        Text(value, style: AppTextStyles.labelLarge),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Flamme de série
+          _buildPill(
+            icon: const Text('🔥', style: TextStyle(fontSize: 16)),
+            value: '$streakDays',
+            onTap: onStreakTap,
+          ),
+          // Graines d'or
+          _buildPill(
+            icon: const Text('🌾', style: TextStyle(fontSize: 16)),
+            value: '$seeds',
+            onTap: onSeedsTap,
+          ),
+          // Niveau
+          _buildPill(
+            icon: const Text('⚡', style: TextStyle(fontSize: 16)),
+            value: 'Niv. $level',
+            onTap: onLevelTap,
+          ),
+        ],
+      ),
     );
   }
 }
