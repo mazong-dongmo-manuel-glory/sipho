@@ -31,7 +31,7 @@ android {
     }
 
     defaultConfig {
-        // Must match google-services.json / Firebase Android app package.
+        // Must match google-services.json / Firebase Android app package (QA = staging).
         applicationId = "com.cargonomade.sipho.staging"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion

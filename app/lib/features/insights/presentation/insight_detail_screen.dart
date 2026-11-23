@@ -91,12 +91,12 @@ class _InsightDetailScreenState extends ConsumerState<InsightDetailScreen> {
           l10n.coachTitle,
           style: const TextStyle(
             fontFamily: 'Nunito',
-            fontSize: 20,
-            fontWeight: FontWeight.w900,
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
             color: AppColors.primaryDark,
           ),
         ),
-        centerTitle: true,
+        centerTitle: false,
       ),
       body: SafeArea(
         child: ListView(

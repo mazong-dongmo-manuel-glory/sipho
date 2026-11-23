@@ -57,6 +57,7 @@ class InsightText {
     this.recommendedLessonId = 'track_spending',
     this.suggestedQuest,
     this.focusTopic = 'general',
+    this.locale = '',
     this.createdAt,
   });
 
@@ -67,6 +68,8 @@ class InsightText {
   final String recommendedLessonId;
   final SuggestedCoachQuest? suggestedQuest;
   final String focusTopic;
+  /// Language the insight was generated in (`fr`|`en`), when known.
+  final String locale;
   final DateTime? createdAt;
 
   static const validLessonIds = [
@@ -182,6 +185,11 @@ InsightText? parseInsightMap(
     }
   }
 
+  final localeRaw = decoded['locale'];
+  final locale = localeRaw is String
+      ? (localeRaw.toLowerCase().startsWith('fr') ? 'fr' : 'en')
+      : '';
+
   return InsightText(
     id: id ?? (decoded['id'] is String ? decoded['id'] as String : null),
     title: title is String ? title.trim() : '',
@@ -191,6 +199,7 @@ InsightText? parseInsightMap(
     suggestedQuest: quest,
     focusTopic:
         topic is String && topic.trim().isNotEmpty ? topic.trim() : 'general',
+    locale: locale,
     createdAt: createdAt,
   );
 }

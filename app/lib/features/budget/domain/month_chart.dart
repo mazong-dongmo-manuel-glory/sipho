@@ -49,13 +49,14 @@ int? spendingChangePercent(int currentCents, int previousCents) {
 }
 
 /// Categories treated as fixed / "socle" when present on a transaction.
+/// Keep aligned with bill templates in [kSocleTemplates] (+ common aliases).
 const Set<String> kFixedExpenseCategories = {
   'rent',
   'internet',
   'energy',
   'phone',
   'insurance',
-  'electricity',
+  'electricity', // alias of energy
   'water',
 };
 

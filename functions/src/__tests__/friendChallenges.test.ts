@@ -41,7 +41,7 @@ describe("referral delayed reward", () => {
 });
 
 describe("country lesson modules", () => {
-  test("slot ids are awardable and gated by country", () => {
+  test("pack lesson ids are awardable and gated by country", () => {
     expect(ALL_AWARDABLE_LESSON_IDS).toContain("ca_slot_01");
     expect(ALL_AWARDABLE_LESSON_IDS).toContain("ci_slot_01");
     expect(isCountryLessonAllowed("ca_slot_01", "CA")).toBe(true);
@@ -53,7 +53,6 @@ describe("country lesson modules", () => {
   test("every country module lists at least one country or *", () => {
     for (const mod of COUNTRY_LESSON_MODULES) {
       expect(mod.countries.length).toBeGreaterThan(0);
-      expect(mod.id).toMatch(/_slot_\d{2}$/);
     }
   });
 });

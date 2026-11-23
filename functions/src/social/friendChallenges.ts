@@ -163,30 +163,16 @@ export const respondFriendChallenge = onCall(
       windowMs: 24 * 60 * 60 * 1000,
     });
 
-    const challengeRef = db().doc(
-      `friendships/${pairId}/challenges/${challengeId}`
-    );
-
     if (accept) {
-      const probe = await challengeRef.get();
-      const senderUid =
-        typeof probe.data()?.senderUid === "string"
-          ? (probe.data()?.senderUid as string)
-          : "";
       const myActive = await countActivePointers(uid);
       if (myActive >= MAX_ACTIVE_CHALLENGES_PER_USER) {
         throw new HttpsError("resource-exhausted", "Too many open challenges.");
       }
-      if (senderUid) {
-        const senderActive = await countActivePointers(senderUid);
-        if (senderActive >= MAX_ACTIVE_CHALLENGES_PER_USER) {
-          throw new HttpsError(
-            "resource-exhausted",
-            "Your friend has too many open challenges."
-          );
-        }
-      }
     }
+
+    const challengeRef = db().doc(
+      `friendships/${pairId}/challenges/${challengeId}`
+    );
 
     await db().runTransaction(async (tx) => {
       const snap = await tx.get(challengeRef);

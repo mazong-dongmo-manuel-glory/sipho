@@ -16,9 +16,10 @@ class QuestReward {
       return value is num ? value.toInt() : 0;
     }
 
+    final seeds = number('gemsGained');
     return QuestReward(
       xpGained: number('xpGained'),
-      gemsGained: number('gemsGained'),
+      gemsGained: seeds > 0 ? seeds : number('seedsGained'),
       levelUp: data['levelUp'] == true,
       alreadyClaimed: data['alreadyClaimed'] == true,
     );

@@ -3,7 +3,7 @@
 > Suivi de l'avancement des maquettes Figma et de l'implémentation des écrans.
 
 **Fichier Figma :** [Sipho — Design](https://www.figma.com/design/nsdpHR62Ct0mjq1cgVGkwl/Untitled) (clé `nsdpHR62Ct0mjq1cgVGkwl`, page « Page 1 ». Le fichier s'appelle encore « Untitled » : à renommer.)
-**Dernière mise à jour :** 2026-11-15 (relecture du fichier réel : 33 frames iPhone 15 de 393 × 852 + 1 frame « Sipho · Bibliothèque locale »)
+**Dernière mise à jour :** 2026-11-22 (alignement pixel Flutter ← frames « · Épuré » : Phase 1 entrée/onboarding/home + typo/shell phases 2–4 ; Validé Manuel toujours ⬜)
 
 > Ancien lien du tracker (`node-id=2-29018`) : un nœud de 200 × 200 px, pas un écran. Ne pas l'utiliser.
 
@@ -17,17 +17,17 @@
 
 | # | Frame Figma (id) | Maquetté | Validé | Implémenté | Notes |
 |---|---|:---:|:---:|:---:|---|
-| 1 | 01 · Démarrage (`2:28911`) | 🖌️ | ⬜ | 💻 | `/splash` |
-| 2 | 02 · Bienvenue (`2:28913`) | 🖌️ | ⬜ | 💻 | `/login` |
-| 3a | 03a · Ton prénom (`2:28915`) | 🖌️ | ⬜ | 💻 | `onboarding_name_step` |
-| 3b | 03b · Ton pays (`2:28917`) | 🖌️ | ⬜ | 💻 | Pays, région, devise et « Utiliser ma position » (`LocationService`) |
-| 3c | 03c · Ton objectif (`2:28919`) | 🖌️ | ⬜ | 💻 | `onboarding_goal_step` + étape de vie + revenu mensuel optionnel |
-| 4 | 04 · Construisons ton nid (`2:28921`) | 🖌️ | ⬜ | 💻 | `/fixed-expenses/swipe` |
+| 1 | 01 · Démarrage (`2:28911`) | 🖌️ | ⬜ | 💻 | `/splash` — déjà aligné épuré (#FCFCF9, 40 Black, CTA) |
+| 2 | 02 · Bienvenue (`2:28913`) | 🖌️ | ⬜ | 💻 | `/login` — déjà aligné épuré |
+| 3a | 03a · Ton prénom (`2:28915`) | 🖌️ | ⬜ | 💻 | Chrome + name step réalignés (soft card, 01/05) |
+| 3b | 03b · Ton pays (`2:28917`) | 🖌️ | ⬜ | 💻 | Même chrome onboarding ; contenu pays inchangé |
+| 3c | 03c · Ton objectif (`2:28919`) | 🖌️ | ⬜ | 💻 | + étapes vie/revenu (hors Figma 3 frames) |
+| 4 | 04 · Socle (`2:28921`) | 🖌️ | ⬜ | 💻 | `/onboarding/nest` réécrit style épuré |
 | 5 | 05 · Dépense fixe (`2:28923`) | 🖌️ | ⬜ | 💻 | `/fixed-expenses/amount` |
-| 6 | 06 · Nid terminé (`2:28925`) | 🖌️ | ⬜ | 💻 | Badge « Bâtisseur » attribué par le serveur (`onboardingDone`) |
-| 7 | 07 · Notifications (`2:28927`) | 🖌️ | ⬜ | 💻 | `/onboarding/notifications` |
-| 8a | 08 · Accueil clair (`2:28929`) | 🖌️ | ⬜ | 💻 | Relu |
-| 8b | 08 · Accueil sombre (`2:28931`) | 🖌️ | ⬜ | 💻 | Thème sombre suit le système (`ThemeMode.system`) |
+| 6 | 06 · Première victoire (`2:28925`) | 🖌️ | ⬜ | 💻 | `/onboarding/ready` réécrit ; celebration orphelin supprimé |
+| 7 | 07 · Notifications (`2:28927`) | 🖌️ | ⬜ | 💻 | `/onboarding/notifications` réécrit épuré |
+| 8a | 08 · Accueil clair (`2:28929`) | 🖌️ | ⬜ | 💻 | FAB 64, Sipho proud, compteur quêtes, lien `/insights` |
+| 8b | 08 · Accueil sombre (`2:28931`) | 🖌️ | ⬜ | 💻 | Thème sombre système |
 | 9 | 09 · Ajout express (`2:28933`) | 🖌️ | ⬜ | 💻 | `/expenses/add` avec sélecteur de devise et conversion FX |
 | 10 | 10 · Micro-récompense (`2:28935`) | 🖌️ | ⬜ | 💻 | Sons / vibrations branchés |
 | 11a | 11a · Scanner (`2:28937`) | 🖌️ | ⬜ | 💻 | `/expenses/scan` |

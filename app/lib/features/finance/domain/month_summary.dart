@@ -7,10 +7,16 @@ class MonthSummary {
   });
 
   final int incomeCents;
+
+  /// Recurring **bills** only (rent, phone…). Envelopes are budgets for
+  /// variable spend and must not be subtracted here — their spend is already
+  /// in [spentCents].
   final int fixedCents;
+
+  /// All logged transactions this month (principal + fees), main currency.
   final int spentCents;
 
-  /// Revenu − dépenses fixes − dépenses variables du mois.
+  /// Income − bills − logged spends (envelopes are not double-counted).
   int get remainingCents => incomeCents - fixedCents - spentCents;
 
   bool get hasIncome => incomeCents > 0;

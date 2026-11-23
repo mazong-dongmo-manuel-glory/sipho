@@ -99,7 +99,56 @@ export function prerequisiteOf(lessonId: string): LessonId | null {
   return index > 0 ? ALL_LESSON_IDS[index - 1] : null;
 }
 
+/** Server-generated lessons: `gen_001`, `gen_002`, … stored in `users/{uid}/aiLessons`. */
+export const GENERATED_LESSON_ID = /^gen_(\d{3})$/;
+
+export function generatedLessonIndex(lessonId: string): number | null {
+  const match = GENERATED_LESSON_ID.exec(lessonId);
+  if (!match) return null;
+  const index = Number(match[1]);
+  if (!Number.isInteger(index) || index < 1 || index > 999) return null;
+  return index;
+}
+
+export function isGeneratedLessonId(lessonId: string): boolean {
+  return generatedLessonIndex(lessonId) != null;
+}
+
+export function generatedLessonIdFor(index: number): string {
+  return `gen_${String(index).padStart(3, "0")}`;
+}
+
+export function previousGeneratedLessonId(lessonId: string): string | null {
+  const index = generatedLessonIndex(lessonId);
+  if (index == null || index <= 1) return null;
+  return generatedLessonIdFor(index - 1);
+}
+
+/** The 12 static lessons are finished, so the open-ended tail may start. */
+export function corePathCompleted(completed: ReadonlySet<string>): boolean {
+  return (ALL_LESSON_IDS as readonly string[]).every((id) => completed.has(id));
+}
+
+/**
+ * A generated lesson unlocks only after the static path, then one by one.
+ * The document must also exist; `completeLesson` checks that separately.
+ */
+export function isGeneratedLessonUnlocked(
+  lessonId: string,
+  completed: ReadonlySet<string>
+): boolean {
+  const index = generatedLessonIndex(lessonId);
+  if (index == null) return false;
+  if (!corePathCompleted(completed)) return false;
+  if (index === 1) return true;
+  const previous = previousGeneratedLessonId(lessonId);
+  return previous != null && completed.has(previous);
+}
+
 export function isLessonUnlocked(lessonId: string, completed: ReadonlySet<string>): boolean {
+  if (isGeneratedLessonId(lessonId)) {
+    return isGeneratedLessonUnlocked(lessonId, completed);
+  }
   // Country modules have no path prerequisite (gated by country in completeLesson).
   if (isCountryLesson(lessonId)) return true;
   if (!(ALL_LESSON_IDS as readonly string[]).includes(lessonId)) return false;
@@ -112,6 +161,11 @@ export function isLessonUnlocked(lessonId: string, completed: ReadonlySet<string
  * other lessons of the same unit. The caller reads these before writing anything.
  */
 export function lessonsToCheck(lessonId: string): string[] {
+  if (isGeneratedLessonId(lessonId)) {
+    const previous = previousGeneratedLessonId(lessonId);
+    if (previous) return [previous];
+    return [...ALL_LESSON_IDS];
+  }
   const ids = new Set<string>();
   const prerequisite = prerequisiteOf(lessonId);
   if (prerequisite) ids.add(prerequisite);

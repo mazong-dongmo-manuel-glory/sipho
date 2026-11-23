@@ -55,7 +55,7 @@ export const economyNewsFetch = onSchedule(
   }
 );
 
-async function fetchCountryNews(
+export async function fetchCountryNews(
   country: EconomyNewsCountry,
   gnewsKey: string
 ): Promise<EconomyNewsDoc> {

@@ -4,6 +4,7 @@ import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/core/money/amount_input.dart';
 import 'package:sipho/core/time/local_day.dart';
+import 'package:sipho/core/widgets/category_chip.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
 import 'package:sipho/features/auth/presentation/auth_provider.dart';
@@ -128,6 +129,7 @@ class _EditExpenseSheetState extends ConsumerState<_EditExpenseSheet> {
               category: _category,
               merchant: _merchant.text.trim(),
               note: _note.text.trim(),
+              feeCents: _category == 'family' ? tx.feeCents : null,
               date: safeDate,
               source: tx.source,
               receiptPath: tx.receiptPath,
@@ -330,12 +332,12 @@ class _EditExpenseSheetState extends ConsumerState<_EditExpenseSheet> {
                 runSpacing: 8,
                 children: [
                   for (final cat in kQuickExpenseCategories)
-                    ChoiceChip(
-                      label: Text(
-                        '${cat.emoji} ${expenseCategoryLabel(l10n, cat.id)}',
-                      ),
-                      selected: _category == cat.id,
-                      onSelected: (_) => setState(() => _category = cat.id),
+                    CategoryChip(
+                      compact: true,
+                      emoji: cat.emoji,
+                      label: expenseCategoryLabel(l10n, cat.id),
+                      isSelected: _category == cat.id,
+                      onTap: () => setState(() => _category = cat.id),
                     ),
                 ],
               ),

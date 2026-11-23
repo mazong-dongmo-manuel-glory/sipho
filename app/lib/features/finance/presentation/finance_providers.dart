@@ -130,9 +130,11 @@ final monthSummaryProvider =
 
   final spent = transactions.value!.fold<int>(
     0,
-    (total, tx) => total + (tx.amountMainCents ?? tx.amountCents),
+    (total, tx) => total + tx.spendMainCents,
   );
+  // Bills only — envelopes (groceries/transport budgets) are caps, not spends.
   final fixedCents = fixed.value!
+      .where((expense) => expense.type != 'envelope')
       .fold<int>(0, (total, expense) => total + expense.amountCents);
 
   return AsyncValue.data(

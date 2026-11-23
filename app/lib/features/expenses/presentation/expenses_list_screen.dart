@@ -13,9 +13,9 @@ import 'package:sipho/features/expenses/data/transaction_repository.dart';
 import 'package:sipho/features/expenses/domain/transaction.dart';
 import 'package:sipho/features/expenses/presentation/edit_expense_sheet.dart';
 import 'package:sipho/features/expenses/presentation/expense_category_label.dart';
+import 'package:sipho/features/expenses/presentation/expenses_section_tabs.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
 import 'package:sipho/features/fixed_expenses/presentation/fixed_expenses_list_screen.dart';
-import 'package:sipho/features/gamification/data/game_state_repository.dart';
 
 class ExpensesListScreen extends ConsumerStatefulWidget {
   const ExpensesListScreen({super.key});
@@ -25,7 +25,17 @@ class ExpensesListScreen extends ConsumerStatefulWidget {
 }
 
 class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
-  int _tab = 0;
+  void _selectSection(int index) {
+    ref.read(expensesSectionTabProvider.notifier).state = index;
+    if (index == 2) {
+      context.go('/charts');
+      return;
+    }
+    // Stay on /expenses for Ce mois / Mon socle.
+    if (GoRouterState.of(context).matchedLocation != '/expenses') {
+      context.go('/expenses');
+    }
+  }
 
   void _shiftMonth(int delta) {
     final current = ref.read(expensesMonthProvider);
@@ -41,12 +51,16 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final tab = ref.watch(expensesSectionTabProvider);
+    // Coming back from /charts: keep "Ce mois" or "Mon socle", not charts.
+    final section = tab == 2 ? 0 : tab;
     final month = ref.watch(expensesMonthProvider);
     final monthKey = monthKeyOf(month);
     final transactions = ref.watch(transactionsForMonthProvider(monthKey));
     final currency =
         ref.watch(userFinanceProvider).valueOrNull?.currency ?? 'CAD';
-    final game = ref.watch(gameStateStreamProvider).valueOrNull;
+    final fixed = ref.watch(activeFixedExpensesProvider).valueOrNull ?? const [];
+    final fixedTotal = fixed.fold<int>(0, (sum, item) => sum + item.amountCents);
     final now = DateTime.now();
     final isCurrent = month.year == now.year && month.month == now.month;
 
@@ -54,92 +68,101 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
       backgroundColor: AppColors.background,
       body: SafeArea(
         bottom: false,
-        child: _tab == 1
-            ? SocleView(
-                onSelectTab: (index) {
-                  if (index == 2) {
-                    context.push('/charts');
-                    return;
-                  }
-                  setState(() => _tab = index);
-                },
-              )
-            : ListView(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.pagePadding,
-                  8,
-                  AppSpacing.pagePadding,
-                  24,
-                ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.pagePadding,
+                8,
+                AppSpacing.pagePadding,
+                0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _Pills(
-                    streak: game?.streak.current,
-                    seeds: game?.gems,
-                    level: l10n.homeLevelPill(game?.level ?? 1),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    l10n.expensesTitle,
-                    style: const TextStyle(
-                      fontFamily: 'Nunito',
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
-                      height: 1.2,
-                      color: AppColors.primaryDark,
+                  if (section == 0) ...[
+                    Text(
+                      l10n.expensesTitle,
+                      style: const TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        height: 1.3,
+                        color: AppColors.primaryDark,
+                      ),
                     ),
+                    const SizedBox(height: 16),
+                  ],
+                  ExpensesSectionTabs(
+                    selectedIndex: section,
+                    onSelectTab: _selectSection,
                   ),
-                  const SizedBox(height: 12),
-                  _Tabs(
-                    labels: [
-                      l10n.expensesThisMonth,
-                      l10n.expensesBase,
-                      l10n.expensesCharts,
-                    ],
-                    selected: _tab,
-                    onTap: (index) {
-                      if (index == 2) {
-                        context.push('/charts');
-                        return;
-                      }
-                      setState(() => _tab = index);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      GestureDetector(
-                        onTap: () => _shiftMonth(-1),
-                        child: const Text('‹', style: _monthArrow),
-                      ),
-                      const SizedBox(width: 24),
-                      Text(
-                        _monthLabel(context, month),
-                        style: const TextStyle(
-                          fontFamily: 'Nunito',
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.primaryDark,
-                        ),
-                      ),
-                      const SizedBox(width: 24),
-                      GestureDetector(
-                        onTap: isCurrent ? null : () => _shiftMonth(1),
-                        child: Text(
-                          '›',
-                          style: _monthArrow.copyWith(
-                            color: isCurrent
-                                ? AppColors.textSecondary
-                                : AppColors.primaryDark,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  ..._monthBody(context, l10n, transactions, currency),
                 ],
               ),
+            ),
+            Expanded(
+              child: section == 1
+                  ? SocleView(
+                      showSectionTabs: false,
+                      onSelectTab: _selectSection,
+                    )
+                  : ListView(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.pagePadding,
+                        16,
+                        AppSpacing.pagePadding,
+                        24,
+                      ),
+                      children: [
+                        Row(
+                          children: [
+                            Semantics(
+                              button: true,
+                              label: _monthLabel(context, month),
+                              child: GestureDetector(
+                                onTap: () => _shiftMonth(-1),
+                                child: Text(
+                                  '${_monthLabel(context, month)}  ↓',
+                                  style: const TextStyle(
+                                    fontFamily: 'Nunito',
+                                    fontSize: 16,
+                                    height: 1.3,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (!isCurrent) ...[
+                              const SizedBox(width: 16),
+                              Semantics(
+                                button: true,
+                                label: _monthLabel(context, month),
+                                child: GestureDetector(
+                                  onTap: () => _shiftMonth(1),
+                                  child: const Icon(
+                                    Icons.keyboard_arrow_up_rounded,
+                                    size: 22,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        ..._monthBody(
+                          context,
+                          l10n,
+                          transactions,
+                          currency,
+                          fixedTotal,
+                        ),
+                      ],
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -149,6 +172,7 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
     AppLocalizations l10n,
     AsyncValue<List<SiphoTransaction>> transactions,
     String currency,
+    int fixedTotal,
   ) {
     return transactions.when(
       loading: () => const [
@@ -171,45 +195,87 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
       data: (items) {
         final spent = items.fold<int>(
           0,
-          (sum, tx) => sum + (tx.amountMainCents ?? tx.amountCents),
+          (sum, tx) => sum + tx.spendMainCents,
         );
         final groups = <String, List<SiphoTransaction>>{};
         for (final tx in items) {
           groups.putIfAbsent(tx.date, () => []).add(tx);
         }
         return [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(16, 13, 16, 14),
-            decoration: BoxDecoration(
+          Text(
+            _formatCents(context, spent, currency),
+            style: const TextStyle(
+              fontFamily: 'Nunito',
+              fontSize: 56,
+              fontWeight: FontWeight.w900,
+              height: 1.3,
               color: AppColors.primaryDark,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.expensesSpentKicker,
-                  style: const TextStyle(
-                    fontFamily: 'Nunito',
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.spentMuted,
-                  ),
-                ),
-                Text(
-                  _formatCents(context, spent, currency),
-                  style: const TextStyle(
-                    fontFamily: 'Nunito',
-                    fontSize: 32,
-                    fontWeight: FontWeight.w900,
-                    height: 1.2,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
             ),
           ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.expensesSpentKicker,
+            style: const TextStyle(
+              fontFamily: 'Nunito',
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              height: 1.3,
+              letterSpacing: 0.4,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Semantics(
+            button: true,
+            label: l10n.expensesFixedApart,
+            child: GestureDetector(
+              onTap: () =>
+                  ref.read(expensesSectionTabProvider.notifier).state = 1,
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.expensesFixedApart,
+                          style: const TextStyle(
+                            fontFamily: 'Nunito',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            height: 1.3,
+                            color: AppColors.primaryDark,
+                          ),
+                        ),
+                        Text(
+                          l10n.expensesSeeBills,
+                          style: const TextStyle(
+                            fontFamily: 'Nunito',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            height: 1.3,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    _formatCents(context, fixedTotal, currency),
+                    style: const TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primaryDark,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Divider(height: 1, color: AppColors.line),
           if (items.isEmpty) ...[
             const SizedBox(height: 24),
             Text(
@@ -228,7 +294,7 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
             Text(_dayLabel(context, l10n, entry.key), style: _section),
             const SizedBox(height: 8),
             for (var i = 0; i < entry.value.length; i++) ...[
-              if (i > 0) const SizedBox(height: 8),
+              const SizedBox(height: 16),
               Dismissible(
                 key: ValueKey(entry.value[i].id),
                 direction: DismissDirection.endToStart,
@@ -248,6 +314,8 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
                   onTap: () => showEditExpenseSheet(context, entry.value[i]),
                 ),
               ),
+              const SizedBox(height: 16),
+              const Divider(height: 1, color: AppColors.line),
             ],
           ],
         ];
@@ -313,127 +381,6 @@ const _section = TextStyle(
   color: AppColors.textSecondary,
 );
 
-const _monthArrow = TextStyle(
-  fontFamily: 'Nunito',
-  fontSize: 18,
-  fontWeight: FontWeight.w800,
-  color: AppColors.primaryDark,
-);
-
-class _Pills extends StatelessWidget {
-  const _Pills({
-    required this.level,
-    this.streak,
-    this.seeds,
-  });
-
-  final String level;
-  final int? streak;
-  final int? seeds;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        _Pill(AppColors.flamePill, AppColors.flameText, '🔥  ${streak ?? '—'}'),
-        const SizedBox(width: 16),
-        _Pill(AppColors.seedPill, AppColors.seedText, '🌾  ${seeds ?? '—'}'),
-        const SizedBox(width: 16),
-        _Pill(AppColors.mint, AppColors.primaryDark, level),
-      ],
-    );
-  }
-}
-
-class _Pill extends StatelessWidget {
-  const _Pill(this.background, this.foreground, this.label);
-
-  final Color background;
-  final Color foreground;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        height: 36,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: background,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Nunito',
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-            color: foreground,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Tabs extends StatelessWidget {
-  const _Tabs({
-    required this.labels,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final List<String> labels;
-  final int selected;
-  final ValueChanged<int> onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (var i = 0; i < labels.length; i++)
-          Expanded(
-            child: GestureDetector(
-              onTap: () => onTap(i),
-              behavior: HitTestBehavior.opaque,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    labels[i],
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontFamily: 'Nunito',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: FractionallySizedBox(
-                      widthFactor: 0.72,
-                      child: Container(
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: i == selected
-                              ? AppColors.primary
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
 
 typedef _ExpenseTile = ExpenseTile;
 
@@ -477,32 +424,13 @@ class ExpenseTile extends StatelessWidget {
         : _formatCents(context, transaction.amountCents, transaction.currency);
 
     return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(16),
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 65),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: AppColors.seedPill,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  expenseCategoryIcon(transaction.category),
-                  color: AppColors.categoryGold,
-                  size: 25,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -577,15 +505,14 @@ class ExpenseTile extends StatelessWidget {
                 displayAmount,
                 style: const TextStyle(
                   fontFamily: 'Nunito',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.primaryDark,
                 ),
               ),
             ],
           ),
         ),
-      ),
     );
   }
 }

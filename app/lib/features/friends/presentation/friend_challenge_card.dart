@@ -4,6 +4,7 @@ import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/core/feedback/feedback_cue.dart';
 import 'package:sipho/core/feedback/feedback_service.dart';
+import 'package:sipho/core/widgets/sipho_button_3d.dart';
 import 'package:sipho/features/auth/presentation/auth_provider.dart';
 import 'package:sipho/features/friends/data/friend_challenges_repository.dart';
 import 'package:sipho/features/friends/domain/friend_challenge.dart';
@@ -108,7 +109,7 @@ class FriendChallengeCard extends ConsumerWidget {
             children: [
               Expanded(
                 child: _PlayerProgress(
-                  name: 'Toi',
+                  name: l10n.friendsChallengeYou,
                   progress: myProg,
                   target: challenge.targetCount,
                   color: AppColors.primary,
@@ -141,7 +142,12 @@ class FriendChallengeCard extends ConsumerWidget {
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
+                  child: SiphoButton3D(
+                    label: l10n.friendsDecline,
+                    height: 44,
+                    color: AppColors.surface,
+                    textColor: AppColors.primaryDark,
+                    shadowColor: AppColors.border,
                     onPressed: () async {
                       await performSystemHaptic(HapticKind.selection);
                       await ref
@@ -152,23 +158,19 @@ class FriendChallengeCard extends ConsumerWidget {
                             accept: false,
                           );
                     },
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.border),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: Text(
-                      l10n.friendsDecline,
-                      style: const TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w800),
-                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: FilledButton(
+                  child: SiphoButton3D(
+                    label: l10n.friendsChallengeAccept,
+                    height: 44,
+                    color: AppColors.primary,
+                    shadowColor: AppColors.primaryDark,
                     onPressed: () async {
-                      await ref.read(feedbackServiceProvider).play(SiphoCue.fixedPaid);
+                      await ref
+                          .read(feedbackServiceProvider)
+                          .play(SiphoCue.fixedPaid);
                       await ref
                           .read(friendChallengesRepositoryProvider)
                           .respondChallenge(
@@ -177,20 +179,6 @@ class FriendChallengeCard extends ConsumerWidget {
                             accept: true,
                           );
                     },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Relever ⚔️',
-                      style: TextStyle(
-                        fontFamily: 'Nunito',
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                      ),
-                    ),
                   ),
                 ),
               ],
@@ -199,7 +187,7 @@ class FriendChallengeCard extends ConsumerWidget {
             const SizedBox(height: 10),
             Center(
               child: Text(
-                'En attente de $otherName...',
+                l10n.friendsChallengeWaiting(otherName),
                 style: const TextStyle(
                   fontFamily: 'Nunito',
                   fontSize: 12,
@@ -219,8 +207,8 @@ class FriendChallengeCard extends ConsumerWidget {
               alignment: Alignment.center,
               child: Text(
                 challenge.winnerUid == myUid
-                    ? '🏆 Défi remporté ! Félicitations !'
-                    : '🏁 Défi terminé par $otherName',
+                    ? l10n.friendsChallengeWon
+                    : l10n.friendsChallengeFinishedBy(otherName),
                 style: const TextStyle(
                   fontFamily: 'Nunito',
                   fontSize: 12,

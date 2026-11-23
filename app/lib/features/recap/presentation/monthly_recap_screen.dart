@@ -1,22 +1,28 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_spacing.dart';
+import 'package:sipho/core/money/money_formatter.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
+import 'package:sipho/features/expenses/presentation/expense_category_label.dart';
+import 'package:sipho/features/finance/presentation/finance_providers.dart';
+import 'package:sipho/features/recap/domain/month_recap.dart';
 
-class MonthlyRecapScreen extends StatefulWidget {
+class MonthlyRecapScreen extends ConsumerStatefulWidget {
   const MonthlyRecapScreen({super.key});
 
   @override
-  State<MonthlyRecapScreen> createState() => _MonthlyRecapScreenState();
+  ConsumerState<MonthlyRecapScreen> createState() => _MonthlyRecapScreenState();
 }
 
-class _MonthlyRecapScreenState extends State<MonthlyRecapScreen> {
+class _MonthlyRecapScreenState extends ConsumerState<MonthlyRecapScreen> {
   final _controller = PageController();
   int _page = 0;
 
@@ -29,36 +35,101 @@ class _MonthlyRecapScreenState extends State<MonthlyRecapScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final pages = [
-      _Page(
-        background: AppColors.primaryDark,
-        ink: Colors.white,
-        track: AppColors.recapTrack,
-        weave: AppColors.weaveGreen,
-        buttonColor: Colors.white,
-        buttonText: AppColors.primaryDark,
-        body: _Spent(l10n),
-      ),
-      _Page(
-        background: AppColors.accent,
-        ink: AppColors.primaryDark,
-        track: AppColors.recapGoldTrack,
-        weave: AppColors.weaveGold,
-        buttonColor: AppColors.primaryDark,
-        buttonText: Colors.white,
-        body: _Progress(l10n),
-      ),
-      _Page(
-        background: AppColors.primary,
-        ink: Colors.white,
-        track: Colors.white.withValues(alpha: 0.45),
-        weave: AppColors.weaveGreen,
-        buttonColor: Colors.white,
-        buttonText: AppColors.primaryDark,
-        body: _Saved(l10n),
-      ),
-    ];
-    final current = pages[_page];
+    final now = DateTime.now();
+    final monthKey = currentMonthKey();
+    final previous = DateTime(now.year, now.month - 1);
+    final currentTx =
+        ref.watch(transactionsForMonthProvider(monthKey)).valueOrNull ?? const [];
+    final previousTx = ref
+            .watch(transactionsForMonthProvider(monthKeyOf(previous)))
+            .valueOrNull ??
+        const [];
+    final currency =
+        ref.watch(userFinanceProvider).valueOrNull?.currency ?? 'CAD';
+    final facts = buildMonthRecap(
+      current: [
+        for (final tx in currentTx)
+          (
+            category: tx.category,
+            amountCents: tx.amountCents,
+            amountMainCents: tx.amountMainCents,
+            feeCents: tx.feeCents,
+          ),
+      ],
+      previous: [
+        for (final tx in previousTx)
+          (
+            category: tx.category,
+            amountCents: tx.amountCents,
+            amountMainCents: tx.amountMainCents,
+            feeCents: tx.feeCents,
+          ),
+      ],
+    );
+    final locale = Localizations.localeOf(context).toString();
+    final monthName = DateFormat.MMMM(locale).format(now);
+    final savedLabel = MoneyFormatter(locale).formatCents(facts.savedCents, currency);
+    final focusLabel = facts.focusCategory == null
+        ? ''
+        : expenseCategoryLabel(l10n, facts.focusCategory!);
+    final pages = facts.expenseCount == 0
+        ? [
+            _Page(
+              background: AppColors.primaryDark,
+              ink: Colors.white,
+              track: AppColors.recapTrack,
+              weave: AppColors.weaveGreen,
+              buttonColor: Colors.white,
+              buttonText: AppColors.primaryDark,
+              body: _Empty(l10n),
+            ),
+          ]
+        : [
+            _Page(
+              background: AppColors.primaryDark,
+              ink: Colors.white,
+              track: AppColors.recapTrack,
+              weave: AppColors.weaveGreen,
+              buttonColor: Colors.white,
+              buttonText: AppColors.primaryDark,
+              body: _Spent(
+                title: l10n.recapSpentTitleMonth(monthName),
+                count: '${facts.expenseCount}',
+                label: l10n.recapSpentLabel,
+              ),
+            ),
+            _Page(
+              background: AppColors.accent,
+              ink: AppColors.primaryDark,
+              track: AppColors.recapGoldTrack,
+              weave: AppColors.weaveGold,
+              buttonColor: AppColors.primaryDark,
+              buttonText: Colors.white,
+              body: _Progress(
+                title: l10n.recapProgressTitle,
+                category: focusLabel,
+                value: facts.focusImproved
+                    ? l10n.recapFocusDrop(facts.focusPercent)
+                    : l10n.recapFocusShare(facts.focusPercent),
+                caption: l10n.recapProgressCaption,
+              ),
+            ),
+            _Page(
+              background: AppColors.primary,
+              ink: Colors.white,
+              track: Colors.white.withValues(alpha: 0.45),
+              weave: AppColors.weaveGreen,
+              buttonColor: Colors.white,
+              buttonText: AppColors.primaryDark,
+              body: _Saved(
+                title: l10n.recapSavedTitle,
+                value: savedLabel,
+                label: l10n.recapSavedLabel,
+              ),
+            ),
+          ];
+    final safePage = _page >= pages.length ? 0 : _page;
+    final current = pages[safePage];
     return Scaffold(
       backgroundColor: current.background,
       body: SafeArea(
@@ -75,7 +146,7 @@ class _MonthlyRecapScreenState extends State<MonthlyRecapScreen> {
                       child: Container(
                         height: 4,
                         decoration: BoxDecoration(
-                          color: i == _page ? current.ink : current.track,
+                          color: i == safePage ? current.ink : current.track,
                           borderRadius: BorderRadius.circular(3),
                         ),
                       ),
@@ -106,7 +177,7 @@ class _MonthlyRecapScreenState extends State<MonthlyRecapScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              l10n.recapKicker,
+                              l10n.recapKickerMonth(monthName),
                               style: TextStyle(
                                 fontFamily: 'Nunito',
                                 fontSize: 12,
@@ -118,7 +189,13 @@ class _MonthlyRecapScreenState extends State<MonthlyRecapScreen> {
                             Expanded(child: page.body),
                             SiphoButton3D(
                               label: l10n.recapShare,
-                              onPressed: () => Share.share(l10n.recapShareText),
+                              onPressed: () => Share.share(
+                                l10n.recapShareReal(
+                                  monthName,
+                                  facts.expenseCount,
+                                  savedLabel,
+                                ),
+                              ),
                               color: page.buttonColor,
                               textColor: page.buttonText,
                               shadowColor: AppColors.primaryDark,
@@ -162,9 +239,15 @@ class _Page {
 }
 
 class _Spent extends StatelessWidget {
-  const _Spent(this.l10n);
+  const _Spent({
+    required this.title,
+    required this.count,
+    required this.label,
+  });
 
-  final AppLocalizations l10n;
+  final String title;
+  final String count;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -172,7 +255,7 @@ class _Spent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          l10n.recapSpentTitle,
+          title,
           style: const TextStyle(
             fontFamily: 'Nunito',
             fontSize: 34,
@@ -182,7 +265,7 @@ class _Spent extends StatelessWidget {
           ),
         ),
         Text(
-          l10n.recapSpentCount,
+          count,
           style: const TextStyle(
             fontFamily: 'Nunito',
             fontSize: 112,
@@ -192,7 +275,7 @@ class _Spent extends StatelessWidget {
           ),
         ),
         Text(
-          l10n.recapSpentLabel,
+          label,
           style: const TextStyle(
             fontFamily: 'Nunito',
             fontSize: 32,
@@ -209,9 +292,17 @@ class _Spent extends StatelessWidget {
 }
 
 class _Progress extends StatelessWidget {
-  const _Progress(this.l10n);
+  const _Progress({
+    required this.title,
+    required this.category,
+    required this.value,
+    required this.caption,
+  });
 
-  final AppLocalizations l10n;
+  final String title;
+  final String category;
+  final String value;
+  final String caption;
 
   @override
   Widget build(BuildContext context) {
@@ -219,7 +310,7 @@ class _Progress extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          l10n.recapProgressTitle,
+          title,
           style: const TextStyle(
             fontFamily: 'Nunito',
             fontSize: 34,
@@ -230,7 +321,7 @@ class _Progress extends StatelessWidget {
         ),
         const SizedBox(height: 24),
         Text(
-          l10n.recapProgressCategory,
+          category,
           style: const TextStyle(
             fontFamily: 'Nunito',
             fontSize: 30,
@@ -239,10 +330,10 @@ class _Progress extends StatelessWidget {
           ),
         ),
         Text(
-          l10n.recapProgressValue,
+          value,
           style: const TextStyle(
             fontFamily: 'Nunito',
-            fontSize: 84,
+            fontSize: 64,
             fontWeight: FontWeight.w900,
             height: 1.05,
             color: AppColors.primaryDark,
@@ -259,7 +350,7 @@ class _Progress extends StatelessWidget {
         const SizedBox(height: 8),
         Center(
           child: Text(
-            l10n.recapProgressCaption,
+            caption,
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontFamily: 'Nunito',
@@ -276,9 +367,15 @@ class _Progress extends StatelessWidget {
 }
 
 class _Saved extends StatelessWidget {
-  const _Saved(this.l10n);
+  const _Saved({
+    required this.title,
+    required this.value,
+    required this.label,
+  });
 
-  final AppLocalizations l10n;
+  final String title;
+  final String value;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -286,7 +383,7 @@ class _Saved extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          l10n.recapSavedTitle,
+          title,
           style: const TextStyle(
             fontFamily: 'Nunito',
             fontSize: 34,
@@ -296,17 +393,17 @@ class _Saved extends StatelessWidget {
           ),
         ),
         Text(
-          l10n.recapSavedValue,
+          value,
           style: const TextStyle(
             fontFamily: 'Nunito',
-            fontSize: 84,
+            fontSize: 56,
             fontWeight: FontWeight.w900,
             height: 1.05,
             color: AppColors.accent,
           ),
         ),
         Text(
-          l10n.recapSavedLabel,
+          label,
           style: const TextStyle(
             fontFamily: 'Nunito',
             fontSize: 30,
@@ -321,6 +418,45 @@ class _Saved extends StatelessWidget {
     );
   }
 }
+
+class _Empty extends StatelessWidget {
+  const _Empty(this.l10n);
+
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.recapEmptyTitle,
+          style: const TextStyle(
+            fontFamily: 'Nunito',
+            fontSize: 34,
+            fontWeight: FontWeight.w900,
+            height: 1.2,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          l10n.recapEmptyBody,
+          style: const TextStyle(
+            fontFamily: 'Nunito',
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            height: 1.3,
+            color: Colors.white,
+          ),
+        ),
+        const Spacer(),
+        const Center(child: SiphoArt.happy(frame: 120)),
+      ],
+    );
+  }
+}
+
 
 class _DancingBird extends StatelessWidget {
   const _DancingBird();

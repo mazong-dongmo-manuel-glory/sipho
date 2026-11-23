@@ -11,14 +11,15 @@ import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
 import 'package:sipho/features/expenses/domain/transaction.dart';
 import 'package:sipho/features/expenses/presentation/expense_category_label.dart';
+import 'package:sipho/features/expenses/presentation/expenses_section_tabs.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
-import 'package:sipho/features/gamification/data/game_state_repository.dart';
 import 'package:sipho/features/fixed_expenses/domain/fixed_expense.dart';
 import 'package:sipho/features/fixed_expenses/domain/fixed_expense_draft.dart';
 import 'package:sipho/features/fixed_expenses/domain/fixed_expense_schedule.dart';
 import 'package:sipho/features/fixed_expenses/domain/fixed_paid.dart';
 import 'package:sipho/features/fixed_expenses/presentation/edit_fixed_expense_sheet.dart';
 import 'package:sipho/features/fixed_expenses/presentation/fixed_paid_button.dart';
+import 'package:sipho/features/gamification/data/game_state_repository.dart';
 
 class FixedExpensesListScreen extends StatelessWidget {
   const FixedExpensesListScreen({super.key});
@@ -33,9 +34,16 @@ class FixedExpensesListScreen extends StatelessWidget {
 }
 
 class SocleView extends ConsumerWidget {
-  const SocleView({super.key, this.onSelectTab});
+  const SocleView({
+    super.key,
+    this.onSelectTab,
+    this.showSectionTabs = true,
+  });
 
   final ValueChanged<int>? onSelectTab;
+
+  /// When false, the parent already shows [ExpensesSectionTabs].
+  final bool showSectionTabs;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -67,26 +75,23 @@ class SocleView extends ConsumerWidget {
         Row(
           children: [
             Expanded(
-              child: _Pill(
-                AppColors.flamePill,
-                AppColors.flameText,
-                '🔥  ${game?.streak.current ?? '—'}',
+              child: Text(
+                l10n.homeStreakDays(game?.streak.current ?? 0),
+                style: const TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryDark,
+                ),
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _Pill(
-                AppColors.seedPill,
-                AppColors.seedText,
-                '🌾  ${game?.gems ?? '—'}',
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _Pill(
-                AppColors.mint,
-                AppColors.primaryDark,
-                l10n.homeLevelPill(game?.level ?? 1),
+            Text(
+              l10n.homeSeedsLevel('${game?.gems ?? 0}', game?.level ?? 1),
+              style: const TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primaryDark,
               ),
             ),
           ],
@@ -122,9 +127,12 @@ class SocleView extends ConsumerWidget {
             const SiphoArt.happy(frame: 100),
           ],
         ),
-        if (onSelectTab != null) ...[
+        if (showSectionTabs && onSelectTab != null) ...[
           const SizedBox(height: 12),
-          _SocleTabs(onSelectTab: onSelectTab!),
+          ExpensesSectionTabs(
+            selectedIndex: 1,
+            onSelectTab: onSelectTab!,
+          ),
         ],
         const SizedBox(height: 12),
         Container(
@@ -324,7 +332,7 @@ List<int> _dueDays(List<FixedExpense> items) {
 int _spent(List<SiphoTransaction> transactions, String category) {
   return transactions
       .where((tx) => tx.category == category)
-      .fold<int>(0, (sum, tx) => sum + (tx.amountMainCents ?? tx.amountCents));
+      .fold<int>(0, (sum, tx) => sum + tx.spendMainCents);
 }
 
 String _note(
@@ -519,91 +527,4 @@ class _Day extends StatelessWidget {
   }
 }
 
-class _SocleTabs extends StatelessWidget {
-  const _SocleTabs({required this.onSelectTab});
 
-  final ValueChanged<int> onSelectTab;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final labels = [
-      l10n.expensesThisMonth,
-      l10n.expensesBase,
-      l10n.expensesCharts
-    ];
-    return Row(
-      children: [
-        for (var i = 0; i < labels.length; i++)
-          Expanded(
-            child: GestureDetector(
-              onTap: () => onSelectTab(i),
-              behavior: HitTestBehavior.opaque,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    labels[i],
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: 'Nunito',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: i == 1
-                          ? AppColors.primaryDark
-                          : AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: FractionallySizedBox(
-                      widthFactor: 0.72,
-                      child: Container(
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color:
-                              i == 1 ? AppColors.primary : Colors.transparent,
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _Pill extends StatelessWidget {
-  const _Pill(this.background, this.foreground, this.label);
-
-  final Color background;
-  final Color foreground;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 36,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: 'Nunito',
-          fontSize: 14,
-          fontWeight: FontWeight.w800,
-          color: foreground,
-        ),
-      ),
-    );
-  }
-}

@@ -1,9 +1,14 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:sipho/core/firebase/firebase_providers.dart';
 import 'package:sipho/core/time/device_timezone.dart';
 import 'package:sipho/features/auth/domain/user_model.dart';
@@ -68,25 +73,77 @@ class AuthRepository {
     final onApplePlatform = !kIsWeb &&
         (defaultTargetPlatform == TargetPlatform.iOS ||
             defaultTargetPlatform == TargetPlatform.macOS);
-    if (!onApplePlatform) {
-      // Android / other: do not call SignInWithApple (native crash / unsupported).
-      throw UnsupportedError(
-        'Apple Sign-In is only available on iOS and macOS.',
-      );
-    }
 
     try {
-      // Native Apple sign-in via Firebase on Apple devices
-      final appleProvider = AppleAuthProvider();
-      appleProvider.addScope('email');
-      appleProvider.addScope('name');
-      final result = await _auth.signInWithProvider(appleProvider);
+      final UserCredential result;
+      String? displayName;
+
+      if (onApplePlatform) {
+        // Native Sign in with Apple + nonce (reliable on simulator / first-run
+        // name capture). Do not pass authorizationCode as accessToken.
+        final rawNonce = _generateNonce();
+        final nonce = _sha256ofString(rawNonce);
+        final appleCredential = await SignInWithApple.getAppleIDCredential(
+          scopes: [
+            AppleIDAuthorizationScopes.email,
+            AppleIDAuthorizationScopes.fullName,
+          ],
+          nonce: nonce,
+        );
+        final idToken = appleCredential.identityToken;
+        if (idToken == null || idToken.isEmpty) {
+          throw StateError('Apple Sign-In returned no identity token.');
+        }
+        final oauthCredential = OAuthProvider('apple.com').credential(
+          idToken: idToken,
+          rawNonce: rawNonce,
+        );
+        result = await _auth.signInWithCredential(oauthCredential);
+        final appleName = [
+          appleCredential.givenName,
+          appleCredential.familyName,
+        ]
+            .whereType<String>()
+            .map((p) => p.trim())
+            .where((p) => p.isNotEmpty);
+        displayName = appleName.isEmpty ? null : appleName.join(' ');
+      } else {
+        // Android: Firebase OAuth via Custom Tabs. Needs OAuth code flow in
+        // Firebase Auth (Services ID kAppleServicesId — see ENVIRONMENTS.md).
+        // Native SignInWithApple without web options crashes on Android.
+        final appleProvider = AppleAuthProvider()
+          ..addScope('email')
+          ..addScope('name');
+        result = await _auth.signInWithProvider(appleProvider);
+        displayName = _displayNameFromAppleProfile(
+          result.additionalUserInfo?.profile,
+        );
+      }
+
       if (result.user != null) {
-        await ensureProfile(result.user!);
+        try {
+          if (displayName != null &&
+              (result.user!.displayName == null ||
+                  result.user!.displayName!.trim().isEmpty)) {
+            await result.user!.updateDisplayName(displayName);
+          }
+          await ensureProfile(result.user!, displayName: displayName);
+        } catch (e) {
+          // Auth already succeeded — don't bounce the user back to login.
+          debugPrint('Apple Sign-In profile sync failed: $e');
+        }
       }
       return result;
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) {
+        return null;
+      }
+      debugPrint('Apple Sign-In Authorization error: $e');
+      rethrow;
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'canceled' || e.code == 'web-context-cancelled') {
+      if (e.code == 'canceled' ||
+          e.code == 'web-context-cancelled' ||
+          e.code == 'ERROR_ABORTED_BY_USER') {
         return null;
       }
       debugPrint('Apple Sign-In Firebase error: $e');
@@ -95,6 +152,47 @@ class AuthRepository {
       debugPrint('Apple Sign-In error: $e');
       rethrow;
     }
+  }
+
+  /// Best-effort name from Apple OAuth profile (Android / web provider flow).
+  static String? _displayNameFromAppleProfile(Map<String, dynamic>? profile) {
+    if (profile == null || profile.isEmpty) return null;
+    final name = profile['name'];
+    if (name is String && name.trim().isNotEmpty) return name.trim();
+    if (name is Map) {
+      final given = name['firstName'] ?? name['givenName'] ?? name['first_name'];
+      final family =
+          name['lastName'] ?? name['familyName'] ?? name['last_name'];
+      final parts = [given, family]
+          .whereType<String>()
+          .map((p) => p.trim())
+          .where((p) => p.isNotEmpty)
+          .toList();
+      if (parts.isNotEmpty) return parts.join(' ');
+    }
+    final given = profile['given_name'] ?? profile['first_name'];
+    final family = profile['family_name'] ?? profile['last_name'];
+    final parts = [given, family]
+        .whereType<String>()
+        .map((p) => p.trim())
+        .where((p) => p.isNotEmpty)
+        .toList();
+    return parts.isEmpty ? null : parts.join(' ');
+  }
+
+  /// Cryptographically random nonce for Sign in with Apple → Firebase.
+  static String _generateNonce([int length = 32]) {
+    const charset =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)])
+        .join();
+  }
+
+  static String _sha256ofString(String input) {
+    final bytes = utf8.encode(input);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
   }
 
   Future<void> signOut() async {
@@ -157,7 +255,8 @@ class AuthRepository {
     final data = existing.data() ?? {};
     if (data['countryCode'] == null) updates['countryCode'] = country;
     if (data['currency'] == null) updates['currency'] = 'CAD';
-    if (data['locale'] == null) updates['locale'] = language;
+    // Keep profile locale aligned with the device UI language (FR/EN only).
+    if (data['locale'] != language) updates['locale'] = language;
     // Refreshed on every launch so a daylight-saving change or a trip is picked up.
     updates.addAll(timezone.toProfileFields());
     if (data['timezone'] == null && timezone.id == null) {

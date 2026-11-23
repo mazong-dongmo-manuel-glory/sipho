@@ -42,7 +42,7 @@ class _ChestOpenScreenState extends ConsumerState<ChestOpenScreen> {
     final l10n = AppLocalizations.of(context);
     final game = ref.watch(gameStateStreamProvider).valueOrNull;
     return Scaffold(
-      backgroundColor: _open ? AppColors.seedPill : AppColors.background,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
           padding:
@@ -53,16 +53,24 @@ class _ChestOpenScreenState extends ConsumerState<ChestOpenScreen> {
               Row(
                 children: [
                   Expanded(
-                      child: _Pill(AppColors.flamePill, AppColors.flameText,
-                          '🔥  ${game?.streak.current ?? '—'}')),
-                  const SizedBox(width: 16),
-                  Expanded(
-                      child: _Pill(AppColors.seedPill, AppColors.seedText,
-                          '🌾  ${game?.gems ?? '—'}')),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _Pill(AppColors.mint, AppColors.primaryDark,
-                        l10n.homeLevelPill(game?.level ?? 1)),
+                    child: Text(
+                      l10n.homeStreakDays(game?.streak.current ?? 0),
+                      style: const TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    l10n.homeSeedsLevel('${game?.gems ?? 0}', game?.level ?? 1),
+                    style: const TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primaryDark,
+                    ),
                   ),
                 ],
               ),
@@ -72,9 +80,9 @@ class _ChestOpenScreenState extends ConsumerState<ChestOpenScreen> {
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontFamily: 'Nunito',
-                  fontSize: 29,
-                  fontWeight: FontWeight.w900,
-                  height: 1.2,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  height: 1.3,
                   color: AppColors.primaryDark,
                 ),
               ),
@@ -332,31 +340,3 @@ class _Gift extends StatelessWidget {
   }
 }
 
-class _Pill extends StatelessWidget {
-  const _Pill(this.background, this.foreground, this.label);
-
-  final Color background;
-  final Color foreground;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 36,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: 'Nunito',
-          fontSize: 14,
-          fontWeight: FontWeight.w800,
-          color: foreground,
-        ),
-      ),
-    );
-  }
-}

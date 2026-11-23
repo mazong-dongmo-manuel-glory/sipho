@@ -53,10 +53,15 @@ class GameState {
   final int weeklyXp;
   final List<String> badges;
 
+  /// Seeds of gold — stored as `gems` in Firestore; `seeds` accepted as alias.
+  int get seeds => gems;
+
   factory GameState.fromJson(Map<String, dynamic> json) => GameState(
         xp: (json['xp'] as num?)?.toInt() ?? 0,
         level: (json['level'] as num?)?.toInt() ?? 1,
-        gems: (json['gems'] as num?)?.toInt() ?? 0,
+        gems: (json['gems'] as num?)?.toInt() ??
+            (json['seeds'] as num?)?.toInt() ??
+            0,
         streak: json['streak'] is Map<String, dynamic>
             ? StreakInfo.fromJson(json['streak'] as Map<String, dynamic>)
             : const StreakInfo(),

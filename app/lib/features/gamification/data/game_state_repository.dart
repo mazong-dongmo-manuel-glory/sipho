@@ -4,8 +4,6 @@ import 'package:sipho/core/firebase/firebase_providers.dart';
 import 'package:sipho/features/auth/presentation/auth_provider.dart';
 import 'package:sipho/features/gamification/domain/game_extras.dart';
 import 'package:sipho/features/gamification/domain/game_state.dart';
-import 'package:sipho/features/gamification/domain/quest.dart';
-
 final gameStateRepositoryProvider = Provider<GameStateRepository>((ref) {
   return GameStateRepository(ref.watch(firestoreProvider));
 });
@@ -76,23 +74,4 @@ class GameStateRepository {
     );
   }
 
-  Stream<List<Quest>> watchActiveQuests(String uid) {
-    return _firestore
-        .collection('users/$uid/quests')
-        .where('status', isNotEqualTo: 'claimed')
-        .snapshots()
-        .map((snap) => snap.docs.map((d) {
-              final data = d.data();
-              return Quest(
-                id: d.id,
-                templateId: data['templateId'] as String? ?? '',
-                type: data['type'] as String? ?? 'daily',
-                progress: (data['progress'] as num?)?.toInt() ?? 0,
-                target: (data['target'] as num?)?.toInt() ?? 1,
-                rewardXp: (data['rewardXp'] as num?)?.toInt() ?? 20,
-                rewardChest: data['rewardChest'] as String?,
-                status: data['status'] as String? ?? 'active',
-              );
-            }).toList());
-  }
 }

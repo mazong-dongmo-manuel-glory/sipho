@@ -96,38 +96,43 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = dark
-        ? AppColors.nightNavIcon
-        : (selected ? AppColors.primary : AppColors.textSecondary);
+    final color = selected
+        ? (dark ? AppColors.nightMint : AppColors.primary)
+        : (dark ? AppColors.nightNavIcon : AppColors.textSecondary);
     final pill = dark ? AppColors.nightNavActive : AppColors.mint;
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(4, 8, 4, 18),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: selected ? pill : Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(tab.icon, color: color, size: 25),
-              const SizedBox(height: 2),
-              Text(
-                tab.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontFamily: 'Nunito',
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  height: 1.2,
-                  color: color,
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: tab.label,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(4, 8, 4, 18),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: selected ? pill : Colors.transparent,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(tab.icon, color: color, size: 25),
+                const SizedBox(height: 2),
+                Text(
+                  tab.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                    color: color,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

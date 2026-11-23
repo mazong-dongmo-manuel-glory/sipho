@@ -32,8 +32,8 @@ CatalogLesson slotPlaceholder({
     id: id,
     emoji: emoji,
     minutes: 3,
-    titleFr: 'Leçon locale $n',
-    titleEn: 'Local lesson $n',
+    titleFr: 'Leçon $n',
+    titleEn: 'Lesson $n',
     objective: LText(
       'Une micro-leçon adaptée à ton pays (générée pour toi).',
       'A micro-lesson tailored to your country (generated for you).',

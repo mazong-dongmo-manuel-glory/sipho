@@ -6,6 +6,7 @@ import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/features/economy/data/economy_repository.dart';
 import 'package:sipho/features/economy/domain/economy_data.dart';
 import 'package:sipho/features/economy/domain/economy_news.dart';
+import 'package:sipho/features/finance/data/fx_rates_repository.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
 
 /// Country economy snapshot on Home: inflation / rate chips + top local headline.
@@ -22,9 +23,12 @@ class HomeCountryEconomyCard extends ConsumerWidget {
         : 'CA';
     final economy = ref.watch(userEconomyProvider).valueOrNull;
     final news = ref.watch(userEconomyNewsProvider).valueOrNull;
+    final fx = ref.watch(fxRatesProvider).valueOrNull;
+    ref.watch(marketRefreshProvider);
     final headline = _headline(news);
     final inflation = _indicator(economy, const ['inflation', 'cpi']);
     final rate = _indicator(economy, const ['policy_rate', 'keyRate', 'key_rate']);
+    final fxLine = _fxLine(l10n, fx, finance?.currency ?? '', isFr: isFr);
 
     return Material(
       color: Colors.transparent,
@@ -73,7 +77,7 @@ class HomeCountryEconomyCard extends ConsumerWidget {
                   ),
                 ],
               ),
-              if (inflation != null || rate != null) ...[
+              if (inflation != null || rate != null || fxLine != null) ...[
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 8,
@@ -91,6 +95,7 @@ class HomeCountryEconomyCard extends ConsumerWidget {
                           _formatValue(rate, isFr: isFr),
                         ),
                       ),
+                    if (fxLine != null) _Chip(label: fxLine),
                   ],
                 ),
               ],
@@ -144,6 +149,25 @@ class HomeCountryEconomyCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  String? _fxLine(
+    AppLocalizations l10n,
+    FxRates? fx,
+    String currency, {
+    required bool isFr,
+  }) {
+    if (fx == null) return null;
+    final quote = currency.toUpperCase() == fx.base || currency.trim().length != 3
+        ? 'EUR'
+        : currency.toUpperCase();
+    if (quote == fx.base) return null;
+    final value = fx.rateTo(from: fx.base, to: quote);
+    if (value == null) return null;
+    final digits = value >= 100 ? 2 : 4;
+    final raw = value.toStringAsFixed(digits);
+    final formatted = isFr ? raw.replaceAll('.', ',') : raw;
+    return l10n.homeFxChip(fx.base, formatted, quote);
   }
 
   EconomyNewsItem? _headline(EconomyNewsFeed? feed) {

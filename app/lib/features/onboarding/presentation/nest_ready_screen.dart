@@ -1,16 +1,11 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
-import 'package:sipho/app/theme/app_spacing.dart';
-import 'package:sipho/core/animations/lottie_widget.dart';
-import 'package:sipho/core/animations/sipho_lotties.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
 
+/// Frame Figma 06 · Première victoire · Épuré (`2:28925`).
 class NestReadyScreen extends StatelessWidget {
   const NestReadyScreen({super.key});
 
@@ -21,97 +16,115 @@ class NestReadyScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
-          padding:
-              const EdgeInsets.symmetric(horizontal: AppSpacing.pagePadding),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 8),
-              const LottieWidget(
-                assetPath: SiphoLotties.confetti,
-                width: 220,
-                height: 72,
-              ),
-              Text(
-                l10n.nestReadyKicker,
-                style: const TextStyle(
-                  fontFamily: 'Nunito',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  height: 1.2,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 270,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Transform.rotate(
-                      angle: -12 * math.pi / 180,
-                      child: SvgPicture.asset(
-                        'assets/images/sipho_dancing.svg',
-                        width: 209.739,
-                        height: 182.02,
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 8,
-                      child: SvgPicture.asset(
-                        'assets/images/sipho_nest_wide.svg',
-                        width: 247,
-                        height: 72.9773,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
               Text(
                 l10n.nestReadyTitle,
-                textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontFamily: 'Nunito',
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                  height: 1.2,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  height: 1.3,
                   color: AppColors.primaryDark,
                 ),
               ),
-              const SizedBox(height: 12),
-              Container(
-                height: 56,
-                padding: const EdgeInsets.symmetric(horizontal: 22),
-                decoration: BoxDecoration(
-                  color: AppColors.seedPill,
-                  borderRadius: BorderRadius.circular(999),
+              const SizedBox(height: 20),
+              Text(
+                l10n.nestReadyLead,
+                style: const TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  height: 1.3,
+                  color: AppColors.textSecondary,
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+              ),
+              const SizedBox(height: 20),
+              const SiphoArt.celebrating(frame: 154),
+              const SizedBox(height: 20),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: AppColors.soft,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('🏅', style: TextStyle(fontSize: 18)),
-                    const SizedBox(width: 8),
                     Text(
-                      l10n.nestReadyBadge,
+                      l10n.nestReadyXpCardTitle,
                       style: const TextStyle(
                         fontFamily: 'Nunito',
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.seedText,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        height: 1.3,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.nestReadyXpCardBody,
+                      style: const TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        height: 1.3,
+                        color: AppColors.primaryDark,
                       ),
                     ),
                   ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.nestReadyBadgeRow,
+                      style: const TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        height: 1.3,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                  ),
+                  const Text(
+                    '✓',
+                    style: TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      height: 1.3,
+                      color: AppColors.primaryDark,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Text(
+                l10n.nestReadyDisclaimer,
+                style: const TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  height: 1.3,
+                  color: AppColors.textSecondary,
                 ),
               ),
               const Spacer(),
               SiphoButton3D(
-                label: l10n.continueBtn.toUpperCase(),
+                label: l10n.nestReadyCta,
                 onPressed: () => context.go('/onboarding/notifications'),
-                color: AppColors.primary,
+                color: AppColors.primaryDark,
                 shadowColor: AppColors.primaryDark,
                 height: 52,
                 borderRadius: figmaButtonRadius,
               ),
-              const SizedBox(height: 28),
             ],
           ),
         ),

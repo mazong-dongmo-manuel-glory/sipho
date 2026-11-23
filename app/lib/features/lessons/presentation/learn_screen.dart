@@ -6,12 +6,12 @@ import 'package:go_router/go_router.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_spacing.dart';
+import 'package:sipho/core/i18n/app_language.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
-import 'package:sipho/features/gamification/data/game_state_repository.dart';
 import 'package:sipho/features/insights/data/insight_service.dart';
 import 'package:sipho/features/lessons/data/ai_country_lessons_repository.dart';
 import 'package:sipho/features/lessons/domain/country_lesson_catalog_extra.dart';
-import 'package:sipho/features/lessons/domain/country_slot_player.dart';
+import 'package:sipho/features/lessons/domain/generated_lesson_path.dart';
 import 'package:sipho/features/lessons/domain/lesson_catalog.dart';
 import 'package:sipho/features/lessons/presentation/learn_path.dart';
 import 'package:sipho/features/lessons/presentation/learn_quests_section.dart';
@@ -33,31 +33,30 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _ensureAiLessons());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _ensureNextLesson());
   }
 
-  Future<void> _ensureAiLessons() async {
-    if (!mounted) return;
-    final country =
-        ref.read(userFinanceProvider).valueOrNull?.countryCode.trim() ?? '';
-    if (!canRequestAiLessonFill(
-      alreadyRequested: _requestedAiLessons,
-      countryCode: country,
+  Future<void> _ensureNextLesson() async {
+    if (!mounted || _requestedAiLessons) return;
+    final finance = ref.read(userFinanceProvider).valueOrNull;
+    if (finance == null) return;
+    final completed = finance.completedLessonIds.toSet();
+    final ai = ref.read(aiCountryLessonsProvider);
+    if (!ai.hasValue) return;
+    final generated = generatedLessonsFrom(ai.value ?? const {});
+    if (!needsAnotherGeneratedLesson(
+      generatedIds: generated.map((lesson) => lesson.id),
+      completed: completed,
     )) {
       return;
     }
     _requestedAiLessons = true;
     try {
-      final filled =
-          ref.read(aiCountryLessonsProvider).valueOrNull?.keys.toSet() ??
-              {};
-      await ref.read(aiCountryLessonsRepositoryProvider).ensureEmptySlotsFilled(
-            countryCode: country,
-            filledSlotIds: filled,
-            limit: 3,
+      await ref.read(aiCountryLessonsRepositoryProvider).ensureNextGenerated(
+            locale: ref.read(appUiLanguageProvider),
           );
     } catch (_) {
-      // Slot placeholders remain visible; generation retries on open.
+      // The path stays on the lessons already stored. The next open retries.
     }
   }
 
@@ -80,11 +79,17 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
     // Country slots: fill monolingual AI content before playing (reuse if present).
     if (isCountrySlotId(lesson.id)) {
       final ai = ref.read(aiCountryLessonsProvider).valueOrNull ?? {};
-      if (ai[lesson.id]?.isPlayable != true) {
+      final uiLanguage = ref.read(appUiLanguageProvider);
+      final existing = ai[lesson.id];
+      final needsFill = existing?.isPlayable != true ||
+          !appLanguagesMatch(existing?.locale, uiLanguage);
+      if (needsFill) {
         try {
-          await ref
-              .read(aiCountryLessonsRepositoryProvider)
-              .ensureGenerated(slotId: lesson.id, forceNew: false);
+          await ref.read(aiCountryLessonsRepositoryProvider).ensureGenerated(
+                slotId: lesson.id,
+                forceNew: existing?.isPlayable == true,
+                locale: uiLanguage,
+              );
         } catch (_) {
           // Player will show placeholder / not-found; user can retry.
         }
@@ -115,26 +120,37 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
             ?.completedLessonIds
             .toSet() ??
         {};
-    final game = ref.watch(gameStateStreamProvider).valueOrNull;
     final advice = ref.watch(activeCoachAdviceProvider);
     final ids = [for (final lesson in kCatalogLessons) lesson.id];
     final nextId = nextLessonId(ids, completed);
     final units = unitProgressList(kCatalogUnits, completed);
-    final localUnits = unitProgressList(
-      ref.watch(personalizedCountryUnitsProvider),
-      completed,
+    final coreDone = units.isNotEmpty && units.every((unit) => unit.completed);
+    final generatedLessons = generatedLessonsFrom(
+      ref.watch(aiCountryLessonsProvider).valueOrNull ?? const {},
     );
+    final localUnits = unitProgressList(
+      generatedUnits(generatedLessons),
+      completed,
+      startIndex: units.length,
+      initiallyUnlocked: coreDone,
+    );
+    final localIds = [
+      for (final unit in localUnits)
+        for (final lesson in unit.unit.lessons) lesson.id,
+    ];
+    // One current lesson on the whole path. The country module waits until
+    // the core units are finished, then continues with the same lock rule.
+    final countryOpen = localUnits.any((unit) => unit.unlocked && !unit.completed);
+    final localNextId = countryOpen ? nextLessonId(localIds, completed) : null;
     ref.listen(userFinanceProvider, (previous, next) {
-      final code = next.valueOrNull?.countryCode.trim() ?? '';
-      if (code.isNotEmpty && !_requestedAiLessons) {
-        unawaited(_ensureAiLessons());
-      }
+      if (_requestedAiLessons) return;
+      unawaited(_ensureNextLesson());
     });
-    if (nextId != null) _scrollToCurrentOnce();
-
-    final streakText = game != null ? '${game.streak.current}' : '—';
-    final seedsText = game != null ? '${game.gems}' : '—';
-    final levelNum = game?.level ?? 1;
+    ref.listen(aiCountryLessonsProvider, (previous, next) {
+      if (_requestedAiLessons || !next.hasValue) return;
+      unawaited(_ensureNextLesson());
+    });
+    if (nextId != null || localNextId != null) _scrollToCurrentOnce();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -143,60 +159,46 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.pagePadding,
-            8,
+            16,
             AppSpacing.pagePadding,
             24,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: _Pill(
-                      AppColors.flamePill,
-                      AppColors.flameText,
-                      '🔥  $streakText',
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _Pill(
-                      AppColors.seedPill,
-                      AppColors.seedText,
-                      '🌾  $seedsText',
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _Pill(
-                      AppColors.mint,
-                      AppColors.primaryDark,
-                      l10n.homeLevelPill(levelNum),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
+              // Frame 15 · Parcours · Épuré
               Text(
                 l10n.learnTitle,
                 style: const TextStyle(
                   fontFamily: 'Nunito',
-                  fontSize: 27,
-                  fontWeight: FontWeight.w900,
-                  height: 1.2,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  height: 1.3,
                   color: AppColors.primaryDark,
                 ),
               ),
               const SizedBox(height: 12),
-              _CoachCard(
-                title: advice == null || advice.title.isEmpty
-                    ? '💡  ${l10n.coachTitle}'
-                    : '💡  ${advice.title}',
-                body: advice?.body ?? l10n.coachSubtitle,
-                openLabel: l10n.coachOpenCard,
-                onTap: () => context.push('/economy'),
+              Text(
+                l10n.learnPathLead,
+                style: const TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  height: 1.3,
+                  color: AppColors.textSecondary,
+                ),
               ),
+              if (advice != null) ...[
+                const SizedBox(height: 12),
+                _CoachCard(
+                  title: advice.title.isEmpty
+                      ? l10n.coachTitle
+                      : advice.title,
+                  body: advice.body,
+                  openLabel: l10n.coachOpenCard,
+                  onTap: () => context.push('/insights'),
+                ),
+              ],
               const SizedBox(height: 14),
               const LearnQuestsSection(),
               const SizedBox(height: 16),
@@ -206,19 +208,17 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                   completed: completed,
                   nextId: nextId,
                   language: language,
-                  currentKey: _currentKey,
+                  currentKey: nextId != null ? _currentKey : null,
                   onLessonTap: (lesson, state) =>
                       _openLesson(lesson, state, unit, language),
                 ),
               for (final unit in localUnits)
                 LearnUnitSection(
                   progress: unit,
-                  // Country slots: all incomplete are playable (matches server).
                   completed: completed,
-                  nextId: null,
-                  unlockIndependently: true,
+                  nextId: localNextId,
                   language: language,
-                  currentKey: _currentKey,
+                  currentKey: nextId == null ? _currentKey : null,
                   onLessonTap: (lesson, state) =>
                       _openLesson(lesson, state, unit, language),
                 ),
@@ -245,81 +245,56 @@ class _CoachCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(12, 11, 12, 12),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.accent),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontFamily: 'Nunito',
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: AppColors.primaryDark,
+    return Semantics(
+      button: true,
+      label: title,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          decoration: BoxDecoration(
+            color: AppColors.soft,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primaryDark,
+                ),
               ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              body,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontFamily: 'Nunito',
-                fontSize: 14,
-                color: AppColors.textSecondary,
+              const SizedBox(height: 6),
+              Text(
+                body,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              openLabel,
-              style: const TextStyle(
-                fontFamily: 'Nunito',
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: AppColors.primary,
+              const SizedBox(height: 8),
+              Text(
+                openLabel,
+                style: const TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primary,
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Pill extends StatelessWidget {
-  const _Pill(this.background, this.foreground, this.label);
-
-  final Color background;
-  final Color foreground;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 36,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: 'Nunito',
-          fontSize: 14,
-          fontWeight: FontWeight.w800,
-          color: foreground,
+            ],
+          ),
         ),
       ),
     );
   }
 }
+

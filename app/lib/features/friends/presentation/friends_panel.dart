@@ -432,7 +432,7 @@ class _ActiveChallengesSection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 8),
-        const _SectionTitle('Défis 1v1 ⚔️'),
+        _SectionTitle(AppLocalizations.of(context).friendsChallengesSection),
         for (final challenge in challenges)
           FriendChallengeCard(challenge: challenge),
         const SizedBox(height: 12),
@@ -470,7 +470,7 @@ class _FriendsList extends ConsumerWidget {
             sharedStreak: byUid[uid]?.sharedStreak ?? 0,
             actions: (name) => [
               IconButton(
-                tooltip: 'Défier',
+                tooltip: AppLocalizations.of(context).friendsChallengeTooltip,
                 onPressed: () {
                   final link = byUid[uid]!;
                   final profile = profiles[uid] ??

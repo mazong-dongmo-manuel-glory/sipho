@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/core/feedback/feedback_cue.dart';
 import 'package:sipho/core/feedback/feedback_service.dart';
+import 'package:sipho/core/i18n/app_language.dart';
+import 'package:sipho/core/widgets/sipho_button_3d.dart';
 import 'package:sipho/features/friends/data/friend_challenges_repository.dart';
 import 'package:sipho/features/friends/domain/friend_challenge.dart';
 import 'package:sipho/features/friends/domain/friends.dart';
@@ -50,34 +53,39 @@ class _ChallengeFriendSheetState extends ConsumerState<ChallengeFriendSheet> {
     if (_busy) return;
     setState(() => _busy = true);
 
+    final l10n = AppLocalizations.of(context);
     final selected = PredefinedChallengeTemplate.catalog[_selectedIndex];
     final friendName = widget.friendProfile.pseudo.isNotEmpty
         ? widget.friendProfile.pseudo
-        : 'Ami';
-    final locale = Localizations.localeOf(context).languageCode;
+        : l10n.friendsUnknownName;
+    final locale =
+        normalizeAppLanguage(Localizations.localeOf(context).languageCode);
 
     try {
       await ref.read(feedbackServiceProvider).play(SiphoCue.fixedPaid);
       await ref.read(friendChallengesRepositoryProvider).createChallenge(
             friendUid: widget.friendProfile.uid,
             templateId: selected.id,
-            locale: locale.startsWith('en') ? 'en' : 'fr',
+            locale: locale,
           );
 
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Défi "${selected.title}" envoyé à $friendName ! ⚔️'),
+            content: Text(
+              l10n.friendsChallengeSent(
+                selected.title(locale),
+                friendName,
+              ),
+            ),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Erreur lors de l’envoi du défi. Réessaie.'),
-          ),
+          SnackBar(content: Text(l10n.friendsChallengeSendError)),
         );
       }
     } finally {
@@ -87,10 +95,13 @@ class _ChallengeFriendSheetState extends ConsumerState<ChallengeFriendSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final language =
+        normalizeAppLanguage(Localizations.localeOf(context).languageCode);
     final friendName = widget.friendProfile.pseudo.isNotEmpty
         ? widget.friendProfile.pseudo
-        : 'ton ami';
-    final templates = PredefinedChallengeTemplate.catalog;
+        : l10n.friendsChallengeFriendFallback;
+    const templates = PredefinedChallengeTemplate.catalog;
 
     return SafeArea(
       child: Padding(
@@ -111,7 +122,7 @@ class _ChallengeFriendSheetState extends ConsumerState<ChallengeFriendSheet> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Défier $friendName ⚔️',
+              l10n.friendsChallengeTitle(friendName),
               style: const TextStyle(
                 fontFamily: 'Nunito',
                 fontSize: 20,
@@ -121,7 +132,7 @@ class _ChallengeFriendSheetState extends ConsumerState<ChallengeFriendSheet> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Choisis un défi amical pour vous motiver à progresser ensemble :',
+              l10n.friendsChallengeSubtitle,
               style: const TextStyle(
                 fontFamily: 'Nunito',
                 fontSize: 14,
@@ -133,6 +144,7 @@ class _ChallengeFriendSheetState extends ConsumerState<ChallengeFriendSheet> {
             for (int i = 0; i < templates.length; i++) ...[
               _TemplateTile(
                 template: templates[i],
+                language: language,
                 isSelected: _selectedIndex == i,
                 onTap: () async {
                   await performSystemHaptic(HapticKind.selection);
@@ -142,33 +154,13 @@ class _ChallengeFriendSheetState extends ConsumerState<ChallengeFriendSheet> {
               const SizedBox(height: 10),
             ],
             const SizedBox(height: 16),
-            FilledButton(
-              onPressed: _busy ? null : _sendChallenge,
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              child: _busy
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Text(
-                      'Lancer le défi ⚔️',
-                      style: TextStyle(
-                        fontFamily: 'Nunito',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                      ),
-                    ),
+            SiphoButton3D(
+              label: l10n.friendsChallengeSend,
+              isLoading: _busy,
+              enabled: !_busy,
+              color: AppColors.primary,
+              shadowColor: AppColors.primaryDark,
+              onPressed: _sendChallenge,
             ),
           ],
         ),
@@ -180,11 +172,13 @@ class _ChallengeFriendSheetState extends ConsumerState<ChallengeFriendSheet> {
 class _TemplateTile extends StatelessWidget {
   const _TemplateTile({
     required this.template,
+    required this.language,
     required this.isSelected,
     required this.onTap,
   });
 
   final PredefinedChallengeTemplate template;
+  final String language;
   final bool isSelected;
   final VoidCallback onTap;
 
@@ -213,7 +207,7 @@ class _TemplateTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    template.title,
+                    template.title(language),
                     style: const TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 15,
@@ -223,7 +217,7 @@ class _TemplateTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    template.description,
+                    template.description(language),
                     style: const TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 12,

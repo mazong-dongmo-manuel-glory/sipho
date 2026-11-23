@@ -48,9 +48,9 @@ class LessonDoneScreen extends ConsumerWidget {
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontFamily: 'Nunito',
-                  fontSize: 30,
-                  fontWeight: FontWeight.w900,
-                  height: 1.2,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  height: 1.3,
                   color: AppColors.primaryDark,
                 ),
               ),

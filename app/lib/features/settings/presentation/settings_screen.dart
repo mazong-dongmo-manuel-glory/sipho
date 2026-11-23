@@ -12,9 +12,8 @@ import 'package:sipho/core/feedback/feedback_service.dart';
 import 'package:sipho/core/feedback/feedback_settings.dart';
 import 'package:sipho/core/legal/sipho_legal.dart';
 import 'package:sipho/core/sound/sound_service.dart';
-import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
-import 'package:sipho/features/auth/presentation/auth_provider.dart';
+import 'package:sipho/features/auth/data/auth_repository.dart';
 import 'package:sipho/features/profile/presentation/profile_edit_sheet.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -78,129 +77,108 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       (label: l10n.settingsHaptics, onLabel: null),
       (label: l10n.settingsVoice, onLabel: null),
     ];
+    String statusFor(int index, bool on) {
+      final feminine = index == 1 || index == 7 || index == 8; // budget, haptics, voice
+      if (on) {
+        return feminine ? l10n.settingsEnabledF : l10n.settingsEnabled;
+      }
+      return feminine ? l10n.settingsDisabledF : l10n.settingsDisabled;
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.pagePadding,
-            12,
-            AppSpacing.pagePadding,
             16,
+            AppSpacing.pagePadding,
+            24,
           ),
           children: [
+            // Frame 25 · Réglages · Épuré
             Row(
               children: [
-                GestureDetector(
-                  onTap: () => context.pop(),
-                  child: const Icon(Icons.arrow_back,
-                      color: AppColors.primaryDark, size: 24),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  l10n.settingsTitle,
-                  style: const TextStyle(
-                    fontFamily: 'Nunito',
-                    fontSize: 26,
-                    fontWeight: FontWeight.w900,
+                IconButton(
+                  onPressed: () => context.pop(),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 44,
+                    minHeight: 44,
+                  ),
+                  icon: const Icon(
+                    Icons.chevron_left_rounded,
                     color: AppColors.primaryDark,
+                    size: 28,
+                  ),
+                  tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    l10n.settingsTitle,
+                    style: const TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      height: 1.3,
+                      color: AppColors.primaryDark,
+                    ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
               l10n.settingsSubtitle,
               style: const TextStyle(
                 fontFamily: 'Nunito',
                 fontSize: 16,
+                fontWeight: FontWeight.w400,
+                height: 1.3,
                 color: AppColors.textSecondary,
               ),
             ),
+            const SizedBox(height: 20),
+            for (var i = 0; i < rows.length; i++) ...[
+              _PrefRow(
+                label: rows[i].label,
+                status: statusFor(i, _on[i]),
+                on: _on[i],
+                onChanged: (value) => _setToggle(i, value),
+                onLabel: rows[i].onLabel,
+              ),
+              if (i != rows.length - 1)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 10),
+                  child: Divider(height: 1, thickness: 1, color: AppColors.line),
+                ),
+            ],
             const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                children: [
-                  for (var i = 0; i < rows.length; i++) ...[
-                    _PrefRow(
-                      label: rows[i].label,
-                      on: _on[i],
-                      onChanged: (value) => _setToggle(i, value),
-                      onLabel: rows[i].onLabel,
-                    ),
-                    if (i != rows.length - 1)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 15),
-                        child: Divider(
-                            height: 1, thickness: 1, color: AppColors.hairline),
-                      ),
-                  ],
-                ],
-              ),
+            _PrefRow(
+              label: l10n.settingsReminder,
+              status: l10n.settingsReminderTime,
+              on: true,
+              onChanged: (_) {},
+              onLabel: () => context.push('/notification-settings'),
+              statusOnly: true,
             ),
-            const SizedBox(height: 16),
-            const _EditProfileSettingsCard(),
-            const SizedBox(height: 16),
-            GestureDetector(
-              onTap: () => context.push('/notification-settings'),
-              child: Container(
-                height: 73,
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                decoration: BoxDecoration(
-                  color: AppColors.seedPill,
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        l10n.settingsReminder,
-                        style: const TextStyle(
-                          fontFamily: 'Nunito',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.seedText,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      l10n.settingsReminderTime,
-                      style: const TextStyle(
-                        fontFamily: 'Nunito',
-                        fontSize: 23,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.primaryDark,
-                      ),
-                    ),
-                  ],
-                ),
+            const SizedBox(height: 20),
+            Text(
+              l10n.settingsSleep,
+              style: const TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                height: 1.3,
+                color: AppColors.textSecondary,
               ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                const SiphoArt.sleeping(frame: 61),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    l10n.settingsSleep,
-                    style: const TextStyle(
-                      fontFamily: 'Nunito',
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ),
-              ],
             ),
             const SizedBox(height: 24),
-            const _PrivacyPolicyRow(),
+            const _EditProfileSettingsCard(),
             const SizedBox(height: 12),
+            const _PrivacyPolicyRow(),
+            const SizedBox(height: 16),
             const _SignOutButton(),
           ],
         ),
@@ -321,7 +299,7 @@ class _SignOutButton extends ConsumerWidget {
       color: AppColors.primaryDark,
       shadowColor: AppColors.ink,
       onPressed: () async {
-        await ref.read(authNotifierProvider.notifier).signOut();
+        await ref.read(authRepositoryProvider).signOut();
         if (context.mounted) context.go('/login');
       },
     );
@@ -331,75 +309,62 @@ class _SignOutButton extends ConsumerWidget {
 class _PrefRow extends StatelessWidget {
   const _PrefRow({
     required this.label,
+    required this.status,
     required this.on,
     required this.onChanged,
     this.onLabel,
+    this.statusOnly = false,
   });
 
   final String label;
+  final String status;
   final bool on;
   final ValueChanged<bool> onChanged;
   final VoidCallback? onLabel;
+  final bool statusOnly;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 52,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 15),
+    return Semantics(
+      button: true,
+      toggled: statusOnly ? null : on,
+      label: '$label, $status',
+      child: GestureDetector(
+        onTap: () {
+          if (onLabel != null) {
+            onLabel!();
+            return;
+          }
+          if (!statusOnly) onChanged(!on);
+        },
+        behavior: HitTestBehavior.opaque,
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: GestureDetector(
-                onTap: onLabel,
-                behavior: HitTestBehavior.opaque,
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    fontFamily: 'Nunito',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primaryDark,
-                  ),
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  height: 1.3,
+                  color: AppColors.primaryDark,
                 ),
               ),
             ),
-            _Switch(on: on, onChanged: onChanged),
+            const SizedBox(width: 10),
+            Text(
+              status,
+              style: const TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                height: 1.3,
+                color: AppColors.primaryDark,
+              ),
+            ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Switch extends StatelessWidget {
-  const _Switch({required this.on, required this.onChanged});
-
-  final bool on;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => onChanged(!on),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        width: 54,
-        height: 32,
-        padding: const EdgeInsets.all(3),
-        decoration: BoxDecoration(
-          color: on ? AppColors.primary : AppColors.switchOff,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: AnimatedAlign(
-          duration: const Duration(milliseconds: 160),
-          alignment: on ? Alignment.centerRight : Alignment.centerLeft,
-          child: Container(
-            width: 26,
-            height: 26,
-            decoration: const BoxDecoration(
-                color: Colors.white, shape: BoxShape.circle),
-          ),
         ),
       ),
     );

@@ -36,6 +36,7 @@ class ParsedReceipt {
     'transport',
     'restaurants',
     'shopping',
+    'family',
   ];
 
   /// Parses a model JSON object. Unknown categories and impossible amounts

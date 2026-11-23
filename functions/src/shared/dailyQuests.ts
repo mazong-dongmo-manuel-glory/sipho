@@ -1,6 +1,6 @@
 import { Firestore, FieldValue, Timestamp } from "firebase-admin/firestore";
 import { logger } from "./logger";
-import { localDateKey, startOfNextLocalDay, UserTime } from "./timezone";
+import { localDateKey, previousLocalDateKey, startOfNextLocalDay, UserTime } from "./timezone";
 
 export interface DailyQuestTemplate {
   templateId: string;
@@ -103,6 +103,7 @@ export async function ensureDailyQuests(
   }
 
   if (created > 0) logger.info("daily quests created", { uid, dayKey, created });
+  created += await ensureCatchUpQuest(db, uid, time, locale, now, dayKey);
   return created;
 }
 
@@ -122,7 +123,7 @@ export async function expireDailyQuests(db: Firestore, uid: string, now: Date): 
   let count = 0;
   for (const doc of snap.docs) {
     const data = doc.data() as { status?: string; period?: string; expiresAt?: Timestamp };
-    if (data.period !== "daily") continue; // weekly / AI quests keep their own lifecycle
+    if (data.period !== "daily" && data.period !== "catchup") continue;
     const expiresMs = data.expiresAt?.toMillis() ?? 0;
     if (data.status === "completed" && expiresMs + CLAIM_GRACE_MS > now.getTime()) continue;
     batch.update(doc.ref, { status: "expired", expiredAt: FieldValue.serverTimestamp() });
@@ -147,4 +148,74 @@ export async function expireDailyQuests(db: Firestore, uid: string, now: Date): 
 
   if (count > 0 || !staleSnap.empty) await batch.commit();
   return count;
+}
+
+export interface QuestProgressRow {
+  dayKey?: string;
+  period?: string;
+  status?: string;
+  progress?: number;
+  target?: number;
+}
+
+/** True when a daily quest from another day was left unfinished. */
+export function hasMissedDailyQuest(rows: readonly QuestProgressRow[], todayKey: string): boolean {
+  return rows.some((row) => {
+    if (row.period !== "daily" || row.dayKey === todayKey) return false;
+    if (row.status === "claimed") return false;
+    const target = Math.max(1, row.target ?? 1);
+    const progress = row.progress ?? 0;
+    return progress < target;
+  });
+}
+
+/**
+ * One recovery quest for today when yesterday's daily quests were left unfinished.
+ * Logging one expense advances it (same ADD_TRANSACTION path as the daily log quest).
+ */
+export async function ensureCatchUpQuest(
+  db: Firestore,
+  uid: string,
+  time: UserTime,
+  locale: "fr" | "en",
+  now: Date,
+  todayKey: string
+): Promise<number> {
+  const yesterday = previousLocalDateKey(now, time);
+  const snap = await db.collection(`users/${uid}/quests`).where("dayKey", "==", yesterday).get();
+  const missed = hasMissedDailyQuest(
+    snap.docs.map((doc) => doc.data() as QuestProgressRow),
+    todayKey
+  );
+  if (!missed) return 0;
+
+  const ref = db.doc(`users/${uid}/quests/catchup_${todayKey}`);
+  try {
+    await ref.create({
+      templateId: "catch_up",
+      type: "ADD_TRANSACTION",
+      period: "catchup",
+      dayKey: todayKey,
+      name: locale === "en" ? "Catch up: log one expense" : "Rattrapage : note une dépense",
+      description:
+        locale === "en"
+          ? "Yesterday’s quest stayed open. One expense puts you back on track."
+          : "La quête d’hier est restée ouverte. Une dépense te remet sur la voie.",
+      locale,
+      progress: 0,
+      target: 1,
+      rewardXp: 15,
+      rewardGems: 3,
+      status: "active",
+      source: "catchup",
+      expireWarningSent: true,
+      createdAt: FieldValue.serverTimestamp(),
+      expiresAt: Timestamp.fromDate(startOfNextLocalDay(now, time)),
+    });
+    logger.info("catch-up quest created", { uid, dayKey: todayKey });
+    return 1;
+  } catch (err) {
+    if ((err as { code?: number }).code !== 6) throw err;
+    return 0;
+  }
 }

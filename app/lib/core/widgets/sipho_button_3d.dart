@@ -15,7 +15,7 @@ class SiphoButton3D extends StatefulWidget {
     this.icon,
     this.isLoading = false,
     this.enabled = true,
-    this.height = 56,
+    this.height = 52,
     this.shadowOffset = 4.0,
     this.shadowColor,
     this.borderRadius,
@@ -56,61 +56,66 @@ class _SiphoButton3DState extends State<SiphoButton3D> {
     final effectiveOnPressed =
         (widget.enabled && !widget.isLoading) ? widget.onPressed : null;
 
-    return GestureDetector(
-      onTapDown: effectiveOnPressed != null
-          ? (_) => setState(() => _pressed = true)
-          : null,
-      onTapUp: effectiveOnPressed != null
-          ? (_) {
-              setState(() => _pressed = false);
-              effectiveOnPressed();
-            }
-          : null,
-      onTapCancel: () => setState(() => _pressed = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 80),
-        height: widget.height + widget.shadowOffset,
-        decoration: BoxDecoration(
-          color: _shadowColor,
-          borderRadius: _borderRadius,
-        ),
+    return Semantics(
+      button: true,
+      enabled: effectiveOnPressed != null,
+      label: widget.label.isEmpty ? null : widget.label,
+      child: GestureDetector(
+        onTapDown: effectiveOnPressed != null
+            ? (_) => setState(() => _pressed = true)
+            : null,
+        onTapUp: effectiveOnPressed != null
+            ? (_) {
+                setState(() => _pressed = false);
+                effectiveOnPressed();
+              }
+            : null,
+        onTapCancel: () => setState(() => _pressed = false),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 80),
-          margin: EdgeInsets.only(bottom: _pressed ? 0 : widget.shadowOffset),
-          height: widget.height,
+          height: widget.height + widget.shadowOffset,
           decoration: BoxDecoration(
-            color: widget.enabled ? widget.color : AppColors.border,
+            color: _shadowColor,
             borderRadius: _borderRadius,
           ),
-          alignment: Alignment.center,
-          child: widget.isLoading
-              ? SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    color: widget.textColor,
-                  ),
-                )
-              : Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (widget.icon != null) ...[
-                      widget.icon!,
-                      const SizedBox(width: 8),
-                    ],
-                    Text(
-                      widget.label,
-                      style: AppTextStyles.button.copyWith(
-                        height: 1.2,
-                        letterSpacing: 0,
-                        color: widget.enabled
-                            ? widget.textColor
-                            : AppColors.textSecondary,
-                      ),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 80),
+            margin: EdgeInsets.only(bottom: _pressed ? 0 : widget.shadowOffset),
+            height: widget.height,
+            decoration: BoxDecoration(
+              color: widget.enabled ? widget.color : AppColors.border,
+              borderRadius: _borderRadius,
+            ),
+            alignment: Alignment.center,
+            child: widget.isLoading
+                ? SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: widget.textColor,
                     ),
-                  ],
-                ),
+                  )
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (widget.icon != null) ...[
+                        widget.icon!,
+                        const SizedBox(width: 8),
+                      ],
+                      Text(
+                        widget.label,
+                        style: AppTextStyles.button.copyWith(
+                          height: 1.2,
+                          letterSpacing: 0,
+                          color: widget.enabled
+                              ? widget.textColor
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
         ),
       ),
     );

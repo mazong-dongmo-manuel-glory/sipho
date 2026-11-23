@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
@@ -11,6 +12,7 @@ import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/features/budget/domain/month_chart.dart';
 import 'package:sipho/features/expenses/domain/transaction.dart';
 import 'package:sipho/features/expenses/presentation/expense_category_label.dart';
+import 'package:sipho/features/expenses/presentation/expenses_section_tabs.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
 import 'package:sipho/features/gamification/data/game_state_repository.dart';
 
@@ -79,44 +81,54 @@ class ChartsScreen extends ConsumerWidget {
                 24,
               ),
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _Pill(
-                        AppColors.flamePill,
-                        AppColors.flameText,
-                        '🔥  ${game?.streak.current ?? '—'}',
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _Pill(
-                        AppColors.seedPill,
-                        AppColors.seedText,
-                        '🌾  ${game?.gems ?? '—'}',
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _Pill(
-                        AppColors.mint,
-                        AppColors.primaryDark,
-                        l10n.homeLevelPill(game?.level ?? 1),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
                 Text(
                   l10n.chartsTitle,
                   style: const TextStyle(
                     fontFamily: 'Nunito',
-                    fontSize: 27,
-                    fontWeight: FontWeight.w900,
-                    height: 1.2,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    height: 1.3,
                     color: AppColors.primaryDark,
                   ),
                 ),
+                const SizedBox(height: 16),
+                ExpensesSectionTabs(
+                  selectedIndex: 2,
+                  onSelectTab: (index) {
+                    ref.read(expensesSectionTabProvider.notifier).state = index;
+                    if (index == 2) return;
+                    context.go('/expenses');
+                  },
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.homeStreakDays(game?.streak.current ?? 0),
+                        style: const TextStyle(
+                          fontFamily: 'Nunito',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryDark,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      l10n.homeSeedsLevel(
+                        '${game?.gems ?? 0}',
+                        game?.level ?? 1,
+                      ),
+                      style: const TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     GestureDetector(
@@ -292,7 +304,7 @@ List<({String category, int cents, String date})> _rows(
     for (final tx in items)
       (
         category: tx.category,
-        cents: tx.amountMainCents ?? tx.amountCents,
+        cents: tx.spendMainCents,
         date: tx.date,
       ),
   ];
@@ -796,37 +808,6 @@ class _SixMonthTrendCard extends StatelessWidget {
                 ),
         ),
       ],
-    );
-  }
-}
-
-class _Pill extends StatelessWidget {
-  const _Pill(this.background, this.foreground, this.label);
-
-  final Color background;
-  final Color foreground;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 36,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          fontFamily: 'Nunito',
-          fontSize: 14,
-          fontWeight: FontWeight.w800,
-          color: foreground,
-        ),
-      ),
     );
   }
 }

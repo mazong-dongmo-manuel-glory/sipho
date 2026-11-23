@@ -192,7 +192,11 @@ service cloud.firestore {
                   && request.resource.data.merchant.size() <= 80))
           && (!('note' in request.resource.data)
               || (request.resource.data.note is string
-                  && request.resource.data.note.size() <= 200));
+                  && request.resource.data.note.size() <= 200))
+          && (!('feeCents' in request.resource.data)
+              || (request.resource.data.feeCents is int
+                  && request.resource.data.feeCents >= 0
+                  && request.resource.data.feeCents < 10000000));
       }
 
       // ── Budgets ──────────────────────────────────────────────────────────

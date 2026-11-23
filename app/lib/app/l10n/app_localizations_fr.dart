@@ -57,18 +57,43 @@ class AppLocalizationsFr extends AppLocalizations {
   String get signInWithApple => 'Continuer avec Apple';
 
   @override
-  String get welcomeWordmark => 'SIPHO';
+  String get authErrorGeneric =>
+      'Connexion impossible. Réessaie dans un instant.';
 
   @override
-  String get welcomeTitle => 'Bienvenue\nchez Sipho !';
+  String get authErrorAppleDisabled =>
+      'Connexion Apple non activée sur ce projet. Réessaie plus tard ou utilise Google.';
 
   @override
-  String get welcomeSubtitle =>
-      'Le guide gamifié vers ta\nprospérité financière';
+  String get authErrorInvalidCredential =>
+      'Identifiant Apple invalide. Réessaie ou utilise un autre compte.';
+
+  @override
+  String get authErrorNetwork =>
+      'Pas de connexion. Vérifie ton réseau et réessaie.';
+
+  @override
+  String get welcomeWordmark => 'sipho';
+
+  @override
+  String get welcomeTitle => 'Ton futur toi\nte dit merci.';
+
+  @override
+  String get welcomeSubtitle => 'Deux minutes pour poser les premières bases.';
 
   @override
   String get welcomeLegal =>
-      'En continuant, tu acceptes nos conditions\net notre politique de confidentialité.';
+      'En continuant, tu acceptes nos conditions et notre politique de confidentialité.';
+
+  @override
+  String get loginExpertTitle => 'Pas besoin d’être expert.';
+
+  @override
+  String get loginExpertBody =>
+      'On apprend à comprendre son argent, à son rythme. Sans jugement.';
+
+  @override
+  String get loginCreateAccount => 'Créer mon compte';
 
   @override
   String get settingsPrivacyPolicy => 'Politique de confidentialité';
@@ -80,23 +105,41 @@ class AppLocalizationsFr extends AppLocalizations {
   String get splashTagline => 'Fais-toi un cadeau :\nton avenir.';
 
   @override
+  String get splashLead =>
+      'L’argent qui grandit.\nUne bonne habitude à la fois.';
+
+  @override
+  String get splashKicker => 'SI-PO · « CADEAU » EN ZOULOU';
+
+  @override
+  String get splashCta => 'Faire le premier pas';
+
+  @override
   String get splashFooter => 'UN PETIT PAS. UN GRAND AVENIR.';
 
   @override
-  String get onboardingNameHeading => 'Faisons connaissance';
+  String get onboardingNameHeading => 'On fait connaissance ?';
 
   @override
-  String get onboardingNameLead => 'Ton aventure commence ici.';
+  String get onboardingNameLead => '01 / 05 · Environ 2 minutes';
+
+  @override
+  String get onboardingNameBubbleTitle => 'Moi, c’est Sipho.';
 
   @override
   String get onboardingNameBubble =>
-      'Salut ! Moi c’est Sipho. Comment tu t’appelles ?';
+      '« Sifo ? Non, Si-po ! »\nEt toi, comment tu t’appelles ?';
 
   @override
   String get onboardingNameLabel => 'TON PRÉNOM';
 
   @override
-  String get onboardingNameHelper => 'Un joli prénom pour un beau départ.';
+  String get onboardingNameHelper => 'Tu pourras le changer plus tard.';
+
+  @override
+  String onboardingStepLead(String step, String total) {
+    return '$step / $total · Environ 2 minutes';
+  }
 
   @override
   String get onboardingCountryHeading => 'Tu vis où ?';
@@ -175,7 +218,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get onboardingBuildNest => 'CONSTRUIRE MON NID';
 
   @override
-  String get onboardingNestTitle => 'Construisons ton nid !';
+  String get onboardingNestTitle => 'Un brin après l’autre.';
+
+  @override
+  String get onboardingNestLead => '05 / 05 · Les dépenses qui reviennent.';
 
   @override
   String onboardingNestStrands(int count) {
@@ -186,10 +232,20 @@ class AppLocalizationsFr extends AppLocalizations {
   String get onboardingNestQuestion => 'Tu paies un loyer ?';
 
   @override
-  String get onboardingNestHint => 'Ajoutons ce brin à ton socle.';
+  String get onboardingNestHint => 'À droite : oui. À gauche : non.';
 
   @override
-  String get onboardingNestSwipe => 'Glisse à droite pour oui →';
+  String get onboardingNestSwipe => '← Non                            Oui →';
+
+  @override
+  String get onboardingNestYesRent => 'Oui, ajouter le loyer';
+
+  @override
+  String get onboardingNestSkip => 'Non, passer';
+
+  @override
+  String get onboardingNestFooter =>
+      'Ensuite : Internet, téléphone…\nÉpicerie et transport seront des enveloppes.';
 
   @override
   String get fixedSocle => 'Mon socle';
@@ -213,34 +269,92 @@ class AppLocalizationsFr extends AppLocalizations {
   String get nestReadyKicker => 'UNE BELLE PREMIÈRE ÉTAPE';
 
   @override
-  String get nestReadyTitle => 'Ton nid est prêt !';
+  String get nestReadyTitle => 'Ton nid est prêt.';
+
+  @override
+  String get nestReadyLead => 'C’est le début, et c’est déjà quelque chose.';
 
   @override
   String get nestReadyXp => '+50 XP';
 
   @override
+  String get nestReadyXpCardTitle => '+50 XP · Premier pas';
+
+  @override
+  String get nestReadyXpCardBody => 'Pour avoir construit ton socle.';
+
+  @override
   String get nestReadyBadge => 'Bâtisseur';
 
   @override
-  String get notifFlameTitle => 'On garde la flamme ?';
+  String get nestReadyBadgeRow => 'Badge « Nid construit »';
+
+  @override
+  String get nestReadyDisclaimer =>
+      'Les badges ne donnent pas d’XP.\nTon argent reste privé.';
+
+  @override
+  String get nestReadyCta => 'Découvrir mon accueil';
+
+  @override
+  String get notifFlameTitle => 'On garde le lien ?';
+
+  @override
+  String get notifFlameLead => 'Tu as déjà fait le plus important.';
+
+  @override
+  String get notifFlameCardTitle => 'Ton nid t’attend.';
+
+  @override
+  String get notifFlameCardBody => '30 secondes pour garder ta flamme.';
 
   @override
   String get notifFlameBody =>
-      'Je peux te rappeler de garder ta flamme ? Max 2 rappels par jour, promis.';
+      'Des messages courts et rares.\nTu choisis lesquels, et tu peux tout couper.';
 
   @override
-  String get notifFlameYes => 'OUI, RAPPELLE-MOI';
+  String get notifFlameYes => 'Autoriser les notifications';
 
   @override
-  String get notifLater => 'Plus tard';
+  String get notifLater => 'Pas maintenant';
 
   @override
   String homeHello(String name) {
-    return 'Bonjour $name !';
+    return 'Bonjour $name';
   }
 
   @override
   String get homeFutureLine => 'Ton avenir prend forme.';
+
+  @override
+  String get homeEveryStep => 'Chaque petit pas compte.';
+
+  @override
+  String homeStreakDays(int count) {
+    return '$count jours de série';
+  }
+
+  @override
+  String homeSeedsLevel(String seeds, int level) {
+    return '$seeds graines · Niv. $level';
+  }
+
+  @override
+  String get homeComfortable => 'Confortable';
+
+  @override
+  String get homeTight => 'Juste';
+
+  @override
+  String get homeUnderZero => 'En dessous de zéro';
+
+  @override
+  String homeQuestCount(int done, int total) {
+    return '$done sur $total';
+  }
+
+  @override
+  String get homeOnTrackLine => 'Ta série tient. Tu es sur la bonne voie.';
 
   @override
   String homeLevelPill(int level) {
@@ -310,6 +424,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get homeQuests => 'Quêtes du jour';
+
+  @override
+  String homeQuestsProgress(int done, int total) {
+    return '$done sur $total';
+  }
 
   @override
   String get homeQuestsEmpty =>
@@ -594,6 +713,11 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String homeFxChip(String base, String rate, String quote) {
+    return '1 $base = $rate $quote';
+  }
+
+  @override
   String get expenseDeleted => 'Dépense retirée';
 
   @override
@@ -679,10 +803,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get addExpenseTitle => 'Ajouter une dépense';
 
   @override
+  String get addExpenseSteps =>
+      '1. Montant   →   2. Catégorie   →   3. Valider';
+
+  @override
   String get addExpenseCta => 'AJOUTER';
 
   @override
-  String get addExpenseScan => 'Scanner';
+  String get addExpenseScan => 'Scanner une facture';
 
   @override
   String get catRent => 'Loyer';
@@ -707,6 +835,90 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get catShopping => 'Shopping';
+
+  @override
+  String get catFamily => 'Famille / transferts';
+
+  @override
+  String get catInsurance => 'Assurance';
+
+  @override
+  String get catWater => 'Eau';
+
+  @override
+  String get familyRecipientHint => 'Pour qui ?';
+
+  @override
+  String get familyFeeLabel => 'Frais d\'envoi (optionnel)';
+
+  @override
+  String get familyFeeHint => '0,00';
+
+  @override
+  String get familyMonthTitle => 'Envoyé à la famille';
+
+  @override
+  String familyMonthBody(int count, String fees) {
+    return '$count envois · frais $fees';
+  }
+
+  @override
+  String get onTrackTitle => 'Tu es sur la bonne voie';
+
+  @override
+  String onTrackBody(int days) {
+    return '$days jours de suite, et le mois tient encore.';
+  }
+
+  @override
+  String get onTrackLogging =>
+      'Tu notes tes dépenses. C’est l’habitude qui compte.';
+
+  @override
+  String get onTrackCatchUpTitle => 'On peut rattraper ça';
+
+  @override
+  String get onTrackCatchUpBody =>
+      'Le reste à vivre est passé sous zéro. Une petite action suffit.';
+
+  @override
+  String get onTrackStartTitle => 'Le premier pas compte';
+
+  @override
+  String get onTrackStartBody =>
+      'Note une dépense ou finis une leçon. Sipho avance avec toi.';
+
+  @override
+  String recapKickerMonth(String month) {
+    return 'TON $month AVEC SIPHO';
+  }
+
+  @override
+  String recapSpentTitleMonth(String month) {
+    return 'En $month,\ntu as noté';
+  }
+
+  @override
+  String recapFocusDrop(int percent) {
+    return '−$percent %';
+  }
+
+  @override
+  String recapFocusShare(int percent) {
+    return '$percent % du mois';
+  }
+
+  @override
+  String get recapEmptyTitle => 'Rien de noté ce mois-ci';
+
+  @override
+  String get recapEmptyBody =>
+      'Le récap se remplit avec les dépenses que tu entres vraiment.';
+
+  @override
+  String recapShareReal(String month, int count, String saved) {
+    return 'Mon $month avec Sipho : $count dépenses notées, $saved de moins que le mois d’avant.';
+  }
 
   @override
   String rewardAdded(String amount, String category) {
@@ -795,7 +1007,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get expensesMonth => 'Novembre 2026';
 
   @override
-  String get expensesSpentKicker => 'DÉPENSÉ CE MOIS';
+  String get expensesSpentKicker => 'DÉPENSES VARIABLES DU MOIS';
+
+  @override
+  String get expensesFixedApart => 'Socle fixe, à part';
+
+  @override
+  String get expensesSeeBills => 'Voir les échéances →';
 
   @override
   String get expensesToday => 'AUJOURD\'HUI';
@@ -822,7 +1040,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get socleTitle => 'Mon socle';
 
   @override
-  String get socleSubtitle => 'Tes brins, bien organisés.';
+  String get socleSubtitle =>
+      'Les fixes d\'un côté. Les enveloppes de l\'autre.';
 
   @override
   String get socleCalendar => 'NOVEMBRE 2026';
@@ -967,7 +1186,28 @@ class AppLocalizationsFr extends AppLocalizations {
   String get budgetTitle => 'Budget';
 
   @override
-  String get budgetIntro => 'Part de tes dépenses du mois';
+  String get budgetIntro => 'Voici où en est ton mois.';
+
+  @override
+  String get budgetStatusOk => 'À l\'aise';
+
+  @override
+  String get budgetStatusWarn => 'À surveiller';
+
+  @override
+  String get budgetStatusOver => 'On ralentit ?';
+
+  @override
+  String get budgetSiphoAdviceTitle => 'Oh-oh. On ralentit ?';
+
+  @override
+  String get budgetSiphoAdviceBody => 'On peut rattraper ça cette semaine.';
+
+  @override
+  String get budgetGraphsTitle => 'Tes graphiques';
+
+  @override
+  String get budgetGraphsSubtitle => '4 vues simples, sans jargon';
 
   @override
   String get chartsGroceries => 'Épicerie    42 %';
@@ -997,10 +1237,68 @@ class AppLocalizationsFr extends AppLocalizations {
   String get chartsSummary => '12 % de moins que le mois dernier 🎉';
 
   @override
-  String get learnTitle => 'Apprendre, à petits pas';
+  String get learnTitle => 'Un petit pas\nà apprendre.';
+
+  @override
+  String get learnPathLead => 'Ton parcours · 4 unités de base';
 
   @override
   String get learnYourTurn => 'À TOI DE JOUER';
+
+  @override
+  String get learnSlotPending => 'Pas encore prête';
+
+  @override
+  String get learnAvailable => 'Disponible';
+
+  @override
+  String friendsChallengeTitle(String name) {
+    return 'Défier $name ⚔️';
+  }
+
+  @override
+  String get friendsChallengeSubtitle =>
+      'Choisis un défi amical pour vous motiver à progresser ensemble :';
+
+  @override
+  String get friendsChallengeSend => 'Envoyer le défi';
+
+  @override
+  String friendsChallengeSent(String title, String name) {
+    return 'Défi \"$title\" envoyé à $name ! ⚔️';
+  }
+
+  @override
+  String get friendsChallengeSendError =>
+      'Erreur lors de l’envoi du défi. Réessaie.';
+
+  @override
+  String get friendsChallengeYou => 'Toi';
+
+  @override
+  String get friendsChallengeAccept => 'Relever ⚔️';
+
+  @override
+  String friendsChallengeWaiting(String name) {
+    return 'En attente de $name…';
+  }
+
+  @override
+  String get friendsChallengeWon => '🏆 Défi remporté ! Félicitations !';
+
+  @override
+  String friendsChallengeFinishedBy(String name) {
+    return '🏁 Défi terminé par $name';
+  }
+
+  @override
+  String get friendsChallengesSection => 'Défis 1v1 ⚔️';
+
+  @override
+  String get friendsChallengeTooltip => 'Défier';
+
+  @override
+  String get friendsChallengeFriendFallback => 'ton ami';
 
   @override
   String get learnUnit3 => 'Unité 3 : Le CELI 🇨🇦';
@@ -1362,6 +1660,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get profileMember => 'Membre depuis nov. 2026';
 
   @override
+  String profileSpaceSince(String date) {
+    return 'Ton espace à toi · Depuis $date';
+  }
+
+  @override
   String get profileShop => 'Boutique';
 
   @override
@@ -1371,10 +1674,25 @@ class AppLocalizationsFr extends AppLocalizations {
   String get profileStreakLabel => 'Série record';
 
   @override
+  String profileStreakDays(int count) {
+    return '$count jours';
+  }
+
+  @override
   String get profileXp => '2 480';
 
   @override
   String get profileXpLabel => 'XP total';
+
+  @override
+  String profileLevelLabel(int level) {
+    return 'Niveau $level';
+  }
+
+  @override
+  String profileXpValue(String xp) {
+    return '$xp XP';
+  }
 
   @override
   String get profileLeague => 'Or';
@@ -1386,10 +1704,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get profileLessons => '24';
 
   @override
-  String get profileLessonsLabel => 'Leçons';
+  String get profileLessonsLabel => 'Leçons terminées';
 
   @override
   String get profileBadges => 'Mes badges';
+
+  @override
+  String get profilePublic => 'Mon profil public';
+
+  @override
+  String get profilePublicHint => 'Jamais de montant partagé';
+
+  @override
+  String get profileSettingsRow => 'Réglages';
 
   @override
   String get badgeFirstLesson => 'Première leçon';
@@ -1706,10 +2033,22 @@ class AppLocalizationsFr extends AppLocalizations {
       'Contenu éducatif, pas un conseil financier personnalisé.';
 
   @override
-  String get settingsTitle => 'Paramètres';
+  String get settingsTitle => 'À ton rythme';
 
   @override
-  String get settingsSubtitle => 'Notifications et sons';
+  String get settingsSubtitle => 'Tu gardes le contrôle.';
+
+  @override
+  String get settingsEnabled => 'Activés';
+
+  @override
+  String get settingsDisabled => 'Désactivés';
+
+  @override
+  String get settingsEnabledF => 'Activées';
+
+  @override
+  String get settingsDisabledF => 'Désactivées';
 
   @override
   String get settingsStreak => 'Rappels de série';
@@ -1724,10 +2063,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsTips => 'Conseils';
 
   @override
-  String get settingsEconomy => 'Actualité économique';
+  String get settingsEconomy => 'Actualité et taux';
 
   @override
-  String get settingsRecap => 'Récap mensuel';
+  String get settingsRecap => 'Récaps';
 
   @override
   String get settingsSounds => 'Sons';
@@ -1739,13 +2078,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsVoice => 'Voix de Sipho';
 
   @override
-  String get settingsReminder => 'Heure de rappel préférée';
+  String get settingsReminder => 'Heure du rappel';
 
   @override
   String get settingsReminderTime => '19 h';
 
   @override
-  String get settingsSleep => 'Promis, je respecte ton sommeil.';
+  String get settingsSleep =>
+      'Chaque catégorie peut être coupée.\nPromis, je respecte ton sommeil.';
 
   @override
   String get recapKicker => 'TON OCTOBRE AVEC SIPHO';
@@ -2175,4 +2515,86 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get fixedMarkPaidError =>
       'Impossible de marquer cette charge comme payée. Réessaie.';
+
+  @override
+  String get ecoTipCatAll => 'Tous 🌈';
+
+  @override
+  String get ecoTipCatBudget => 'Budget 🛒';
+
+  @override
+  String get ecoTipCatSaving => 'Épargne 🌱';
+
+  @override
+  String get ecoTipCatEconomy => 'Économie 📉';
+
+  @override
+  String get ecoTipCatSecurity => 'Sécurité 🛡️';
+
+  @override
+  String get ecoTipCatInvest => 'Investir 🧺';
+
+  @override
+  String get ecoTipCatLifestyle => 'Quotidien 💡';
+
+  @override
+  String get ecoTipActionLabel => 'ACTION CONCRÈTE';
+
+  @override
+  String get ecoTipSource => 'Source';
+
+  @override
+  String get ecoTipShuffle => 'AUTRE CONSEIL 🎲';
+
+  @override
+  String get ecoMetricInflation => 'Inflation annuelle';
+
+  @override
+  String get ecoMetricPolicyRate => 'Taux directeur';
+
+  @override
+  String get ecoMetricSavingsBenchmark => 'Rendement épargne sans risque';
+
+  @override
+  String get ecoFxTitle => 'Taux de change';
+
+  @override
+  String get ecoFxBlurb =>
+      'Référence Banque centrale européenne, via Frankfurter. Sipho n’invente aucun taux.';
+
+  @override
+  String get ecoFxEmpty => 'Taux pas encore disponibles.';
+
+  @override
+  String get ecoNewsTitle => 'Actus sourcées';
+
+  @override
+  String get ecoNewsSubtitle => 'Archives sourcées · Pas l’actualité du jour';
+
+  @override
+  String get ecoIndicatorsUnavailable => 'Indicateurs officiels indisponibles.';
+
+  @override
+  String get ecoWhatItMeans => 'Ce que ça change pour toi';
+
+  @override
+  String ecoBenchmarkDisclaimer(String date) {
+    return 'Données de référence officielles datées de $date. À des fins éducatives.';
+  }
+
+  @override
+  String get ecoNewsEmpty =>
+      'Pas encore d’actus pour ce pays. Elles arrivent après le prochain passage du serveur.';
+
+  @override
+  String get ecoNewsFooter =>
+      'Données anciennes · Ouvrir les sources\nActualiser avant une décision.';
+
+  @override
+  String get ecoNewsRefresh => 'Voir les informations récentes';
+
+  @override
+  String ecoNewsSiphoQuote(String quote) {
+    return 'Sipho : « $quote »';
+  }
 }

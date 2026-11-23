@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
-import 'package:sipho/app/theme/app_spacing.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
 import 'package:sipho/features/auth/data/auth_repository.dart';
@@ -11,6 +10,7 @@ import 'package:sipho/features/auth/presentation/auth_provider.dart';
 import 'package:sipho/features/notifications/data/notification_service.dart';
 import 'package:sipho/features/notifications/domain/notif_prefs.dart';
 
+/// Frame Figma 07 · Autorisation rappels · Épuré (`2:28927`).
 class NotificationPrimingScreen extends ConsumerStatefulWidget {
   const NotificationPrimingScreen({super.key});
 
@@ -81,81 +81,99 @@ class _NotificationPrimingScreenState
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
-          padding:
-              const EdgeInsets.symmetric(horizontal: AppSpacing.pagePadding),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 48),
-              const Stack(
-                clipBehavior: Clip.none,
-                alignment: Alignment.center,
-                children: [
-                  SiphoArt.waving(frame: 230),
-                  Positioned(
-                    right: 8,
-                    top: 70,
-                    child: Text('🔔', style: TextStyle(fontSize: 46)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
               Text(
                 l10n.notifFlameTitle,
-                textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontFamily: 'Nunito',
                   fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  height: 1.2,
+                  fontWeight: FontWeight.w800,
+                  height: 1.3,
                   color: AppColors.primaryDark,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
+              Text(
+                l10n.notifFlameLead,
+                style: const TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  height: 1.3,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const SiphoArt.happy(frame: 100),
+              const SizedBox(height: 20),
               Container(
                 width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 22, vertical: 23),
+                padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(20),
+                  color: AppColors.soft,
+                  borderRadius: BorderRadius.circular(24),
                 ),
-                child: Text(
-                  l10n.notifFlameBody,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontFamily: 'Nunito',
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    height: 1.2,
-                    color: AppColors.primaryDark,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.notifFlameCardTitle,
+                      style: const TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        height: 1.3,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.notifFlameCardBody,
+                      style: const TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        height: 1.3,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                  ],
                 ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                l10n.notifFlameBody,
+                style: const TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  height: 1.3,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              SiphoButton3D(
+                label: l10n.notifLater,
+                onPressed: _saving ? null : _finish,
+                color: AppColors.surface,
+                shadowColor: AppColors.border,
+                textColor: AppColors.primaryDark,
+                height: 52,
+                borderRadius: figmaButtonRadius,
               ),
               const Spacer(),
               SiphoButton3D(
                 label: l10n.notifFlameYes,
                 onPressed: _enableThenFinish,
                 isLoading: _saving,
-                color: AppColors.primary,
+                color: AppColors.primaryDark,
                 shadowColor: AppColors.primaryDark,
                 height: 52,
                 borderRadius: figmaButtonRadius,
               ),
-              const SizedBox(height: 20),
-              GestureDetector(
-                onTap: _saving ? null : _finish,
-                child: Text(
-                  l10n.notifLater,
-                  style: const TextStyle(
-                    fontFamily: 'Nunito',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    height: 1.2,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 28),
             ],
           ),
         ),

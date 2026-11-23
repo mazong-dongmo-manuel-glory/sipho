@@ -2,6 +2,7 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import {
   isCountryLesson,
   isCountryLessonAllowed,
+  isGeneratedLessonId,
   isLessonUnlocked,
   lessonsToCheck,
   unitBonusFor,
@@ -65,6 +66,9 @@ export const completeLesson = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
       db().doc(`users/${uid}/lessonProgress/${id}`)
     );
     const relatedSnaps = relatedRefs.length > 0 ? await tx.getAll(...relatedRefs) : [];
+    const generatedSnap = isGeneratedLessonId(lessonId)
+      ? await tx.get(db().doc(`users/${uid}/aiLessons/${lessonId}`))
+      : null;
     const completedBefore = new Set<string>();
     const legacyCompleted: unknown = userSnap.data()?.completedLessonIds;
     if (Array.isArray(legacyCompleted)) {
@@ -79,38 +83,23 @@ export const completeLesson = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
     const dailyRef = db().doc(`users/${uid}/dailyXp/${today}`);
     const dailySnap = await tx.get(dailyRef);
 
-    const idemKey = idempotencyKey("completeLesson", uid, lessonId, attemptId);
+    const idemKey = idempotencyKey("completeLesson", uid, lessonId, attemptId ?? today);
     const idemRef = db().collection("_idempotency").doc(encodeKey(idemKey));
     const idemSnap = await tx.get(idemRef);
     if (idemSnap.exists) {
-      const stored = idemSnap.data() as {
-        hooksDone?: unknown;
-        firstCompletion?: unknown;
-        dayKey?: unknown;
-        result?: Record<string, unknown>;
-      };
       const currentGame = normalizeGameState(gameSnap.data());
-      const cached = stored.result ?? {};
       return {
-        xpGained: typeof cached.xpGained === "number" ? cached.xpGained : 0,
-        seedsGained: typeof cached.seedsGained === "number" ? cached.seedsGained : 0,
-        newStreak:
-          typeof cached.newStreak === "number"
-            ? cached.newStreak
-            : currentGame.streak.current,
-        levelUp: cached.levelUp === true,
-        newLevel:
-          typeof cached.newLevel === "number" ? cached.newLevel : currentGame.level,
+        xpGained: 0,
+        seedsGained: 0,
+        newStreak: currentGame.streak.current,
+        levelUp: false,
+        newLevel: currentGame.level,
         alreadyCompleted: true,
-        firstCompletion: stored.firstCompletion === true,
-        unitCompleted:
-          typeof cached.unitCompleted === "string" ? cached.unitCompleted : null,
-        unitBonusXp: typeof cached.unitBonusXp === "number" ? cached.unitBonusXp : 0,
-        unitBonusSeeds:
-          typeof cached.unitBonusSeeds === "number" ? cached.unitBonusSeeds : 0,
-        dayKey: typeof stored.dayKey === "string" ? stored.dayKey : today,
-        hooksDone: stored.hooksDone === true,
-        idemKey,
+        firstCompletion: false,
+        unitCompleted: null as string | null,
+        unitBonusXp: 0,
+        unitBonusSeeds: 0,
+        dayKey: today,
       };
     }
 
@@ -121,6 +110,11 @@ export const completeLesson = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
     // A fresh `attemptId` can never be used to farm XP: first completion pays once per lesson
     // (lessonId is whitelisted), replays only earn a small practice XP capped per local day.
     const alreadyCompletedBefore = existingProgressSnap.exists;
+
+    // Generated lessons exist only after `generateNextLesson` writes them.
+    if (isGeneratedLessonId(lessonId) && generatedSnap?.exists !== true) {
+      throw new HttpsError("failed-precondition", "This lesson is not ready yet.");
+    }
 
     // Country modules: only for the user's country (or generic `*`).
     if (isCountryLesson(lessonId)) {
@@ -177,26 +171,9 @@ export const completeLesson = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
     const newLevel = xpToLevel(newXp);
     const levelUp = newLevel > baseGame.level;
 
-    const clientPayload = {
-      xpGained,
-      seedsGained,
-      newStreak: nextStreak.current,
-      levelUp,
-      newLevel,
-      alreadyCompleted: false,
-      firstCompletion: !alreadyCompletedBefore,
-      unitCompleted: unitBonus?.unitId ?? null,
-      unitBonusXp: unitBonus?.xp ?? 0,
-      unitBonusSeeds: unitBonus?.seeds ?? 0,
-    };
-
     tx.set(idemRef, {
       key: idemKey,
       processedAt: FieldValue.serverTimestamp(),
-      hooksDone: false,
-      firstCompletion: !alreadyCompletedBefore,
-      dayKey: today,
-      result: clientPayload,
     });
 
     tx.set(
@@ -274,66 +251,40 @@ export const completeLesson = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
     );
 
     return {
-      ...clientPayload,
+      xpGained,
+      seedsGained,
+      newStreak: nextStreak.current,
+      levelUp,
+      newLevel,
+      alreadyCompleted: false,
+      firstCompletion: !alreadyCompletedBefore,
+      unitCompleted: unitBonus?.unitId ?? null,
+      unitBonusXp: unitBonus?.xp ?? 0,
+      unitBonusSeeds: unitBonus?.seeds ?? 0,
       dayKey: today,
-      hooksDone: false,
-      idemKey,
     };
   });
 
-  // Post-TX hooks are re-runnable when the same attemptId retries after a crash.
-  // Quest/challenge bumps are gated by a per-attempt hook marker so retries never double-count.
-  const needsHooks = result.hooksDone !== true;
-  if (needsHooks) {
-    const hooksMarkerRef = db()
-      .collection("_idempotency")
-      .doc(encodeKey(idempotencyKey("completeLessonHooks", uid, lessonId, attemptId)));
-    let runHooks = false;
-    try {
-      await hooksMarkerRef.create({ processedAt: FieldValue.serverTimestamp() });
-      runHooks = true;
-    } catch (err) {
-      // ALREADY_EXISTS: another retry already claimed the hooks for this attemptId.
-      if ((err as { code?: number }).code !== 6) throw err;
-    }
-    if (runHooks) {
-      await advanceLessonQuests(uid);
-      if (result.firstCompletion) {
-        await bumpFriendChallenges(uid, "lesson_complete");
-      }
-      if (typeof result.dayKey === "string") {
-        await trackReferralActiveDay(uid, result.dayKey);
-      }
-    }
-    if (typeof result.idemKey === "string") {
-      await db()
-        .collection("_idempotency")
-        .doc(encodeKey(result.idemKey))
-        .set({ hooksDone: true }, { merge: true });
-    }
+  if (result.firstCompletion) {
+    await advanceLessonQuests(uid);
+    await bumpFriendChallenges(uid, "lesson_complete");
+  }
+  if (typeof result.dayKey === "string") {
+    await trackReferralActiveDay(uid, result.dayKey);
   }
 
   logger.info("lesson completed", {
     uid,
     lessonId,
     score,
-    attemptId,
     xpGained: result.xpGained,
     newStreak: result.newStreak,
     unitCompleted: result.unitCompleted,
-    hooksReplayed: result.alreadyCompleted && needsHooks,
   });
 
-  // Strip internal hook fields from the callable response.
-  const {
-    dayKey: _dayKey,
-    hooksDone: _hooksDone,
-    idemKey: _idemKey,
-    ...clientResult
-  } = result as typeof result & {
+  // Strip internal hook field from the callable response.
+  const { dayKey: _dayKey, ...clientResult } = result as typeof result & {
     dayKey?: string;
-    hooksDone?: boolean;
-    idemKey?: string;
   };
   return clientResult;
 });
@@ -348,6 +299,8 @@ async function advanceLessonQuests(uid: string): Promise<void> {
 
   if (snap.empty) return;
 
+  const nowMs = Date.now();
+  // One transaction per quest so concurrent first completions cannot lose progress.
   await Promise.all(
     snap.docs.map((doc) =>
       db().runTransaction(async (tx) => {
@@ -357,8 +310,10 @@ async function advanceLessonQuests(uid: string): Promise<void> {
           status?: string;
           target?: number;
           progress?: number;
+          expiresAt?: { toMillis(): number };
         };
         if (data.status !== "active") return;
+        if (data.expiresAt && data.expiresAt.toMillis() <= nowMs) return;
         const target = Math.max(1, data.target ?? 1);
         const next = Math.min(target, (data.progress ?? 0) + 1);
         tx.update(doc.ref, {

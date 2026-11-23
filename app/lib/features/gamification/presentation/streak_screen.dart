@@ -83,8 +83,9 @@ class StreakScreen extends ConsumerWidget {
                 l10n.streakDays,
                 style: const TextStyle(
                   fontFamily: 'Nunito',
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  height: 1.3,
                   color: AppColors.primaryDark,
                 ),
               ),

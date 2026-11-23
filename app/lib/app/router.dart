@@ -48,7 +48,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   ref.listen(onboardingGateProvider, (_, __) => refresh.value++);
 
   return GoRouter(
-    initialLocation: '/home',
+    initialLocation: '/splash',
     refreshListenable: refresh,
     redirect: (context, state) {
       final auth = ref.read(authStateProvider);
@@ -64,6 +64,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           location.startsWith('/fixed-expenses/swipe');
       final splash = location.startsWith('/splash');
       final login = location.startsWith('/login');
+      // Profile still loading: leave splash/login alone (no bounce to login).
       if (onboardingDone == null) return null;
       if (!onboardingDone && !onboardingFlow) return '/onboarding';
       if (onboardingDone && (onboarding || splash || login)) return '/home';

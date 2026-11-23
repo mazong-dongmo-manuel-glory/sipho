@@ -4,8 +4,8 @@ import { logger } from "../shared/logger";
 import { XP_CONFIG, xpToLevel } from "../shared/xpConfig";
 import {
   idempotencyKey,
-  isIdempotencyKeyProcessed,
-  markIdempotencyKey,
+  checkAndMarkIdempotencyKey,
+  clearIdempotencyKey,
 } from "../shared/idempotency";
 import {
   computeNextStreak,
@@ -21,6 +21,7 @@ const db = (): Firestore => getFirestore();
 interface StoredTransaction {
   amountCents?: number;
   amountMainCents?: number;
+  feeCents?: number;
   category?: string;
   date?: string | Timestamp;
   source?: string;
@@ -45,85 +46,88 @@ export const onTransactionWrite = onDocumentWritten(
     const uid = event.params.uid;
     const txId = event.params.txId;
     const eventKey = idempotencyKey("onTransactionWrite", event.id);
-    // Mark only after success so a mid-handler failure can be retried.
-    if (await isIdempotencyKeyProcessed(eventKey)) return;
+    // Claim the event before mutating aggregates so at-least-once retries cannot
+    // double-count. Clear the key if work fails so a later delivery can retry.
+    if (await checkAndMarkIdempotencyKey(eventKey)) return;
 
-    const beforeData = event.data?.before.exists
-      ? (event.data.before.data() as StoredTransaction)
-      : undefined;
-    const afterData = event.data?.after.exists
-      ? (event.data.after.data() as StoredTransaction)
-      : undefined;
+    try {
+      const beforeData = event.data?.before.exists
+        ? (event.data.before.data() as StoredTransaction)
+        : undefined;
+      const afterData = event.data?.after.exists
+        ? (event.data.after.data() as StoredTransaction)
+        : undefined;
 
-    if (!beforeData && !afterData) {
-      await markIdempotencyKey(eventKey);
-      return;
-    }
-
-    const isCreate = !beforeData && Boolean(afterData);
-    const batch = db().batch();
-
-    // ── 1. Monthly aggregates (supports create, update across categories/months, delete) ─
-    const touchedCategoryMonths = new Set<string>();
-
-    if (beforeData) {
-      const prevCents = effectiveCents(beforeData);
-      const prevCat = safeCategory(beforeData.category);
-      const prevMonth = extractMonthKey(beforeData.date);
-      if (prevCents > 0 && prevMonth) {
-        const prevMonthRef = db().doc(`users/${uid}/months/${prevMonth}`);
-        batch.set(
-          prevMonthRef,
-          {
-            totalVariableCents: FieldValue.increment(-prevCents),
-            expenses: { [prevCat]: FieldValue.increment(-prevCents) },
-            updatedAt: FieldValue.serverTimestamp(),
-          },
-          { merge: true }
-        );
+      if (!beforeData && !afterData) {
+        return;
       }
-    }
 
-    if (afterData) {
-      const nextCents = effectiveCents(afterData);
-      const nextCat = safeCategory(afterData.category);
-      const nextMonth = extractMonthKey(afterData.date);
-      if (nextCents > 0 && nextMonth) {
-        const nextMonthRef = db().doc(`users/${uid}/months/${nextMonth}`);
-        batch.set(
-          nextMonthRef,
-          {
-            totalVariableCents: FieldValue.increment(nextCents),
-            expenses: { [nextCat]: FieldValue.increment(nextCents) },
-            updatedAt: FieldValue.serverTimestamp(),
-          },
-          { merge: true }
-        );
-        touchedCategoryMonths.add(`${nextMonth}::${nextCat}`);
+      const isCreate = !beforeData && Boolean(afterData);
+      const batch = db().batch();
+
+      // ── 1. Monthly aggregates (supports create, update across categories/months, delete) ─
+      const touchedCategoryMonths = new Set<string>();
+
+      if (beforeData) {
+        const prevCents = effectiveCents(beforeData);
+        const prevCat = safeCategory(beforeData.category);
+        const prevMonth = extractMonthKey(beforeData.date);
+        if (prevCents > 0 && prevMonth) {
+          const prevMonthRef = db().doc(`users/${uid}/months/${prevMonth}`);
+          batch.set(
+            prevMonthRef,
+            {
+              totalVariableCents: FieldValue.increment(-prevCents),
+              expenses: { [prevCat]: FieldValue.increment(-prevCents) },
+              updatedAt: FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+        }
       }
-    }
 
-    await batch.commit();
-
-    // ── 2. XP + quest progress on new transaction only ───────────────────────
-    if (isCreate && afterData) {
-      const dayKey = await recordTransactionActivity(uid, txId, new Date());
-      await updateQuestProgress(uid, "ADD_TRANSACTION", 1);
-      if (dayKey) {
-        await bumpFriendChallenges(uid, "activity_day", dayKey);
-        await trackReferralActiveDay(uid, dayKey);
+      if (afterData) {
+        const nextCents = effectiveCents(afterData);
+        const nextCat = safeCategory(afterData.category);
+        const nextMonth = extractMonthKey(afterData.date);
+        if (nextCents > 0 && nextMonth) {
+          const nextMonthRef = db().doc(`users/${uid}/months/${nextMonth}`);
+          batch.set(
+            nextMonthRef,
+            {
+              totalVariableCents: FieldValue.increment(nextCents),
+              expenses: { [nextCat]: FieldValue.increment(nextCents) },
+              updatedAt: FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+          touchedCategoryMonths.add(`${nextMonth}::${nextCat}`);
+        }
       }
-    }
 
-    // ── 3. Budget / envelope alert check ─────────────────────────────────────
-    for (const pair of touchedCategoryMonths) {
-      const [monthKey, category] = pair.split("::");
-      if (monthKey && category) {
-        await checkBudgetAlert(uid, monthKey, category);
+      await batch.commit();
+
+      // ── 2. XP + quest progress on new transaction only ───────────────────────
+      if (isCreate && afterData) {
+        const dayKey = await recordTransactionActivity(uid, txId, new Date());
+        await updateQuestProgress(uid, "ADD_TRANSACTION", 1);
+        if (dayKey) {
+          await bumpFriendChallenges(uid, "activity_day", dayKey);
+          await trackReferralActiveDay(uid, dayKey);
+        }
       }
-    }
 
-    await markIdempotencyKey(eventKey);
+      // ── 3. Budget / envelope alert check ─────────────────────────────────────
+      for (const pair of touchedCategoryMonths) {
+        const [monthKey, category] = pair.split("::");
+        if (monthKey && category) {
+          await checkBudgetAlert(uid, monthKey, category);
+        }
+      }
+    } catch (error) {
+      await clearIdempotencyKey(eventKey);
+      throw error;
+    }
   }
 );
 
@@ -133,7 +137,10 @@ function effectiveCents(tx: StoredTransaction): number {
   const raw = typeof tx.amountMainCents === "number" ? tx.amountMainCents : tx.amountCents;
   if (typeof raw !== "number" || !Number.isFinite(raw)) return 0;
   const intVal = Math.trunc(raw);
-  return intVal > 0 && intVal < 100_000_000 ? intVal : 0;
+  if (intVal <= 0 || intVal >= 100_000_000) return 0;
+  const feeRaw = typeof tx.feeCents === "number" ? Math.trunc(tx.feeCents) : 0;
+  const fee = feeRaw > 0 && feeRaw < 100_000_000 ? feeRaw : 0;
+  return intVal + fee;
 }
 
 function safeCategory(category?: string): string {

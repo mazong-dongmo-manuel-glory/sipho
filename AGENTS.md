@@ -25,6 +25,21 @@ Constantes Dart : `kStagingFirebaseProjectId = 'sipho-staging'`, `kProdFirebaseP
 
 Les **noms de flavors Dart** `dev` / `staging` / `prod` restent des labels d’entrée Flutter ; seul le **Firebase projectId** de QA est `sipho-staging`.
 
+## Sign in with Apple (iOS + Android)
+
+| Champ | Valeur |
+|---|---|
+| Team ID | `B2K3M34M6S` |
+| Services ID | `com.cargonomade.sipho.signin` |
+| Key ID | `8Q8KF2BT48` (même clé sur **sipho-staging** et **sipho-f5a01**) |
+| App ID (primary) | `com.cargonomade.sipho.staging` |
+| Return URLs | `https://sipho-staging.firebaseapp.com/__/auth/handler` et `https://sipho-f5a01.firebaseapp.com/__/auth/handler` |
+
+- **iOS / macOS** : `SignInWithApple` + nonce → `signInWithCredential` (natif).
+- **Android** : `AppleAuthProvider` + `signInWithProvider` (Custom Tabs). Exige le **OAuth code flow** dans Firebase Auth → Apple (Services ID + Team ID + Key ID + `.p8`). Sans ça → `operation-not-allowed` / `Code flow is not enabled for Apple`.
+- Constantes : `kAppleTeamId`, `kAppleServicesId`, `kAppleSignInKeyId` dans `firebase_environment.dart`.
+- **Ne jamais committer** le fichier `.p8` (AuthKey). Détail : [ENVIRONMENTS.md](./ENVIRONMENTS.md) § Sign in with Apple.
+
 ## Autres règles non négociables (rappel)
 - Montants en **cents** (`int`), jamais `double`.
 - XP / séries / graines / ligues = **serveur uniquement**.

@@ -19,8 +19,18 @@ String expenseCategoryLabel(AppLocalizations l10n, String id) {
       return l10n.catRestaurants;
     case 'shopping':
       return l10n.catShopping;
+    case 'family':
+      return l10n.catFamily;
+    case 'insurance':
+      return l10n.catInsurance;
+    case 'electricity':
+      return l10n.catEnergy;
+    case 'water':
+      return l10n.catWater;
+    case 'other':
+      return l10n.categoryOther;
     default:
-      return l10n.catShopping;
+      return l10n.categoryOther;
   }
 }
 
@@ -31,6 +41,7 @@ IconData expenseCategoryIcon(String id) {
     case 'internet':
       return Icons.wifi_rounded;
     case 'energy':
+    case 'electricity':
       return Icons.lightbulb_rounded;
     case 'phone':
       return Icons.smartphone_rounded;
@@ -42,6 +53,12 @@ IconData expenseCategoryIcon(String id) {
       return Icons.restaurant_rounded;
     case 'shopping':
       return Icons.shopping_bag_rounded;
+    case 'family':
+      return Icons.volunteer_activism_rounded;
+    case 'insurance':
+      return Icons.health_and_safety_rounded;
+    case 'water':
+      return Icons.water_drop_rounded;
     default:
       return Icons.receipt_long_rounded;
   }

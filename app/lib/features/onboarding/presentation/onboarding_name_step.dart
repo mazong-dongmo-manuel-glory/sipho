@@ -3,6 +3,7 @@ import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 
+/// Frame Figma 03a · Prénom · Épuré (`2:28915`) — body under the shared chrome.
 class OnboardingNameStep extends StatelessWidget {
   const OnboardingNameStep({
     super.key,
@@ -19,42 +20,50 @@ class OnboardingNameStep extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
+        const SiphoArt.waving(frame: 88),
         const SizedBox(height: 20),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SiphoArt.waving(frame: 140),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Container(
-                height: 110,
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  l10n.onboardingNameBubble,
-                  style: const TextStyle(
-                    fontFamily: 'Nunito',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    height: 1.2,
-                    color: AppColors.primaryDark,
-                  ),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: AppColors.soft,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.onboardingNameBubbleTitle,
+                style: const TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  height: 1.3,
+                  color: AppColors.primaryDark,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                l10n.onboardingNameBubble,
+                style: const TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  height: 1.3,
+                  color: AppColors.primaryDark,
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 20),
         Text(
           l10n.onboardingNameLabel,
           style: const TextStyle(
             fontFamily: 'Nunito',
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-            height: 1.2,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            height: 1.3,
             color: AppColors.textSecondary,
           ),
         ),
@@ -65,8 +74,8 @@ class OnboardingNameStep extends StatelessWidget {
           style: const TextStyle(
             fontFamily: 'Nunito',
             fontSize: 16,
-            fontWeight: FontWeight.w800,
-            height: 1.2,
+            fontWeight: FontWeight.w700,
+            height: 1.3,
             color: AppColors.primaryDark,
           ),
           decoration: InputDecoration(
@@ -74,32 +83,30 @@ class OnboardingNameStep extends StatelessWidget {
             hintStyle: const TextStyle(
               fontFamily: 'Nunito',
               fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: AppColors.primaryDark,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSecondary,
             ),
             filled: true,
-            fillColor: AppColors.mint,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 18,
-            ),
+            fillColor: AppColors.soft,
+            contentPadding: const EdgeInsets.all(18),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(18),
-              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+              borderRadius: BorderRadius.circular(24),
+              borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(24),
               borderSide: const BorderSide(color: AppColors.primary, width: 2),
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         Text(
           l10n.onboardingNameHelper,
           style: const TextStyle(
             fontFamily: 'Nunito',
-            fontSize: 14,
-            height: 1.2,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            height: 1.3,
             color: AppColors.textSecondary,
           ),
         ),

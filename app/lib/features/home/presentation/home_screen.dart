@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
@@ -14,7 +13,11 @@ import 'package:sipho/core/feedback/feedback_cue.dart';
 import 'package:sipho/core/feedback/feedback_service.dart';
 import 'package:sipho/core/money/money.dart';
 import 'package:sipho/core/money/money_formatter.dart';
+import 'package:sipho/core/widgets/game_bar.dart';
+import 'package:sipho/core/widgets/gauge_circular.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
+import 'package:sipho/features/economy/domain/economy_tips.dart';
+import 'package:sipho/features/expenses/domain/family_transfer.dart';
 import 'package:sipho/features/expenses/domain/transaction.dart';
 import 'package:sipho/features/expenses/presentation/expense_category_label.dart';
 import 'package:sipho/features/finance/domain/month_summary.dart';
@@ -26,8 +29,8 @@ import 'package:sipho/features/fixed_expenses/presentation/fixed_paid_button.dar
 import 'package:sipho/features/gamification/data/game_state_repository.dart';
 import 'package:sipho/features/gamification/domain/game_extras.dart';
 import 'package:sipho/features/gamification/presentation/no_spend_controller.dart';
-import 'package:sipho/features/economy/domain/economy_tips.dart';
 import 'package:sipho/features/home/domain/home_add_expense_fab.dart';
+import 'package:sipho/features/home/domain/on_track.dart';
 import 'package:sipho/features/home/presentation/home_country_economy_card.dart';
 import 'package:sipho/features/home/presentation/home_goal_card.dart';
 import 'package:sipho/features/insights/data/insight_service.dart';
@@ -178,28 +181,12 @@ class HomeScreen extends ConsumerWidget {
                 24,
               ),
               children: [
-                Row(
-                  children: [
-                    _Pill(
-                      background: AppColors.flamePill,
-                      foreground: AppColors.flameText,
-                      label: '🔥  ${game?.streak.current ?? '—'}',
-                    ),
-                    const SizedBox(width: 16),
-                    _Pill(
-                      background: AppColors.seedPill,
-                      foreground: AppColors.seedText,
-                      label: '🌾  ${game?.gems ?? '—'}',
-                    ),
-                    const SizedBox(width: 16),
-                    _Pill(
-                      background: AppColors.mint,
-                      foreground: AppColors.primaryDark,
-                      label: l10n.homeLevelPill(game?.level ?? 1),
-                    ),
-                  ],
+                GameBar(
+                  streakDays: game?.streak.current ?? 0,
+                  seeds: game?.seeds ?? 0,
+                  level: game?.level ?? 1,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -211,18 +198,20 @@ class HomeScreen extends ConsumerWidget {
                             l10n.homeHello(greeting),
                             style: TextStyle(
                               fontFamily: 'Nunito',
-                              fontSize: 26,
-                              fontWeight: FontWeight.w900,
-                              height: 1.2,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              height: 1.25,
                               color: palette.title,
                             ),
                           ),
+                          const SizedBox(height: 12),
                           Text(
-                            l10n.homeFutureLine,
+                            l10n.homeEveryStep,
                             style: TextStyle(
                               fontFamily: 'Nunito',
-                              fontSize: 14,
-                              height: 1.2,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              height: 1.25,
                               color: palette.muted,
                             ),
                           ),
@@ -232,12 +221,12 @@ class HomeScreen extends ConsumerWidget {
                     if (reward != null)
                       const LottieWidget(
                         assetPath: SiphoLotties.xpCoins,
-                        width: 56,
+                        width: 48,
                         height: 48,
                       ),
                     reward == null
-                        ? const SiphoArt.happy(frame: 81)
-                        : const SiphoArt.proud(frame: 81),
+                        ? const SiphoArt.proud(frame: 48)
+                        : const SiphoArt.happy(frame: 48),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -248,7 +237,6 @@ class HomeScreen extends ConsumerWidget {
                   currency: currency,
                   onSetIncome: () => showMonthlyIncomeSheet(context, ref),
                 ),
-                const SizedBox(height: 12),
                 if (reward == null)
                   _NextExpense(
                     palette: palette,
@@ -256,7 +244,7 @@ class HomeScreen extends ConsumerWidget {
                         ? '${expenseCategoryLabel(l10n, nextFixed.category)} · ${_formatCents(context, nextFixed.amountCents, currency)}'
                         : latest == null
                             ? l10n.homeNoExpenseYet
-                            : '${expenseCategoryLabel(l10n, latest.category)} · ${_formatCents(context, latest.amountMainCents ?? latest.amountCents, latest.currency)}',
+                            : '${expenseCategoryLabel(l10n, latest.category)} · ${_formatCents(context, latest.spendMainCents, currency)}',
                     subtitle: nextFixed != null
                         ? (nextFixedPaid
                             ? l10n.soclePaidOn('${nextFixed.dueDay}')
@@ -299,19 +287,40 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ),
                 const SizedBox(height: 16),
-                const HomeGoalTrackerSection(),
-                const SizedBox(height: 16),
-                const HomeCountryEconomyCard(),
-                const SizedBox(height: 16),
-                Text(
-                  l10n.homeQuests,
-                  style: TextStyle(
-                    fontFamily: 'Nunito',
-                    fontSize: 19,
-                    fontWeight: FontWeight.w900,
-                    height: 1.2,
-                    color: palette.title,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.homeQuests,
+                        style: TextStyle(
+                          fontFamily: 'Nunito',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          height: 1.25,
+                          color: palette.title,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      l10n.homeQuestsProgress(
+                        dailyQuests
+                            .where(
+                              (q) =>
+                                  q.status == 'completed' ||
+                                  q.progress >= q.target,
+                            )
+                            .length,
+                        dailyQuests.isEmpty ? 3 : dailyQuests.length,
+                      ),
+                      style: TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        height: 1.25,
+                        color: palette.title,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 _QuestCard(
@@ -321,6 +330,27 @@ class HomeScreen extends ConsumerWidget {
                   onOpen: (quest) => _openQuest(context, ref, quest),
                 ),
                 const SizedBox(height: 12),
+                _OnTrackCard(
+                  l10n: l10n,
+                  tone: buildOnTrack(
+                    streak: game?.streak.current ?? 0,
+                    hasIncome: summary.valueOrNull?.hasIncome ?? false,
+                    remainingCents: summary.valueOrNull?.remainingCents ?? 0,
+                    expensesThisMonth: transactions.length,
+                  ).tone,
+                  streak: game?.streak.current ?? 0,
+                ),
+                const SizedBox(height: 12),
+                const Divider(height: 32, color: AppColors.line),
+                _FamilyMonthSlot(
+                  l10n: l10n,
+                  currency: currency,
+                  transactions: transactions,
+                ),
+                const HomeGoalTrackerSection(),
+                const SizedBox(height: 12),
+                const HomeCountryEconomyCard(),
+                const SizedBox(height: 12),
                 if (reward == null)
                   _EconomyCard(
                     l10n: l10n,
@@ -328,7 +358,7 @@ class HomeScreen extends ConsumerWidget {
                     insight: activeAdvice,
                     loading: insightState.loading,
                     onAsk: () => _askInsight(context, ref, l10n),
-                    onOpenDetail: () => context.push('/economy'),
+                    onOpenDetail: () => context.push('/insights'),
                   )
                 else
                   const _RewardToast(),
@@ -343,42 +373,6 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Pill extends StatelessWidget {
-  const _Pill({
-    required this.background,
-    required this.foreground,
-    required this.label,
-  });
-
-  final Color background;
-  final Color foreground;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        height: 36,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: background,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Nunito',
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-            height: 1.2,
-            color: foreground,
-          ),
         ),
       ),
     );
@@ -445,9 +439,20 @@ class _RemainingCard extends StatelessWidget {
             : hasIncome
                 ? _formatCents(context, data.remainingCents, currency)
                 : '—';
+    final now = DateTime.now();
     final caption = data != null && hasIncome
-        ? l10n.homeRemainingCaptionMonth(_monthName(context, DateTime.now()))
+        ? l10n.homeRemainingCaptionMonth(_monthName(context, now))
         : l10n.homeSetIncome;
+    final kicker = data != null && hasIncome
+        ? '${_monthName(context, now).toUpperCase()} ${now.year} · ${l10n.homeRemainingKicker}'
+        : l10n.homeRemainingKicker;
+    final status = data == null || !hasIncome
+        ? null
+        : data.remainingCents < 0
+            ? l10n.homeUnderZero
+            : data.remainingCents * 5 < data.incomeCents
+                ? l10n.homeTight
+                : l10n.homeComfortable;
     final breakdown = data == null
         ? ''
         : l10n.homeRemainingBreakdownValues(
@@ -462,12 +467,9 @@ class _RemainingCard extends StatelessWidget {
     return GestureDetector(
       onTap: onSetIncome,
       child: Container(
-        height: 226,
+        height: 268,
         width: double.infinity,
-        decoration: BoxDecoration(
-          color: palette.card,
-          borderRadius: BorderRadius.circular(24),
-        ),
+        decoration: const BoxDecoration(color: Colors.transparent),
         child: Stack(
           children: [
             Positioned(
@@ -475,7 +477,7 @@ class _RemainingCard extends StatelessWidget {
               left: 16,
               right: 16,
               child: Text(
-                l10n.homeRemainingKicker,
+                kicker,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'Nunito',
@@ -497,22 +499,30 @@ class _RemainingCard extends StatelessWidget {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      Positioned(
-                        left: 4.64,
-                        top: 4.64,
-                        child: SvgPicture.asset(
-                          'assets/images/gauge_ring.svg',
-                          width: 160.727,
-                          height: 160.727,
-                        ),
+                      GaugeCircular(
+                        radius: 80,
+                        strokeWidth: 14,
+                        totalCents: hasIncome ? data!.incomeCents : 100,
+                        spentCents: hasIncome
+                            ? (data!.incomeCents - data.remainingCents)
+                                .clamp(0, data.incomeCents)
+                            : 0,
+                        color: amountColor == AppColors.terracotta
+                            ? AppColors.budgetOver
+                            : null,
+                        backgroundColor: AppColors.border,
                       ),
-                      Positioned(
-                        left: 13.4,
-                        top: 4.64,
-                        child: SvgPicture.asset(
-                          'assets/images/gauge_available.svg',
-                          width: 151.968,
-                          height: 160.727,
+                      Text(
+                        amount,
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: 'Nunito',
+                          fontSize: amount.length > 10 ? 22 : 32,
+                          fontWeight: FontWeight.w900,
+                          height: 1.2,
+                          color: amountColor,
                         ),
                       ),
                     ],
@@ -521,25 +531,7 @@ class _RemainingCard extends StatelessWidget {
               ),
             ),
             Positioned(
-              top: 78,
-              left: 16,
-              right: 16,
-              child: Text(
-                amount,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontFamily: 'Nunito',
-                  fontSize: amount.length > 10 ? 28 : 43,
-                  fontWeight: FontWeight.w900,
-                  height: 1.2,
-                  color: amountColor,
-                ),
-              ),
-            ),
-            Positioned(
-              top: 128,
+              top: 178,
               left: 16,
               right: 16,
               child: Text(
@@ -553,8 +545,27 @@ class _RemainingCard extends StatelessWidget {
                 ),
               ),
             ),
+            if (status != null)
+              Positioned(
+                top: 198,
+                left: 8,
+                right: 8,
+                child: Text(
+                  '✓  $status',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                    color: data!.remainingCents < 0
+                        ? AppColors.terracotta
+                        : palette.title,
+                  ),
+                ),
+              ),
             Positioned(
-              top: 204,
+              top: 222,
               left: 8,
               right: 8,
               child: Text(
@@ -596,11 +607,9 @@ class _NextExpense extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 63,
-      padding: const EdgeInsets.symmetric(horizontal: 13),
-      decoration: BoxDecoration(
-        color: palette.card,
-        borderRadius: BorderRadius.circular(18),
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: AppColors.line)),
       ),
       child: Row(
         children: [
@@ -1096,6 +1105,128 @@ class _RewardToast extends StatelessWidget {
   }
 }
 
+class _OnTrackCard extends StatelessWidget {
+  const _OnTrackCard({
+    required this.l10n,
+    required this.tone,
+    required this.streak,
+  });
+
+  final AppLocalizations l10n;
+  final OnTrackTone tone;
+  final int streak;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = switch (tone) {
+      OnTrackTone.onTrack => l10n.onTrackTitle,
+      OnTrackTone.catchUp => l10n.onTrackCatchUpTitle,
+      OnTrackTone.start => l10n.onTrackStartTitle,
+    };
+    final body = switch (tone) {
+      OnTrackTone.onTrack =>
+        streak >= 3 ? l10n.onTrackBody(streak) : l10n.onTrackLogging,
+      OnTrackTone.catchUp => l10n.onTrackCatchUpBody,
+      OnTrackTone.start => l10n.onTrackStartBody,
+    };
+    final line = tone == OnTrackTone.onTrack && streak >= 3
+        ? l10n.homeOnTrackLine
+        : '$title. $body';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      decoration: BoxDecoration(
+        color: AppColors.soft,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        line,
+        style: const TextStyle(
+          fontFamily: 'Nunito',
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          height: 1.25,
+          color: AppColors.primaryDark,
+        ),
+      ),
+    );
+  }
+}
+
+class _FamilyMonthSlot extends StatelessWidget {
+  const _FamilyMonthSlot({
+    required this.l10n,
+    required this.currency,
+    required this.transactions,
+  });
+
+  final AppLocalizations l10n;
+  final String currency;
+  final List<SiphoTransaction> transactions;
+
+  @override
+  Widget build(BuildContext context) {
+    final summary = summarizeFamilyTransfers([
+      for (final tx in transactions)
+        (
+          category: tx.category,
+          amountCents: tx.amountCents,
+          amountMainCents: tx.amountMainCents,
+          feeCents: tx.feeCents,
+        ),
+    ]);
+    if (summary.count == 0) return const SizedBox.shrink();
+    final locale = Localizations.localeOf(context).toString();
+    final fees = MoneyFormatter(locale).formatCents(summary.feeCents, currency);
+    final sent = MoneyFormatter(locale).formatCents(summary.sentCents, currency);
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.familyMonthTitle,
+              style: const TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 15,
+                fontWeight: FontWeight.w900,
+                color: AppColors.primaryDark,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              sent,
+              style: const TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: AppColors.primaryDark,
+              ),
+            ),
+            Text(
+              l10n.familyMonthBody(summary.count, fees),
+              style: const TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _AddButton extends StatelessWidget {
   const _AddButton({required this.onTap});
 
@@ -1109,15 +1240,15 @@ class _AddButton extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: SizedBox(
-          width: 56,
-          height: 59.5,
+          width: 64,
+          height: 68,
           child: Stack(
             children: [
               Positioned(
-                top: 3.5,
+                top: 4,
                 child: Container(
-                  width: 56,
-                  height: 56,
+                  width: 64,
+                  height: 64,
                   decoration: const BoxDecoration(
                     color: AppColors.primaryDark,
                     shape: BoxShape.circle,
@@ -1125,8 +1256,8 @@ class _AddButton extends StatelessWidget {
                 ),
               ),
               Container(
-                width: 56,
-                height: 56,
+                width: 64,
+                height: 64,
                 alignment: Alignment.center,
                 decoration: const BoxDecoration(
                   color: AppColors.primary,
@@ -1136,9 +1267,9 @@ class _AddButton extends StatelessWidget {
                   '+',
                   style: TextStyle(
                     fontFamily: 'Nunito',
-                    fontSize: 30,
+                    fontSize: 34,
                     fontWeight: FontWeight.w900,
-                    height: 1,
+                    height: 1.2,
                     color: Colors.white,
                   ),
                 ),

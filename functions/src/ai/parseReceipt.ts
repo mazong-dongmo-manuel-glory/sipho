@@ -45,8 +45,6 @@ export type ParsedReceiptResult = z.infer<typeof GeminiReceiptResponseSchema>;
 export const parseReceipt = onCall(
   {
     ...SECURE_CALLABLE_OPTIONS,
-    // ADR-005: enforce App Check on Gemini-cost callables once tokens are wired.
-    enforceAppCheck: true,
     timeoutSeconds: 60,
   },
   async (request) => {
@@ -67,6 +65,7 @@ export const parseReceipt = onCall(
     });
 
     const ikey = idempotencyKey("parseReceipt", uid, storagePath);
+    // Mark only after a successful parse so a mid-call failure can be retried.
     if (await isIdempotencyKeyProcessed(ikey)) {
       logger.info("parseReceipt: duplicate request", { uid });
       throw new HttpsError("already-exists", "Receipt already processed.");

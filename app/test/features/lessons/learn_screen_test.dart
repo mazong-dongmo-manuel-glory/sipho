@@ -41,16 +41,20 @@ void main() {
       expect(of('a', {'a'}, null), LessonNodeState.done);
     });
 
-    test('country slots unlock independently of nextLessonId', () {
-      LessonNodeState of(String id, Set<String> done) => lessonNodeState(
+    test('country slots: focus is current, others available', () {
+      LessonNodeState of(String id, Set<String> done, String? next) =>
+          lessonNodeState(
             lessonId: id,
             completed: done,
-            nextId: null,
+            nextId: next,
             unlockIndependently: true,
           );
-      expect(of('ca_slot_01', {}), LessonNodeState.current);
-      expect(of('ca_slot_02', {}), LessonNodeState.current);
-      expect(of('ca_slot_01', {'ca_slot_01'}), LessonNodeState.done);
+      expect(of('ca_slot_01', {}, 'ca_slot_01'), LessonNodeState.current);
+      expect(of('ca_slot_02', {}, 'ca_slot_01'), LessonNodeState.available);
+      expect(
+        of('ca_slot_01', {'ca_slot_01'}, 'ca_slot_02'),
+        LessonNodeState.done,
+      );
     });
   });
 
@@ -60,6 +64,7 @@ void main() {
     Future<void> pump(
       WidgetTester tester, {
       Set<String> completed = const {},
+      String countryCode = '',
     }) async {
       tester.view.physicalSize = const Size(800, 4000);
       tester.view.devicePixelRatio = 1;
@@ -82,6 +87,7 @@ void main() {
                     uid: 'u',
                     displayName: 'Amina',
                     currency: 'CAD',
+                    countryCode: countryCode,
                     monthlyIncomeCents: 0,
                     completedLessonIds: completed.toList(),
                   ),
@@ -110,6 +116,16 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
     }
+
+    testWidgets('the fixed country pack is not an extra unit', (tester) async {
+      await pump(tester, countryCode: 'CA');
+      expect(find.text('UNIT 1'), findsOneWidget);
+      expect(find.text('UNIT 4'), findsOneWidget);
+      expect(find.text('UNIT 5'), findsNothing);
+      expect(find.text('Canada lessons'), findsNothing);
+      expect(find.text('YOUR TURN'), findsOneWidget);
+      expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
+    });
 
     testWidgets('shows both units with their subtitle and every lesson',
         (tester) async {

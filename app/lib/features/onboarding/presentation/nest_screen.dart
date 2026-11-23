@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
-import 'package:sipho/app/theme/app_spacing.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
+import 'package:sipho/core/widgets/sipho_button_3d.dart';
 import 'package:sipho/features/fixed_expenses/domain/fixed_expense_draft.dart';
 
+/// Frame Figma 04 · Socle à glisser · Épuré (`2:28921`) — entry before amount/swipe.
 class NestScreen extends StatelessWidget {
   const NestScreen({super.key});
 
@@ -16,167 +17,144 @@ class NestScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
-          padding:
-              const EdgeInsets.symmetric(horizontal: AppSpacing.pagePadding),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: GestureDetector(
-                  onTap: () => context.go('/onboarding'),
-                  child: const Text(
-                    '‹',
-                    style: TextStyle(
-                      fontFamily: 'Nunito',
-                      fontSize: 30,
-                      fontWeight: FontWeight.w700,
-                      height: 1.2,
-                      color: AppColors.primaryDark,
-                    ),
-                  ),
+              IconButton(
+                onPressed: () => context.go('/onboarding'),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 44,
+                  minHeight: 44,
                 ),
+                icon: const Icon(
+                  Icons.chevron_left_rounded,
+                  size: 32,
+                  color: AppColors.textSecondary,
+                ),
+                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 4),
               Text(
                 l10n.onboardingNestTitle,
-                textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontFamily: 'Nunito',
                   fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  height: 1.2,
+                  fontWeight: FontWeight.w800,
+                  height: 1.3,
                   color: AppColors.primaryDark,
                 ),
               ),
-              const SizedBox(height: 12),
-              const SiphoArt.happy(frame: 125),
+              const SizedBox(height: 20),
+              Text(
+                l10n.onboardingNestLead,
+                style: const TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  height: 1.3,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const SiphoArt.happy(frame: 106),
+              const SizedBox(height: 20),
               Text(
                 l10n.onboardingNestStrands(3),
                 style: const TextStyle(
                   fontFamily: 'Nunito',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  height: 1.2,
-                  color: AppColors.primary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  height: 1.3,
+                  color: AppColors.textSecondary,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               Container(
-                width: 333,
-                height: 235,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.border),
+                  color: AppColors.soft,
+                  borderRadius: BorderRadius.circular(24),
                 ),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('🏠', style: TextStyle(fontSize: 60)),
-                    const SizedBox(height: 12),
                     Text(
                       l10n.onboardingNestQuestion,
-                      textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontFamily: 'Nunito',
-                        fontSize: 25,
-                        fontWeight: FontWeight.w900,
-                        height: 1.2,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        height: 1.3,
                         color: AppColors.primaryDark,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       l10n.onboardingNestHint,
-                      textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontFamily: 'Nunito',
-                        fontSize: 15,
-                        height: 1.2,
-                        color: AppColors.textSecondary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        height: 1.3,
+                        color: AppColors.primaryDark,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 28),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _RoundAction(
-                    label: '×',
-                    color: AppColors.border,
-                    foreground: AppColors.textSecondary,
-                    onTap: () => context.go('/onboarding/ready'),
-                  ),
-                  const SizedBox(width: 57),
-                  _RoundAction(
-                    label: '✓',
-                    color: AppColors.primary,
-                    foreground: Colors.white,
-                    onTap: () async {
-                      final saved = await context.push<bool>(
-                        '/fixed-expenses/amount',
-                        extra: kSocleTemplates.first,
-                      );
-                      if (saved == true && context.mounted) {
-                        context.go('/onboarding/ready');
-                      }
-                    },
-                  ),
-                ],
-              ),
-              const Spacer(),
+              const SizedBox(height: 20),
               Text(
                 l10n.onboardingNestSwipe,
                 style: const TextStyle(
                   fontFamily: 'Nunito',
-                  fontSize: 15,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w400,
+                  height: 1.3,
+                  color: AppColors.primaryDark,
+                ),
+              ),
+              const Spacer(),
+              SiphoButton3D(
+                label: l10n.onboardingNestYesRent,
+                onPressed: () async {
+                  final saved = await context.push<bool>(
+                    '/fixed-expenses/amount',
+                    extra: kSocleTemplates.first,
+                  );
+                  if (saved == true && context.mounted) {
+                    context.go('/onboarding/ready');
+                  }
+                },
+                color: AppColors.primaryDark,
+                shadowColor: AppColors.primaryDark,
+                height: 52,
+                borderRadius: figmaButtonRadius,
+              ),
+              const SizedBox(height: 12),
+              SiphoButton3D(
+                label: l10n.onboardingNestSkip,
+                onPressed: () => context.go('/onboarding/ready'),
+                color: AppColors.surface,
+                shadowColor: AppColors.border,
+                textColor: AppColors.primaryDark,
+                height: 52,
+                borderRadius: figmaButtonRadius,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                l10n.onboardingNestFooter,
+                style: const TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  height: 1.2,
+                  height: 1.3,
                   color: AppColors.textSecondary,
                 ),
               ),
-              const SizedBox(height: 36),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RoundAction extends StatelessWidget {
-  const _RoundAction({
-    required this.label,
-    required this.color,
-    required this.foreground,
-    required this.onTap,
-  });
-
-  final String label;
-  final Color color;
-  final Color foreground;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 80,
-        height: 84,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Nunito',
-            fontSize: label == '×' ? 36 : 32,
-            fontWeight: FontWeight.w900,
-            height: 1.2,
-            color: foreground,
           ),
         ),
       ),

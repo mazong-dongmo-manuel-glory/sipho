@@ -31,6 +31,7 @@ class TransactionRepository {
                 category: data['category'] as String? ?? 'other',
                 merchant: data['merchant'] as String?,
                 note: data['note'] as String?,
+                feeCents: (data['feeCents'] as num?)?.toInt(),
                 date: data['date'] as String? ?? '',
                 source: data['source'] as String? ?? 'manual',
                 receiptPath: data['receiptPath'] as String?,
@@ -54,6 +55,7 @@ class TransactionRepository {
     if (tx.fxRate != null) data['fxRate'] = tx.fxRate;
     if (tx.merchant != null) data['merchant'] = tx.merchant;
     if (tx.note != null) data['note'] = tx.note;
+    if (tx.feeCents != null && tx.feeCents! > 0) data['feeCents'] = tx.feeCents;
     if (tx.receiptPath != null) data['receiptPath'] = tx.receiptPath;
     if (tx.fixedExpenseId != null) data['fixedExpenseId'] = tx.fixedExpenseId;
     await _firestore.collection('users/$uid/transactions').add(data);
@@ -75,6 +77,9 @@ class TransactionRepository {
       'source': tx.source == 'receipt' ? 'receipt' : 'manual',
       'merchant': merchant.isEmpty ? FieldValue.delete() : merchant,
       'note': note.isEmpty ? FieldValue.delete() : note,
+      'feeCents': tx.feeCents == null || tx.feeCents! <= 0
+          ? FieldValue.delete()
+          : tx.feeCents,
       'fxRate': tx.fxRate ?? FieldValue.delete(),
     };
     await _firestore

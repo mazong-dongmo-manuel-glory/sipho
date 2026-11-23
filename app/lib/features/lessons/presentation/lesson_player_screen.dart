@@ -41,7 +41,6 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
   late final DateTime _startedAt = DateTime.now();
   String? _boundSignature;
   bool _requestedSlotFill = false;
-  bool _slotFillFailed = false;
 
   int? _selected;
   bool _checked = false;
@@ -50,13 +49,18 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
   bool _askingTutor = false;
   LessonTutorReply? _tutorReply;
 
-  CatalogLesson? _resolveLesson(Map<String, AiCountryLesson> ai) {
+  CatalogLesson? _resolveLesson(
+    Map<String, AiCountryLesson> ai,
+    String uiLanguage,
+  ) {
     final id = widget.lessonId;
     if (id == null || id.isEmpty) return null;
     // Country slots: play monolingual AI under aiLessons/{slotId}; XP via completeLesson(slotId).
     if (isCountrySlotId(id)) {
       final aiLesson = ai[id];
-      if (aiLesson != null && aiLesson.isPlayable) {
+      if (aiLesson != null &&
+          aiLesson.isPlayable &&
+          appLanguagesMatch(aiLesson.locale, uiLanguage)) {
         return aiLesson.toCatalogLesson(
           fallback: kCountryCatalogLessons.cast<CatalogLesson?>().firstWhere(
                 (l) => l?.id == id,
@@ -66,7 +70,7 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
       }
       return null;
     }
-    return playableLessonById(id, ai) ??
+    return playableLessonById(id, ai, uiLanguage: uiLanguage) ??
         kAllPlayableLessons.cast<CatalogLesson?>().firstWhere(
               (l) => l?.id == id,
               orElse: () => null,
@@ -74,27 +78,21 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
   }
 
   Future<void> _ensureSlotFilled(String slotId) async {
-    if (_requestedSlotFill || _slotFillFailed) return;
+    if (_requestedSlotFill) return;
     _requestedSlotFill = true;
     try {
-      await ref
-          .read(aiCountryLessonsRepositoryProvider)
-          .ensureGenerated(slotId: slotId, forceNew: false);
-      if (!mounted) return;
-      final ai = ref.read(aiCountryLessonsProvider).valueOrNull ?? {};
-      if (ai[slotId]?.isPlayable != true) {
-        setState(() {
-          _slotFillFailed = true;
-          _requestedSlotFill = false;
-        });
-      }
+      final uiLanguage = ref.read(appUiLanguageProvider);
+      final existing =
+          ref.read(aiCountryLessonsProvider).valueOrNull?[slotId];
+      final mismatch = existing?.isPlayable == true &&
+          !appLanguagesMatch(existing?.locale, uiLanguage);
+      await ref.read(aiCountryLessonsRepositoryProvider).ensureGenerated(
+            slotId: slotId,
+            forceNew: mismatch,
+            locale: uiLanguage,
+          );
     } catch (_) {
-      if (!mounted) return;
-      // Show not-found instead of an infinite spinner; allow a later retry.
-      setState(() {
-        _slotFillFailed = true;
-        _requestedSlotFill = false;
-      });
+      // Not-found UI stays; user can leave and retry.
     }
   }
 
@@ -256,22 +254,27 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final language = Localizations.localeOf(context).languageCode;
+    final uiLanguage = normalizeAppLanguage(language);
     final ai = ref.watch(aiCountryLessonsProvider).valueOrNull ?? const {};
     final slotId = widget.lessonId;
-    if (slotId != null &&
+    final slotAi = slotId == null ? null : ai[slotId];
+    final slotNeedsFill = slotId != null &&
         isCountrySlotId(slotId) &&
-        (ai[slotId]?.isPlayable != true)) {
+        (slotAi?.isPlayable != true ||
+            !appLanguagesMatch(slotAi?.locale, uiLanguage));
+    if (slotNeedsFill) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         unawaited(_ensureSlotFilled(slotId));
       });
     }
-    final resolved = _resolveLesson(ai);
+    final resolved = _resolveLesson(ai, uiLanguage);
     if (resolved != null) {
       final signature =
-          '${resolved.id}:${resolved.titleFr}:${resolved.steps.length}:${resolved.objective.fr}';
+          '${resolved.id}:${resolved.title(uiLanguage)}:${resolved.steps.length}:${resolved.objective.of(uiLanguage)}';
       if (_boundSignature != signature) {
-        final preferAi = ai.containsKey(resolved.id);
+        final preferAi = ai.containsKey(resolved.id) &&
+            appLanguagesMatch(ai[resolved.id]?.locale, uiLanguage);
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           setState(() {
@@ -288,8 +291,9 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
     if (lesson == null || session == null) {
       final waitingForSlot = shouldShowCountrySlotSpinner(
         isCountrySlot: slotId != null && isCountrySlotId(slotId),
-        isPlayable: ai[slotId]?.isPlayable == true,
-        slotFillFailed: _slotFillFailed,
+        isPlayable: slotAi?.isPlayable == true &&
+            appLanguagesMatch(slotAi?.locale, uiLanguage),
+        slotFillFailed: false,
       );
       if (waitingForSlot) {
         return Scaffold(

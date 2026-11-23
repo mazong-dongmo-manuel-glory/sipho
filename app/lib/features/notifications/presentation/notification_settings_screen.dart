@@ -19,11 +19,21 @@ class NotificationSettingsScreen extends ConsumerWidget {
         ref.watch(notifPrefsProvider).valueOrNull ?? NotifPrefs.defaults;
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: Text(l10n.notifSettingsTitle)),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.pagePadding),
           children: [
+            Text(
+              l10n.notifSettingsTitle,
+              style: const TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                height: 1.3,
+                color: AppColors.primaryDark,
+              ),
+            ),
+            const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(AppSpacing.cardPadding),
               decoration: BoxDecoration(

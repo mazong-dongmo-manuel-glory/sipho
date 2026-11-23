@@ -132,7 +132,9 @@ export async function createFriendRequest(
     throw new HttpsError("invalid-argument", "You cannot add yourself.");
   }
 
-  await assertFriendCapacity(uid, otherUid);
+  if ((await countFriendLinks(uid)) >= MAX_FRIEND_LINKS) {
+    throw new HttpsError("resource-exhausted", "Friend list is full.");
+  }
 
   const pairId = friendPairId(uid, otherUid);
   const pairRef = db().doc(`friendships/${pairId}`);
@@ -180,16 +182,6 @@ export const respondFriendRequest = onCall(SECURE_CALLABLE_OPTIONS, async (reque
   });
 
   const pairRef = db().doc(`friendships/${pairId}`);
-
-  if (accept) {
-    const snap = await pairRef.get();
-    const users = (snap.data() as { users?: unknown } | undefined)?.users;
-    const otherUid =
-      Array.isArray(users) && typeof users.find((u) => u !== uid) === "string"
-        ? (users.find((u) => u !== uid) as string)
-        : "";
-    await assertFriendCapacity(uid, ...(otherUid ? [otherUid] : []));
-  }
 
   await db().runTransaction(async (tx) => {
     const snap = await tx.get(pairRef);

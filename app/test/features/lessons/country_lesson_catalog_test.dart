@@ -22,8 +22,8 @@ void main() {
         .readAsStringSync();
     expect(server, contains('SLOTS_PER_COUNTRY'));
     expect(server, contains(r'${pack.prefix}_slot_'));
-    expect(server, contains("prefix: \"ca\""));
-    expect(server, contains("prefix: \"gen\""));
+    expect(server, contains('prefix: "ca"'));
+    expect(server, contains('prefix: "gen"'));
 
     final expected = {
       for (final pack in kCountrySlotPacks)

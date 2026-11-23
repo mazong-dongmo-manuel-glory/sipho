@@ -73,6 +73,36 @@ void main() {
       expect(currentUnit(kCatalogUnits, ids.toSet()), isNull);
     });
 
+    test('startIndex continues unit numbers without reopening the sequence', () {
+      final core = unitProgressList(kCatalogUnits, {});
+      final appended = unitProgressList(
+        kCatalogUnits,
+        {},
+        startIndex: core.length,
+      );
+      expect(core.map((p) => p.index).toList(), [0, 1, 2, 3]);
+      expect(appended.map((p) => p.index).toList(), [4, 5, 6, 7]);
+      expect(appended.first.unlocked, isTrue);
+      expect(appended[1].unlocked, isFalse);
+    });
+
+    test('a later list stays locked until it is allowed to open', () {
+      final waiting = unitProgressList(
+        kCatalogUnits,
+        {},
+        startIndex: 4,
+        initiallyUnlocked: false,
+      );
+      expect(waiting.every((unit) => unit.unlocked == false), isTrue);
+      final finished = unitProgressList(
+        [kCatalogUnits.first],
+        kCatalogUnits.first.lessons.map((lesson) => lesson.id).toSet(),
+        initiallyUnlocked: false,
+      );
+      expect(finished.single.unlocked, isTrue);
+      expect(finished.single.completed, isTrue);
+    });
+
     test('the lesson path matches the server (functions lessonPath.ts)', () {
       final file = File('../functions/src/shared/lessonPath.ts');
       if (!file.existsSync()) {

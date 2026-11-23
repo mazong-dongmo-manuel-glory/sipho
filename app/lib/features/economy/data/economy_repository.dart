@@ -1,9 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sipho/core/firebase/firebase_providers.dart';
-import 'package:sipho/features/finance/presentation/finance_providers.dart';
 import 'package:sipho/features/economy/domain/economy_data.dart';
 import 'package:sipho/features/economy/domain/economy_news.dart';
+import 'package:sipho/features/finance/presentation/finance_providers.dart';
 
 final economyRepositoryProvider = Provider<EconomyRepository>((ref) {
   return EconomyRepository(ref.watch(firestoreProvider));
@@ -44,6 +45,15 @@ final userEconomyNewsProvider = StreamProvider<EconomyNewsFeed>((ref) {
   return ref.watch(countryEconomyNewsProvider(country).stream);
 });
 
+/// One refresh per session: writes `fx/latest` and today's `economyNews` on the server.
+final marketRefreshProvider = FutureProvider<void>((ref) async {
+  try {
+    await ref.read(economyRepositoryProvider).refreshMarketData();
+  } catch (_) {
+    // The screen keeps showing whatever Firestore already has.
+  }
+});
+
 class EconomyRepository {
   final FirebaseFirestore _firestore;
 
@@ -72,6 +82,13 @@ class EconomyRepository {
       if (!doc.exists || doc.data() == null) return EconomyNewsFeed.empty;
       return EconomyNewsFeed.fromJson(doc.data()!);
     });
+  }
+
+  /// Asks the staging/prod function `refreshMarketData` to fill FX and headlines.
+  Future<void> refreshMarketData() async {
+    final callable = FirebaseFunctions.instanceFor(region: 'us-central1')
+        .httpsCallable('refreshMarketData');
+    await callable.call();
   }
 
   static EconomyData defaultEconomyData(String countryCode) {

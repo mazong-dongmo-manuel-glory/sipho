@@ -90,9 +90,9 @@ final learnQuestsProvider =
       !mergedServer.any(
         (q) => q.title.toLowerCase() == aiSuggestion.name.toLowerCase(),
       )) {
-    final liveProgress = aiSuggestion.type == 'COMPLETE_LESSON'
-        ? completedSet.length
-        : transactions.length;
+    // Do not invent progress from lifetime lesson count / all-month spends —
+    // that falsely completes daily quests. Server rows own real progress.
+    final liveProgress = 0;
     mergedServer.insert(
       0,
       ServerQuestRecord(
@@ -103,7 +103,7 @@ final learnQuestsProvider =
         progress: liveProgress,
         target: aiSuggestion.target,
         rewardXp: 0,
-        status: liveProgress >= aiSuggestion.target ? 'completed' : 'active',
+        status: 'active',
         isAiGenerated: true,
       ),
     );

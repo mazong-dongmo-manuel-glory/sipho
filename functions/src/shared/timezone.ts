@@ -110,6 +110,11 @@ export function localDateKey(instant: Date, time: UserTime): string {
   return new Date(localMs(instant, time)).toISOString().slice(0, 10);
 }
 
+/** The local calendar day before [instant]. */
+export function previousLocalDateKey(instant: Date, time: UserTime): string {
+  return localDateKey(new Date(instant.getTime() - 24 * 60 * 60 * 1000), time);
+}
+
 /** Local month at `instant`, as YYYY-MM. */
 export function localMonthKey(instant: Date, time: UserTime): string {
   return localDateKey(instant, time).slice(0, 7);

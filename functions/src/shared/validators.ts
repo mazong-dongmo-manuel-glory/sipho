@@ -12,6 +12,7 @@ export const ALLOWED_EXPENSE_CATEGORIES = [
   "transport",
   "restaurants",
   "shopping",
+  "family",
 ] as const;
 
 /**
@@ -72,19 +73,26 @@ export type TransactionInput = z.infer<typeof TransactionInputSchema>;
 
 // ─── Lesson completion ────────────────────────────────────────────────────────
 
+const GeneratedLessonIdSchema = z
+  .string()
+  .regex(/^gen_\d{3}$/, "Unknown lessonId");
+
 export const CompleteLessonInputSchema = z.object({
-  lessonId: z.enum(ALLOWED_LESSON_IDS, {
-    errorMap: () => ({ message: "Unknown lessonId" }),
-  }),
+  lessonId: z.union([
+    z.enum(ALLOWED_LESSON_IDS, {
+      errorMap: () => ({ message: "Unknown lessonId" }),
+    }),
+    GeneratedLessonIdSchema,
+  ]),
   score: z.number().int().min(0).max(100),
   durationSeconds: z.number().int().min(2, "Duration too short").max(3600),
-  /** Client-generated id per attempt — required so retries can finish post-TX hooks. */
   attemptId: z
     .string()
     .trim()
-    .min(8)
+    .min(1)
     .max(80)
-    .regex(/^[a-zA-Z0-9_-]+$/),
+    .regex(/^[a-zA-Z0-9_-]+$/)
+    .optional(),
 });
 
 export type CompleteLessonInput = z.infer<typeof CompleteLessonInputSchema>;

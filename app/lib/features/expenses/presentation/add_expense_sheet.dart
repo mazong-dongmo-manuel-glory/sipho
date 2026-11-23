@@ -37,8 +37,16 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
   int _selected = 6;
   bool _saving = false;
   String? _txCurrency;
+  final _recipient = TextEditingController();
+  String _feeDigits = '';
 
   static const _currencies = ['CAD', 'USD', 'EUR', 'XAF', 'XOF', 'GBP'];
+
+  @override
+  void dispose() {
+    _recipient.dispose();
+    super.dispose();
+  }
 
   void _tap(String key) {
     setState(() {
@@ -82,6 +90,25 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
       return;
     }
     final category = kQuickExpenseCategories[_selected];
+    final recipient = _recipient.text.trim();
+    final feeRaw =
+        category.id == 'family' ? AmountInput.parseCents(_feeDigits) : 0;
+    int? feeMain;
+    if (feeRaw > 0) {
+      feeMain = fx?.convertCents(
+            amountCents: feeRaw,
+            from: currency,
+            to: mainCurrency,
+          ) ??
+          (currency == mainCurrency ? feeRaw : null);
+      if (feeMain == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.expenseFxUnavailable)),
+        );
+        return;
+      }
+    }
     setState(() => _saving = true);
     try {
       await ref.read(transactionRepositoryProvider).addTransaction(
@@ -93,6 +120,10 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
               amountMainCents: mainCents,
               fxRate: rate,
               category: category.id,
+              merchant: category.id == 'family' && recipient.isNotEmpty
+                  ? recipient
+                  : null,
+              feeCents: feeMain != null && feeMain > 0 ? feeMain : null,
               date: LocalDay.now().isoDate,
               source: 'manual',
               createdAt: DateTime.now(),
@@ -223,9 +254,9 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                             l10n.addExpenseTitle,
                             style: const TextStyle(
                               fontFamily: 'Nunito',
-                              fontSize: 22,
-                              fontWeight: FontWeight.w900,
-                              height: 1.2,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              height: 1.3,
                               color: AppColors.primaryDark,
                             ),
                           ),
@@ -237,7 +268,28 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
+                    Text(
+                      l10n.addExpenseSteps,
+                      style: const TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        height: 1.3,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '$shown $symbol',
+                      style: const TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 56,
+                        fontWeight: FontWeight.w900,
+                        height: 1.3,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
                     Row(
                       children: [
                         Text(
@@ -246,6 +298,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                             fontFamily: 'Nunito',
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
+                            height: 1.3,
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -276,20 +329,44 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                         ),
                       ],
                     ),
-                    Text(
-                      '$shown $symbol',
-                      style: const TextStyle(
-                        fontFamily: 'Nunito',
-                        fontSize: 48,
-                        fontWeight: FontWeight.w900,
-                        height: 1.2,
-                        color: AppColors.primaryDark,
+                    if (kQuickExpenseCategories[_selected].id == 'family') ...[
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _recipient,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: InputDecoration(
+                          hintText: l10n.familyRecipientHint,
+                          isDense: true,
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 6),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          l10n.familyFeeLabel,
+                          style: const TextStyle(
+                            fontFamily: 'Nunito',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                      TextField(
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: l10n.familyFeeHint,
+                          isDense: true,
+                        ),
+                        onChanged: (value) => _feeDigits = value,
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     Expanded(
                       child: GridView.builder(
-                        physics: const NeverScrollableScrollPhysics(),
+                        physics: const ClampingScrollPhysics(),
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 4,
@@ -314,9 +391,6 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                         Expanded(
                           child: SiphoButton3D(
                             label: l10n.addExpenseCta,
-                            height: 39,
-                            shadowOffset: 3,
-                            borderRadius: BorderRadius.circular(12),
                             color: AppColors.primary,
                             shadowColor: AppColors.primaryDark,
                             isLoading: _saving,

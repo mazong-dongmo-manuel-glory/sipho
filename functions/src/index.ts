@@ -6,6 +6,7 @@ admin.initializeApp();
 export { onTransactionWrite } from './gamification/onTransactionWrite';
 export { completeLesson } from './gamification/completeLesson';
 export { generateCountryLessons } from './lessons/generateCountryLessons';
+export { generateNextLesson } from './lessons/generateNextLesson';
 export { markFixedPaid } from './gamification/markFixedPaid';
 export { claimQuest } from './gamification/claimQuest';
 export { refreshDailyQuests } from './gamification/refreshDailyQuests';
@@ -37,6 +38,7 @@ export { economySummaries } from './ai/economySummaries';
 export { economyFetch } from './economy/economyFetch';
 export { economyNewsFetch } from './economy/economyNewsFetch';
 export { fxRates } from './economy/fxRates';
+export { refreshMarketData } from './economy/refreshMarketData';
 export { economyAlerts } from './economy/economyAlerts';
 
 // Friends & invitations

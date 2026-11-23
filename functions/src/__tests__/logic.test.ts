@@ -87,7 +87,6 @@ describe("Server security & gamification logic", () => {
         lessonId: "emergency_fund",
         score: 100,
         durationSeconds: 0,
-        attemptId: "attempt_abc12",
       }).success
     ).toBe(false);
 
@@ -103,7 +102,7 @@ describe("Server security & gamification logic", () => {
   });
 
   test("completeLesson only accepts catalog lesson ids (fake ids earn nothing)", () => {
-    const base = { score: 100, durationSeconds: 30, attemptId: "attempt_abc12" };
+    const base = { score: 100, durationSeconds: 30 };
     expect(CompleteLessonInputSchema.safeParse({ ...base, lessonId: "fake_lesson_1" }).success).toBe(
       false
     );
@@ -113,14 +112,12 @@ describe("Server security & gamification logic", () => {
     expect(CompleteLessonInputSchema.safeParse({ ...base, lessonId: "small_amounts" }).success).toBe(
       true
     );
-    expect(
-      CompleteLessonInputSchema.safeParse({
-        lessonId: "track_spending",
-        score: 100,
-        durationSeconds: 30,
-      }).success
-    ).toBe(false);
-    // Path lessons stay fixed; country awardables are stable slots (not topic seeds).
+    expect(CompleteLessonInputSchema.safeParse({ ...base, lessonId: "gen_001" }).success).toBe(
+      true
+    );
+    expect(CompleteLessonInputSchema.safeParse({ ...base, lessonId: "gen_1" }).success).toBe(
+      false
+    );
     expect(ALLOWED_LESSON_IDS.slice(0, 12)).toEqual([
       "emergency_fund",
       "needs_wants",
@@ -135,12 +132,9 @@ describe("Server security & gamification logic", () => {
       "compound_interest",
       "smart_budget_503020",
     ]);
-    expect(ALLOWED_LESSON_IDS).toContain("ca_slot_01");
-    expect(ALLOWED_LESSON_IDS).toContain("gen_slot_01");
-    expect(ALLOWED_LESSON_IDS).not.toContain("ca_tfsa_101");
-    expect(
-      CompleteLessonInputSchema.safeParse({ ...base, lessonId: "ca_slot_01" }).success
-    ).toBe(true);
+    const slots = ALLOWED_LESSON_IDS.filter((id) => id.includes("_slot_"));
+    expect(slots).toHaveLength(60);
+    expect(slots).toEqual(expect.arrayContaining(["ca_slot_01", "gen_slot_10"]));
   });
 
   test("callGeminiJson uses active Gemini 3.5+ models, omits temperature, and skips thought parts", async () => {

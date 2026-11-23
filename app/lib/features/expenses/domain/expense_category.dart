@@ -15,4 +15,5 @@ const List<ExpenseCategory> kQuickExpenseCategories = [
   ExpenseCategory(id: 'transport', emoji: '🚌'),
   ExpenseCategory(id: 'restaurants', emoji: '🍔'),
   ExpenseCategory(id: 'shopping', emoji: '🛍'),
+  ExpenseCategory(id: 'family', emoji: '🤝'),
 ];

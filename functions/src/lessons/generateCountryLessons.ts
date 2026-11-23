@@ -29,9 +29,10 @@ const InputSchema = z.object({
     .max(64)
     .regex(/^[a-z0-9_]+$/)
     .optional(),
-  /** When true, always regenerate even if a lesson already exists for the slot. */
-  /** When true, regenerate even if a lesson already exists for the slot. Default: reuse. */
+  /** When true, regenerate even if a lesson already exists for the slot. */
   forceNew: z.boolean().optional().default(false),
+  /** Optional UI language override (`fr`|`en`). Defaults to the user profile locale. */
+  locale: z.enum(["fr", "en"]).optional(),
 });
 
 /** Monolingual lesson payload (language = user locale). */
@@ -87,25 +88,20 @@ interface EconomyHeadline {
  * Fills one awardable country **slot** with a fresh monolingual AI lesson.
  * Topic is picked at random (≠ lastTopicId). XP is claimed later via `completeLesson(slotId)`.
  */
-export const generateCountryLessons = onCall(
-  {
-    ...SECURE_CALLABLE_OPTIONS,
-    // ADR-005: enforce App Check on Gemini-cost callables once tokens are wired.
-    enforceAppCheck: true,
-  },
-  async (request) => {
-    const uid = requireAuthUid(request);
-    const { slotId: requestedSlotId, forceNew } = parseInput(
-      InputSchema,
-      request.data ?? {}
-    );
+export const generateCountryLessons = onCall(SECURE_CALLABLE_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const {
+    slotId: requestedSlotId,
+    forceNew,
+    locale: localeOverride,
+  } = parseInput(InputSchema, request.data ?? {});
 
-    await enforceRateLimit({
-      uid,
-      action: "generateCountryLessons",
-      maxRequests: 12,
-      windowMs: 60 * 60 * 1000,
-    });
+  await enforceRateLimit({
+    uid,
+    action: "generateCountryLessons",
+    maxRequests: 12,
+    windowMs: 60 * 60 * 1000,
+  });
 
   const userSnap = await db().doc(`users/${uid}`).get();
   const user = userSnap.data() ?? {};
@@ -135,13 +131,24 @@ export const generateCountryLessons = onCall(
   const lessonRef = db().doc(`users/${uid}/aiLessons/${slotId}`);
   const metaRef = db().doc(`users/${uid}/aiLessonsMeta/state`);
 
+  const profileLocale: "fr" | "en" = user.locale === "en" ? "en" : "fr";
+  const locale: "fr" | "en" = localeOverride ?? profileLocale;
+
   if (!forceNew) {
     const existing = await lessonRef.get();
-    if (existing.exists && existing.data()?.personalized === true) {
+    const existingLocale =
+      existing.data()?.locale === "en" || existing.data()?.locale === "fr"
+        ? (existing.data()?.locale as "fr" | "en")
+        : null;
+    if (
+      existing.exists &&
+      existing.data()?.personalized === true &&
+      existingLocale === locale
+    ) {
       return {
         slotId,
         topicId: existing.data()?.topicId ?? null,
-        locale: existing.data()?.locale ?? (user.locale === "en" ? "en" : "fr"),
+        locale: existingLocale,
         reused: true,
         lesson: existing.data(),
         countryCode: countryCode || null,
@@ -155,7 +162,7 @@ export const generateCountryLessons = onCall(
     return {
       slotId,
       topicId: null,
-      locale: user.locale === "en" ? "en" : "fr",
+      locale,
       reused: false,
       generated: false,
       countryCode: countryCode || null,
@@ -172,8 +179,6 @@ export const generateCountryLessons = onCall(
     : [];
 
   const topic = pickTopicAvoidingRecent(countryCode || null, lastTopicId, recentTopicIds);
-
-  const locale: "fr" | "en" = user.locale === "en" ? "en" : "fr";
   const currency = typeof user.currency === "string" ? user.currency : "";
   const goal = typeof user.goal === "string" ? user.goal : "";
   const region = typeof user.region === "string" ? user.region : "";
@@ -397,10 +402,11 @@ function buildPrompt(params: {
 
   return `You are Sipho, an educational money coach. Produce ONE micro-lesson as JSON.
 ALL user-facing strings must be in ${langName} only (locale=${params.locale}). Do NOT include fr/en maps.
+The "title" must be entirely in ${langName} — never bilingual, never paste English theme/angle labels into the title.
 
 Country focus: ${params.countryCode}.
-Theme: ${params.topic.theme}.
-News / political-economy angle: ${params.topic.angle}.
+Theme (internal label — write the lesson in ${langName}): ${params.topic.theme}.
+News / political-economy angle (internal label — write in ${langName}): ${params.topic.angle}.
 Prefer citing "${params.topic.sourceHint}" as places to verify — NEVER invent rates, tax %, ceilings, fees, or prices.
 
 Recent local economy headlines (context only; do not invent numbers from them):

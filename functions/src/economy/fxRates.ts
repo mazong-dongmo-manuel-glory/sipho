@@ -10,6 +10,9 @@ export type FxLatestDoc = {
   updatedAt: FirebaseFirestore.FieldValue;
 };
 
+/** ECB reference rates via Frankfurter. No API key. Used when FX_FEED_URL is unset. */
+export const DEFAULT_FX_FEED_URL = "https://api.frankfurter.app/latest?from=USD";
+
 /** Parse a frankfurter / exchangerate-style JSON payload into base + rates. */
 export function parseFxFeedPayload(raw: unknown): {
   base: string;
@@ -40,8 +43,8 @@ export function parseFxFeedPayload(raw: unknown): {
 
 /**
  * Daily scheduler (07:00 UTC) for FX reference rates.
- * Writes `fx/latest` only when `FX_FEED_URL` returns a live dated payload —
- * never invents hardcoded rates.
+ * Writes `fx/latest` from `FX_FEED_URL`, or Frankfurter (ECB) when that env is empty.
+ * Never invents a rate: a bad payload is skipped.
  */
 export const fxRates = onSchedule(
   {
@@ -49,11 +52,7 @@ export const fxRates = onSchedule(
     region: "us-central1",
   },
   async (_event) => {
-    const feedUrl = process.env.FX_FEED_URL ?? "";
-    if (!feedUrl) {
-      logger.info("fxRates: FX_FEED_URL not configured; skipping");
-      return;
-    }
+    const feedUrl = (process.env.FX_FEED_URL ?? "").trim() || DEFAULT_FX_FEED_URL;
 
     const response = await fetch(feedUrl, {
       headers: { Accept: "application/json" },

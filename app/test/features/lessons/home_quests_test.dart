@@ -57,6 +57,14 @@ void main() {
       expect(dailyQuestsForHome(const []), isEmpty);
     });
 
+    test('a catch-up quest is shown first', () {
+      final result = dailyQuestsForHome([
+        _quest('log'),
+        _quest('catch', period: 'catchup', target: 1),
+      ]);
+      expect(result.map((q) => q.id), ['catch', 'log']);
+    });
+
     test('the lesson quest and the expense quest are both shown', () {
       final result = dailyQuestsForHome([
         _quest('log', type: 'ADD_TRANSACTION'),

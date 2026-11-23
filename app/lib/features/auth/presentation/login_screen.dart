@@ -1,35 +1,45 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
-import 'package:sipho/app/theme/app_radius.dart';
-import 'package:sipho/app/theme/app_spacing.dart';
 import 'package:sipho/app/theme/app_text_styles.dart';
 import 'package:sipho/core/legal/sipho_legal.dart';
+import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
 import 'package:sipho/features/auth/presentation/auth_provider.dart';
+import 'package:sipho/features/finance/presentation/finance_providers.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Apple Sign-In is only offered on Apple platforms (not Android / web).
+/// User-facing auth error (avoids dumping full exception stacks on login).
+String authErrorMessage(Object? error, AppLocalizations l10n) {
+  if (error is FirebaseAuthException) {
+    switch (error.code) {
+      case 'operation-not-allowed':
+        return l10n.authErrorAppleDisabled;
+      case 'invalid-credential':
+      case 'invalid-id-token':
+        return l10n.authErrorInvalidCredential;
+      case 'network-request-failed':
+        return l10n.authErrorNetwork;
+      default:
+        return l10n.authErrorGeneric;
+    }
+  }
+  return l10n.authErrorGeneric;
+}
+
+/// Apple Sign-In on iOS/macOS (native) and Android (Firebase OAuth / Custom Tabs).
+/// Android needs Firebase Auth Apple **OAuth code flow** — see ENVIRONMENTS.md.
 bool get kShowAppleSignInButton =>
     !kIsWeb &&
     (defaultTargetPlatform == TargetPlatform.iOS ||
-        defaultTargetPlatform == TargetPlatform.macOS);
+        defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.android);
 
-/// Gaps from the 393×852 Figma frame, below the system status bar.
-const _wordmarkTopGap = 19.0;
-const _wordmarkToMascot = 31.0;
-const _mascotToTitle = 23.0;
-const _titleToSubtitle = 18.0;
-const _buttonGap = 16.0;
-const _buttonsToLegal = 29.0;
-const _legalBottomGap = 29.0;
-
-const _mascotFrame = 240.0;
-const _svgWidth = 218.113;
-const _svgHeight = 197.495;
+const _buttonRadius = BorderRadius.all(Radius.circular(16));
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -57,6 +67,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isAppleLoading = true);
     try {
       await ref.read(authNotifierProvider.notifier).signInWithApple();
+      if (!mounted) return;
+      // Router redirect normally takes over; nudge if we're still on /login.
+      final user = ref.read(authStateProvider).valueOrNull;
+      if (user == null) return;
+      final done = ref.read(onboardingGateProvider);
+      if (done == true) {
+        context.go('/home');
+      } else if (done == false) {
+        context.go('/onboarding');
+      }
     } finally {
       if (mounted) setState(() => _isAppleLoading = false);
     }
@@ -67,7 +87,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final authState = ref.watch(authNotifierProvider);
     final l10n = AppLocalizations.of(context);
     final isBusy = _isGoogleLoading || _isAppleLoading;
-    const buttonRadius = BorderRadius.all(Radius.circular(AppRadius.md));
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -79,59 +98,99 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: IntrinsicHeight(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.pagePadding,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: _wordmarkTopGap),
-                        Text(
-                          l10n.welcomeWordmark,
-                          style: AppTextStyles.welcomeWordmark,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: _wordmarkToMascot),
-                        const Align(child: _WavingSipho()),
-                        const SizedBox(height: _mascotToTitle),
+                        // Titre — maquette 02 · Bienvenue
                         Text(
                           l10n.welcomeTitle,
-                          style: AppTextStyles.welcomeTitle,
-                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontFamily: 'Nunito',
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            height: 1.3,
+                            color: AppColors.primaryDark,
+                          ),
                         ),
-                        const SizedBox(height: _titleToSubtitle),
+                        const SizedBox(height: 20),
+                        // Accroche
                         Text(
                           l10n.welcomeSubtitle,
-                          style: AppTextStyles.welcomeSubtitle,
-                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontFamily: 'Nunito',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            height: 1.3,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
-                        const Spacer(),
+                        const SizedBox(height: 20),
+                        // Sipho qui salue
+                        const SiphoArt.waving(frame: 112),
+                        const SizedBox(height: 20),
+                        // Carte info douce — "Pas besoin d'être expert."
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            color: AppColors.soft,
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                l10n.loginExpertTitle,
+                                style: const TextStyle(
+                                  fontFamily: 'Nunito',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.3,
+                                  color: AppColors.primaryDark,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                l10n.loginExpertBody,
+                                style: const TextStyle(
+                                  fontFamily: 'Nunito',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  height: 1.3,
+                                  color: AppColors.primaryDark,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        // Erreur éventuelle
                         if (authState.hasError)
                           Padding(
-                            padding: const EdgeInsets.only(
-                              bottom: AppSpacing.md,
-                            ),
+                            padding: const EdgeInsets.only(bottom: 16),
                             child: Text(
-                              authState.error.toString(),
+                              authErrorMessage(authState.error, l10n),
                               style: AppTextStyles.bodyMedium.copyWith(
                                 color: AppColors.danger,
                               ),
-                              textAlign: TextAlign.center,
                             ),
                           ),
+                        // Bouton secondaire Apple (blanc/bordure)
                         if (kShowAppleSignInButton) ...[
                           SiphoButton3D(
                             label: l10n.signInWithApple,
                             onPressed: isBusy ? null : _handleAppleSignIn,
                             isLoading: _isAppleLoading,
-                            color: AppColors.ink,
-                            shadowColor: AppColors.primaryDark,
-                            textColor: Colors.white,
+                            color: AppColors.surface,
+                            shadowColor: AppColors.border,
+                            textColor: AppColors.primaryDark,
                             height: 52,
-                            borderRadius: buttonRadius,
+                            borderRadius: _buttonRadius,
                           ),
-                          const SizedBox(height: _buttonGap),
+                          const SizedBox(height: 16),
                         ],
+                        // Bouton secondaire Google (blanc/bordure)
                         SiphoButton3D(
                           label: l10n.signInWithGoogle,
                           onPressed: isBusy ? null : _handleGoogleSignIn,
@@ -140,9 +199,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           shadowColor: AppColors.border,
                           textColor: AppColors.primaryDark,
                           height: 52,
-                          borderRadius: buttonRadius,
+                          borderRadius: _buttonRadius,
                         ),
-                        const SizedBox(height: _buttonsToLegal),
+                        const SizedBox(height: 20),
+                        // Mention légale
                         GestureDetector(
                           onTap: () {
                             launchUrl(
@@ -152,14 +212,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           },
                           child: Text(
                             l10n.welcomeLegal,
-                            style: AppTextStyles.welcomeLegal.copyWith(
-                              decoration: TextDecoration.underline,
-                              decorationColor: AppColors.primary,
+                            style: const TextStyle(
+                              fontFamily: 'Nunito',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              height: 1.3,
+                              color: AppColors.textSecondary,
                             ),
-                            textAlign: TextAlign.center,
                           ),
                         ),
-                        const SizedBox(height: _legalBottomGap),
+                        const Spacer(),
+                        // Bouton primaire principal — "Créer mon compte"
+                        SiphoButton3D(
+                          label: l10n.loginCreateAccount,
+                          onPressed: isBusy ? null : _handleGoogleSignIn,
+                          isLoading: _isGoogleLoading,
+                          color: AppColors.primaryDark,
+                          shadowColor: AppColors.primaryDark,
+                          textColor: Colors.white,
+                          height: 52,
+                          borderRadius: _buttonRadius,
+                        ),
                       ],
                     ),
                   ),
@@ -173,37 +246,3 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 }
 
-/// Mascot slot from the Figma component: a 240 frame, SVG at its root size.
-class _WavingSipho extends StatelessWidget {
-  const _WavingSipho();
-
-  @override
-  Widget build(BuildContext context) {
-    const innerLeft = _mascotFrame * 0.05;
-    const innerTop = _mascotFrame * 0.0902;
-    const innerWidth = _mascotFrame * 0.90;
-    const innerHeight = _mascotFrame * (1 - 0.1804);
-    const left = innerLeft + innerWidth * -0.0098;
-    const top = innerTop + innerHeight * -0.0039;
-
-    return SizedBox(
-      width: _mascotFrame,
-      height: _mascotFrame,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            left: left,
-            top: top,
-            child: SvgPicture.asset(
-              'assets/images/sipho_waving.svg',
-              width: _svgWidth,
-              height: _svgHeight,
-              semanticsLabel: 'Sipho',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

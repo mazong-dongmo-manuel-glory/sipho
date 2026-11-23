@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_ai/firebase_ai.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sipho/core/ai/sipho_ai_client.dart';
 import 'package:sipho/core/firebase/firebase_providers.dart';
+import 'package:sipho/core/i18n/app_language.dart';
 import 'package:sipho/features/auth/presentation/auth_provider.dart';
 import 'package:sipho/features/insights/domain/insight_text.dart';
 
@@ -44,12 +45,22 @@ final storedInsightsProvider = StreamProvider<List<InsightText>>((ref) {
   });
 });
 
-/// Resolves the active coach advice: latest in-session AI advice, or latest stored insight.
+/// Resolves the active coach advice: latest in-session AI advice, or latest stored insight
+/// matching the UI language when locale is known.
 final activeCoachAdviceProvider = Provider<InsightText?>((ref) {
   final sessionAdvice = ref.watch(insightControllerProvider).text;
   if (sessionAdvice != null) return sessionAdvice;
+  final uiLanguage = normalizeAppLanguage(
+    WidgetsBinding.instance.platformDispatcher.locale.languageCode,
+  );
   final stored = ref.watch(storedInsightsProvider).valueOrNull;
-  if (stored != null && stored.isNotEmpty) return stored.first;
+  if (stored == null || stored.isEmpty) return null;
+  for (final insight in stored) {
+    if (insight.locale.isEmpty ||
+        appLanguagesMatch(insight.locale, uiLanguage)) {
+      return insight;
+    }
+  }
   return null;
 });
 

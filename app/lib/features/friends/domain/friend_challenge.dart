@@ -253,8 +253,10 @@ class FriendChallenge {
 class PredefinedChallengeTemplate {
   const PredefinedChallengeTemplate({
     required this.id,
-    required this.title,
-    required this.description,
+    required this.titleFr,
+    required this.titleEn,
+    required this.descriptionFr,
+    required this.descriptionEn,
     required this.category,
     required this.targetCount,
     required this.rewardXp,
@@ -262,18 +264,32 @@ class PredefinedChallengeTemplate {
   });
 
   final String id;
-  final String title;
-  final String description;
+  final String titleFr;
+  final String titleEn;
+  final String descriptionFr;
+  final String descriptionEn;
   final ChallengeCategory category;
   final int targetCount;
   final int rewardXp;
   final int durationDays;
 
+  String title(String languageCode) =>
+      languageCode.toLowerCase().startsWith('fr') ? titleFr : titleEn;
+
+  String description(String languageCode) =>
+      languageCode.toLowerCase().startsWith('fr')
+          ? descriptionFr
+          : descriptionEn;
+
   static const List<PredefinedChallengeTemplate> catalog = [
     PredefinedChallengeTemplate(
       id: 'marathon_savoir',
-      title: 'Marathon Savoir',
-      description: 'Termine 3 leçons financières cette semaine avant ton ami.',
+      titleFr: 'Marathon Savoir',
+      titleEn: 'Knowledge Marathon',
+      descriptionFr:
+          'Termine 3 leçons financières cette semaine avant ton ami.',
+      descriptionEn:
+          'Finish 3 money lessons this week before your friend.',
       category: ChallengeCategory.learning,
       targetCount: 3,
       rewardXp: 50,
@@ -281,8 +297,11 @@ class PredefinedChallengeTemplate {
     ),
     PredefinedChallengeTemplate(
       id: 'zero_ecart',
-      title: '3 Jours Zéro Écart',
-      description: '3 jours sans dépasser son budget de dépenses variables.',
+      titleFr: '3 Jours Zéro Écart',
+      titleEn: '3 Days On Budget',
+      descriptionFr:
+          '3 jours sans dépasser son budget de dépenses variables.',
+      descriptionEn: 'Stay within your variable spending budget for 3 days.',
       category: ChallengeCategory.budget,
       targetCount: 3,
       rewardXp: 40,
@@ -290,8 +309,10 @@ class PredefinedChallengeTemplate {
     ),
     PredefinedChallengeTemplate(
       id: 'boost_epargne',
-      title: 'Boost Épargne',
-      description: 'Coche une dépense fixe payée (un pas vers ton nid).',
+      titleFr: 'Boost Épargne',
+      titleEn: 'Savings Boost',
+      descriptionFr: 'Coche une dépense fixe payée (un pas vers ton nid).',
+      descriptionEn: 'Mark one fixed expense as paid (a step toward your nest).',
       category: ChallengeCategory.saving,
       targetCount: 1,
       rewardXp: 30,
@@ -299,8 +320,12 @@ class PredefinedChallengeTemplate {
     ),
     PredefinedChallengeTemplate(
       id: 'semaine_champion',
-      title: 'Semaine Champion',
-      description: 'Enregistre tes dépenses ou une journée sans dépense, 5 jours.',
+      titleFr: 'Semaine Champion',
+      titleEn: 'Champion Week',
+      descriptionFr:
+          'Enregistre tes dépenses ou une journée sans dépense, 5 jours.',
+      descriptionEn:
+          'Log spending or a no-spend day, five days in a row.',
       category: ChallengeCategory.budget,
       targetCount: 5,
       rewardXp: 75,

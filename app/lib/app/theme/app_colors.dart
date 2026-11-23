@@ -9,8 +9,10 @@ abstract final class AppColors {
   static const Color terracotta = Color(0xFFC8553D); // Terre cuite
 
   // ── Surfaces ────────────────────────────────────────────────────────────────
-  static const Color background = Color(0xFFFFF8EC); // Crème
+  static const Color background = Color(0xFFFCFCF9); // Fond clair des maquettes
   static const Color cream = Color(0xFFFFF8EC); // Alias crème
+  static const Color soft = Color(0xFFF0F4EF); // Surface douce
+  static const Color line = Color(0xFFE4E9E3); // Séparateur épuré
   static const Color surface = Color(0xFFFFFFFF); // Blanc cartes
   static const Color border = Color(0xFFEDE6D8);
   static const Color mint = Color(0xFFE4F2E7); // Sélection / pastille niveau
@@ -47,7 +49,7 @@ abstract final class AppColors {
   static const Color relegationZone = Color(0xFFFDE7E6);
 
   // ── Text ────────────────────────────────────────────────────────────────────
-  static const Color textPrimary = Color(0xFF1E2A2F);
+  static const Color textPrimary = Color(0xFF14342B);
   static const Color textSecondary = Color(0xFF5B6770);
 
   // ── Semantic ────────────────────────────────────────────────────────────────

@@ -29,12 +29,13 @@ void main() {
     await tester.pump();
 
     const ordered = <String>[
-      'SIPHO',
-      'Bienvenue\nchez Sipho !',
-      'Le guide gamifié vers ta\nprospérité financière',
+      'Ton futur toi\nte dit merci.',
+      'Deux minutes pour poser les premières bases.',
+      'Pas besoin d’être expert.',
       'Continuer avec Apple',
       'Continuer avec Google',
-      'En continuant, tu acceptes nos conditions\net notre politique de confidentialité.',
+      'En continuant, tu acceptes nos conditions et notre politique de confidentialité.',
+      'Créer mon compte',
     ];
 
     var previousTop = -1.0;

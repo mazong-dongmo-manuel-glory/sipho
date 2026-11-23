@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
-import 'package:sipho/app/theme/app_radius.dart';
-import 'package:sipho/app/theme/app_spacing.dart';
 import 'package:sipho/core/money/amount_input.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
@@ -103,38 +101,44 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       3 => l10n.onboardingGoalHeading,
       _ => l10n.onboardingIncomeHeading,
     };
-    final lead = switch (_currentStep) {
-      0 => l10n.onboardingNameLead,
-      1 => l10n.onboardingCountryLead,
-      2 => l10n.onboardingLifeLead,
-      3 => l10n.onboardingGoalLead,
-      _ => l10n.onboardingIncomeLead,
-    };
+    final stepLabel = (_currentStep + 1).toString().padLeft(2, '0');
+    final totalLabel = _totalSteps.toString().padLeft(2, '0');
+    final lead = l10n.onboardingStepLead(stepLabel, totalLabel);
     final onIncome = _currentStep == 4;
-    final button = onIncome
-        ? l10n.onboardingBuildNest
-        : l10n.continueBtn.toUpperCase();
+    final button =
+        onIncome ? l10n.onboardingBuildNest : l10n.continueBtn;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
-          padding:
-              const EdgeInsets.symmetric(horizontal: AppSpacing.pagePadding),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 8),
-              _OnboardingBar(
-                step: _currentStep,
-                total: _totalSteps,
-                onBack: _back,
-              ),
-              const SizedBox(height: 18),
+              if (_currentStep > 0)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    onPressed: _back,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 44,
+                      minHeight: 44,
+                    ),
+                    icon: const Icon(
+                      Icons.chevron_left_rounded,
+                      size: 32,
+                      color: AppColors.textSecondary,
+                    ),
+                    tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                  ),
+                ),
+              if (_currentStep > 0) const SizedBox(height: 4),
               Text(heading, style: _heading),
-              const SizedBox(height: 8),
+              const SizedBox(height: 20),
               Text(lead, style: _lead),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               Expanded(
                 child: IndexedStack(
                   index: _currentStep,
@@ -178,7 +182,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 onPressed: _nextStep,
                 enabled: _currentStep > 0 || _name.trim().isNotEmpty,
                 isLoading: _saving,
-                color: AppColors.primary,
+                color: AppColors.primaryDark,
                 shadowColor: AppColors.primaryDark,
                 height: 52,
                 borderRadius: figmaButtonRadius,
@@ -194,13 +198,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     style: const TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 13,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                       color: AppColors.textSecondary,
                     ),
                   ),
                 ),
               ],
-              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -212,8 +215,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 const _heading = TextStyle(
   fontFamily: 'Nunito',
   fontSize: 28,
-  fontWeight: FontWeight.w900,
-  height: 1.2,
+  fontWeight: FontWeight.w800,
+  height: 1.3,
   color: AppColors.primaryDark,
 );
 
@@ -221,61 +224,6 @@ const _lead = TextStyle(
   fontFamily: 'Nunito',
   fontSize: 16,
   fontWeight: FontWeight.w400,
-  height: 1.2,
+  height: 1.3,
   color: AppColors.textSecondary,
 );
-
-class _OnboardingBar extends StatelessWidget {
-  const _OnboardingBar({
-    required this.step,
-    required this.total,
-    required this.onBack,
-  });
-
-  final int step;
-  final int total;
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: onBack,
-          child: const SizedBox(
-            width: 30,
-            height: 36,
-            child: Text(
-              '‹',
-              style: TextStyle(
-                fontFamily: 'Nunito',
-                fontSize: 30,
-                fontWeight: FontWeight.w700,
-                height: 1.2,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            child: SizedBox(
-              height: 10,
-              child: Stack(
-                children: [
-                  const ColoredBox(color: AppColors.border),
-                  FractionallySizedBox(
-                    widthFactor: (step + 1) / total,
-                    child: const ColoredBox(color: AppColors.primary),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}

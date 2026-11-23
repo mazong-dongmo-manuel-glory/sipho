@@ -2,21 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_spacing.dart';
 import 'package:sipho/core/ai/sipho_ai_client.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:sipho/features/economy/data/economy_repository.dart';
 import 'package:sipho/features/economy/domain/economy_data.dart';
 import 'package:sipho/features/economy/domain/economy_news.dart';
 import 'package:sipho/features/economy/domain/economy_tips.dart';
+import 'package:sipho/features/finance/data/fx_rates_repository.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
 import 'package:sipho/features/insights/data/insight_service.dart';
 import 'package:sipho/features/insights/domain/insight_text.dart';
 import 'package:sipho/features/insights/presentation/spend_snapshot_builder.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class EconomyDetailScreen extends ConsumerStatefulWidget {
   const EconomyDetailScreen({super.key});
@@ -91,7 +93,7 @@ class _EconomyDetailScreenState extends ConsumerState<EconomyDetailScreen> {
                 index: _selectedTabIndex,
                 children: [
                   _buildTipsTab(locale, l10n),
-                  _buildEconomyTab(locale, country, economyAsync),
+                  _buildEconomyTab(locale, country, economyAsync, l10n),
                   _buildCoachTab(
                     l10n: l10n,
                     state: coachState,
@@ -237,15 +239,14 @@ class _EconomyDetailScreenState extends ConsumerState<EconomyDetailScreen> {
   }
 
   Widget _buildTipsTab(String locale, AppLocalizations l10n) {
-    final isFr = locale.startsWith('fr');
     final categories = [
-      (null, isFr ? 'Tous 🌈' : 'All 🌈'),
-      (EconomyTipCategory.budget, isFr ? 'Budget 🛒' : 'Budget 🛒'),
-      (EconomyTipCategory.saving, isFr ? 'Épargne 🌱' : 'Saving 🌱'),
-      (EconomyTipCategory.economy, isFr ? 'Économie 📉' : 'Economy 📉'),
-      (EconomyTipCategory.security, isFr ? 'Sécurité 🛡️' : 'Security 🛡️'),
-      (EconomyTipCategory.invest, isFr ? 'Investir 🧺' : 'Investing 🧺'),
-      (EconomyTipCategory.lifestyle, isFr ? 'Quotidien 💡' : 'Daily Life 💡'),
+      (null, l10n.ecoTipCatAll),
+      (EconomyTipCategory.budget, l10n.ecoTipCatBudget),
+      (EconomyTipCategory.saving, l10n.ecoTipCatSaving),
+      (EconomyTipCategory.economy, l10n.ecoTipCatEconomy),
+      (EconomyTipCategory.security, l10n.ecoTipCatSecurity),
+      (EconomyTipCategory.invest, l10n.ecoTipCatInvest),
+      (EconomyTipCategory.lifestyle, l10n.ecoTipCatLifestyle),
     ];
 
     return ListView(
@@ -374,7 +375,7 @@ class _EconomyDetailScreenState extends ConsumerState<EconomyDetailScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isFr ? 'ACTION CONCRÈTE' : 'ACTION STEP',
+                            l10n.ecoTipActionLabel,
                             style: const TextStyle(
                               fontFamily: 'Nunito',
                               fontSize: 10,
@@ -404,7 +405,7 @@ class _EconomyDetailScreenState extends ConsumerState<EconomyDetailScreen> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Text(
-                    '${isFr ? "Source" : "Source"}: ${_currentTip.source}',
+                    '${l10n.ecoTipSource}: ${_currentTip.source}',
                     style: const TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 10,
@@ -419,7 +420,7 @@ class _EconomyDetailScreenState extends ConsumerState<EconomyDetailScreen> {
         ),
         const SizedBox(height: 20),
         SiphoButton3D(
-          label: isFr ? 'AUTRE CONSEIL 🎲' : 'ANOTHER TIP 🎲',
+          label: l10n.ecoTipShuffle,
           onPressed: _shuffleTip,
         ),
       ],
@@ -430,24 +431,69 @@ class _EconomyDetailScreenState extends ConsumerState<EconomyDetailScreen> {
     String locale,
     String countryCode,
     AsyncValue<EconomyData> economyAsync,
+    AppLocalizations l10n,
   ) {
     final isFr = locale.startsWith('fr');
     final newsAsync = ref.watch(countryEconomyNewsProvider(countryCode));
     final worldNewsAsync = countryCode.toUpperCase() == 'WORLD'
         ? null
         : ref.watch(countryEconomyNewsProvider('WORLD'));
+    final fx = ref.watch(fxRatesProvider).valueOrNull;
+    ref.watch(marketRefreshProvider);
+    final currency = ref.watch(userFinanceProvider).valueOrNull?.currency ?? '';
+    final news = _resolveNewsFeed(
+      newsAsync.valueOrNull,
+      worldNewsAsync?.valueOrNull,
+    );
+
+    final header = <Widget>[
+      _FxRatesCard(l10n: l10n, isFr: isFr, fx: fx, currency: currency),
+      const SizedBox(height: 14),
+    ];
 
     return economyAsync.when(
-      loading: () => const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: CircularProgressIndicator(),
+      loading: () => ListView(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.pagePadding,
+          8,
+          AppSpacing.pagePadding,
+          24,
         ),
+        children: [
+          ...header,
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: CircularProgressIndicator(),
+            ),
+          ),
+          const SizedBox(height: 18),
+          _EconomyNewsSection(
+            l10n: l10n,
+            isFr: isFr,
+            feed: news,
+            onRefresh: () => ref.invalidate(marketRefreshProvider),
+          ),
+        ],
       ),
-      error: (_, __) => Center(
-        child: Text(isFr
-            ? 'Données économiques indisponibles.'
-            : 'Economy data unavailable.'),
+      error: (_, __) => ListView(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.pagePadding,
+          8,
+          AppSpacing.pagePadding,
+          24,
+        ),
+        children: [
+          ...header,
+          Text(l10n.ecoIndicatorsUnavailable),
+          const SizedBox(height: 18),
+          _EconomyNewsSection(
+            l10n: l10n,
+            isFr: isFr,
+            feed: news,
+            onRefresh: () => ref.invalidate(marketRefreshProvider),
+          ),
+        ],
       ),
       data: (data) {
         final indicators = data.indicators;
@@ -459,7 +505,7 @@ class _EconomyDetailScreenState extends ConsumerState<EconomyDetailScreen> {
         final inflation = indicators['inflation'];
         final rate = indicators['policy_rate'];
         final benchmark = indicators['savings_benchmark'];
-        final news = _resolveNewsFeed(
+        final newsFeed = _resolveNewsFeed(
           newsAsync.valueOrNull,
           worldNewsAsync?.valueOrNull,
         );
@@ -472,12 +518,13 @@ class _EconomyDetailScreenState extends ConsumerState<EconomyDetailScreen> {
             24,
           ),
           children: [
+            ...header,
             Row(
               children: [
                 Expanded(
                   child: _MetricCard(
                     emoji: '📉',
-                    label: isFr ? 'Inflation annuelle' : 'Annual Inflation',
+                    label: l10n.ecoMetricInflation,
                     value: inflation != null
                         ? '${inflation.value} ${inflation.unit}'
                         : '—',
@@ -489,7 +536,7 @@ class _EconomyDetailScreenState extends ConsumerState<EconomyDetailScreen> {
                 Expanded(
                   child: _MetricCard(
                     emoji: '🏛️',
-                    label: isFr ? 'Taux directeur' : 'Policy Rate',
+                    label: l10n.ecoMetricPolicyRate,
                     value: rate != null ? '${rate.value} ${rate.unit}' : '—',
                     subtext: rate?.source ?? '',
                     color: AppColors.primary,
@@ -501,7 +548,7 @@ class _EconomyDetailScreenState extends ConsumerState<EconomyDetailScreen> {
             if (benchmark != null) ...[
               _MetricCard(
                 emoji: '🌱',
-                label: isFr ? 'Rendement épargne sans risque' : 'Savings Benchmark',
+                label: l10n.ecoMetricSavingsBenchmark,
                 value: '${benchmark.value} ${benchmark.unit}',
                 subtext: benchmark.source,
                 color: AppColors.accent,
@@ -523,9 +570,7 @@ class _EconomyDetailScreenState extends ConsumerState<EconomyDetailScreen> {
                       const Text('💡', style: TextStyle(fontSize: 20)),
                       const SizedBox(width: 8),
                       Text(
-                        isFr
-                            ? 'Ce que ça change pour toi'
-                            : 'What this means for you',
+                        l10n.ecoWhatItMeans,
                         style: const TextStyle(
                           fontFamily: 'Nunito',
                           fontSize: 16,
@@ -548,9 +593,7 @@ class _EconomyDetailScreenState extends ConsumerState<EconomyDetailScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    isFr
-                        ? 'Données de référence officielles datées de ${inflation?.date ?? "2026"}. À des fins éducatives.'
-                        : 'Official benchmark indicators dated ${inflation?.date ?? "2026"}. Educational purposes.',
+                    l10n.ecoBenchmarkDisclaimer(inflation?.date ?? '2026'),
                     style: const TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 11,
@@ -562,7 +605,12 @@ class _EconomyDetailScreenState extends ConsumerState<EconomyDetailScreen> {
               ),
             ),
             const SizedBox(height: 18),
-            _EconomyNewsSection(isFr: isFr, feed: news),
+            _EconomyNewsSection(
+              l10n: l10n,
+              isFr: isFr,
+              feed: newsFeed,
+              onRefresh: () => ref.invalidate(marketRefreshProvider),
+            ),
           ],
         );
       },
@@ -609,7 +657,7 @@ class _EconomyDetailScreenState extends ConsumerState<EconomyDetailScreen> {
             .ask(snapshot, acceptQuest: acceptQuest);
       } catch (error) {
         debugPrint('[SiphoAI] Economy coach advice failed: $error');
-        if (!context.mounted) return;
+        if (!mounted) return;
         await showSiphoAiErrorSnackBar(
           context,
           error,
@@ -970,11 +1018,144 @@ class _CountrySelectorBadge extends StatelessWidget {
   }
 }
 
-class _EconomyNewsSection extends StatelessWidget {
-  const _EconomyNewsSection({required this.isFr, required this.feed});
+class _FxRatesCard extends StatelessWidget {
+  const _FxRatesCard({
+    required this.l10n,
+    required this.isFr,
+    required this.fx,
+    required this.currency,
+  });
 
+  final AppLocalizations l10n;
+  final bool isFr;
+  final FxRates? fx;
+  final String currency;
+
+  @override
+  Widget build(BuildContext context) {
+    final lines = _lines();
+    final asOf = fx?.asOf;
+    final dated = asOf == null
+        ? ''
+        : '${asOf.year}-${asOf.month.toString().padLeft(2, '0')}-${asOf.day.toString().padLeft(2, '0')}';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.ecoFxTitle,
+            style: const TextStyle(
+              fontFamily: 'Nunito',
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+              color: AppColors.primaryDark,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            l10n.ecoFxBlurb,
+            style: const TextStyle(
+              fontFamily: 'Nunito',
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              height: 1.3,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          if (lines.isEmpty)
+            Text(
+              l10n.ecoFxEmpty,
+              style: const TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: AppColors.primaryDark,
+              ),
+            )
+          else
+            for (final line in lines)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  line,
+                  style: const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primaryDark,
+                  ),
+                ),
+              ),
+          if (dated.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              dated,
+              style: const TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  List<String> _lines() {
+    final rates = fx;
+    if (rates == null) return const [];
+    final preferred = <String>[
+      currency.toUpperCase(),
+      'CAD',
+      'EUR',
+      'XOF',
+      'XAF',
+      'GBP',
+    ];
+    final seen = <String>{};
+    final lines = <String>[];
+    for (final code in preferred) {
+      if (code.length != 3 || seen.contains(code) || code == rates.base) {
+        continue;
+      }
+      final value = rates.rateTo(from: rates.base, to: code);
+      if (value == null) continue;
+      seen.add(code);
+      lines.add('1 ${rates.base} = ${_format(value)} $code');
+      if (lines.length == 4) break;
+    }
+    return lines;
+  }
+
+  String _format(double value) {
+    final digits = value >= 100 ? 2 : 4;
+    final raw = value.toStringAsFixed(digits);
+    return isFr ? raw.replaceAll('.', ',') : raw;
+  }
+}
+
+class _EconomyNewsSection extends StatelessWidget {
+  const _EconomyNewsSection({
+    required this.l10n,
+    required this.isFr,
+    required this.feed,
+    this.onRefresh,
+  });
+
+  final AppLocalizations l10n;
   final bool isFr;
   final EconomyNewsFeed feed;
+  final VoidCallback? onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -982,79 +1163,66 @@ class _EconomyNewsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          isFr ? 'Actus éco locales (simples)' : 'Local economy news (plain)',
+          l10n.ecoNewsTitle,
           style: const TextStyle(
             fontFamily: 'Nunito',
             fontSize: 16,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w700,
+            height: 1.3,
             color: AppColors.primaryDark,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         Text(
-          isFr
-              ? 'Titres du jour sur le pouvoir d’achat, le logement, les taux… Sipho ajoute une phrase claire, sans inventer de chiffres.'
-              : 'Today’s headlines on purchasing power, housing, rates… Sipho adds one plain sentence — no invented figures.',
+          l10n.ecoNewsSubtitle,
           style: const TextStyle(
             fontFamily: 'Nunito',
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            height: 1.35,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            height: 1.3,
             color: AppColors.textSecondary,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 20),
         if (feed.items.isEmpty)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.border),
+              color: AppColors.soft,
+              borderRadius: BorderRadius.circular(24),
             ),
             child: Text(
-              isFr
-                  ? 'Pas encore d’actus pour ce pays. Elles arrivent après le prochain passage du serveur (1×/jour).'
-                  : 'No headlines for this country yet. They appear after the next daily server fetch.',
+              l10n.ecoNewsEmpty,
               style: const TextStyle(
                 fontFamily: 'Nunito',
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
+                fontSize: 16,
+                height: 1.3,
+                color: AppColors.primaryDark,
               ),
             ),
           )
         else
           for (final item in feed.items) ...[
-            _EconomyNewsCard(isFr: isFr, item: item),
-            const SizedBox(height: 10),
+            _EconomyNewsCard(l10n: l10n, isFr: isFr, item: item),
+            const SizedBox(height: 20),
           ],
-        if (feed.fetchedAt != null) ...[
-          const SizedBox(height: 4),
-          Text(
-            isFr
-                ? 'Mis à jour ${feed.fetchedAt!.toLocal().toString().substring(0, 16)} · source ${feed.provider}'
-                : 'Updated ${feed.fetchedAt!.toLocal().toString().substring(0, 16)} · ${feed.provider}',
-            style: const TextStyle(
-              fontFamily: 'Nunito',
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
-        const SizedBox(height: 6),
         Text(
-          isFr
-              ? 'Contenu éducatif, pas un conseil financier personnalisé. Ouvre la source pour le détail.'
-              : 'Educational content, not personalised financial advice. Open the source for details.',
+          l10n.ecoNewsFooter,
           style: const TextStyle(
             fontFamily: 'Nunito',
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            height: 1.3,
             color: AppColors.textSecondary,
           ),
+        ),
+        const SizedBox(height: 20),
+        SiphoButton3D(
+          label: l10n.ecoNewsRefresh,
+          onPressed: onRefresh,
+          color: AppColors.primaryDark,
+          shadowColor: AppColors.primaryDark,
         ),
       ],
     );
@@ -1062,18 +1230,35 @@ class _EconomyNewsSection extends StatelessWidget {
 }
 
 class _EconomyNewsCard extends StatelessWidget {
-  const _EconomyNewsCard({required this.isFr, required this.item});
+  const _EconomyNewsCard({
+    required this.l10n,
+    required this.isFr,
+    required this.item,
+  });
 
+  final AppLocalizations l10n;
   final bool isFr;
   final EconomyNewsItem item;
 
   @override
   Widget build(BuildContext context) {
+    final when = item.publishedAt?.toLocal();
+    final date = when == null
+        ? ''
+        : DateFormat.yMMMd(isFr ? 'fr' : 'en').format(when);
+    final source = item.source.trim();
+    final sourceLine = [
+      if (source.isNotEmpty) source,
+      if (date.isNotEmpty) date,
+    ].join(' · ');
+    final quote = item.takeaway.trim().isEmpty
+        ? ''
+        : l10n.ecoNewsSiphoQuote(item.takeaway.trim());
+
     return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(16),
+      color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         onTap: item.url.isEmpty
             ? null
             : () async {
@@ -1083,73 +1268,48 @@ class _EconomyNewsCard extends StatelessWidget {
               },
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
+            color: AppColors.soft,
+            borderRadius: BorderRadius.circular(24),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(item.emoji, style: const TextStyle(fontSize: 22)),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      item.title,
-                      style: const TextStyle(
-                        fontFamily: 'Nunito',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
-                        height: 1.25,
-                        color: AppColors.primaryDark,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
               Text(
-                item.takeaway,
+                item.title,
                 style: const TextStyle(
                   fontFamily: 'Nunito',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  height: 1.35,
-                  color: AppColors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  height: 1.3,
+                  color: AppColors.primaryDark,
                 ),
               ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      item.source.isEmpty
-                          ? (isFr ? 'Source' : 'Source')
-                          : item.source,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontFamily: 'Nunito',
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
+              if (quote.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  quote,
+                  style: const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 16,
+                    height: 1.3,
+                    color: AppColors.primaryDark,
                   ),
-                  Text(
-                    isFr ? 'Lire →' : 'Read →',
-                    style: const TextStyle(
-                      fontFamily: 'Nunito',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
-                    ),
+                ),
+              ],
+              if (sourceLine.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  sourceLine,
+                  style: const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 16,
+                    height: 1.3,
+                    color: AppColors.primaryDark,
                   ),
-                ],
-              ),
+                ),
+              ],
             ],
           ),
         ),

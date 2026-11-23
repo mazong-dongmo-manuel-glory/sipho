@@ -5,10 +5,9 @@ import 'package:intl/intl.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/app/theme/app_spacing.dart';
-import 'package:sipho/core/money/money.dart';
-import 'package:sipho/core/money/money_formatter.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
 import 'package:sipho/core/widgets/sipho_button_3d.dart';
+import 'package:sipho/features/auth/data/auth_repository.dart';
 import 'package:sipho/features/auth/presentation/auth_provider.dart';
 import 'package:sipho/features/coach/data/coach_repository.dart';
 import 'package:sipho/features/finance/presentation/finance_providers.dart';
@@ -35,30 +34,26 @@ class ProfileScreen extends ConsumerWidget {
         : l10n.profileGuest;
     final lessons = finance?.completedLessonIds.length ?? 0;
     final created = finance?.createdAt;
-    final member = created == null
+    final sinceDate = created == null
+        ? null
+        : DateFormat.yMMMM(Localizations.localeOf(context).toString())
+            .format(created);
+    final spaceLead = sinceDate == null
         ? l10n.profileMember
-        : l10n.profileMemberSince(
-            DateFormat.yMMM(Localizations.localeOf(context).toString())
-                .format(created),
-          );
+        : l10n.profileSpaceSince(sinceDate);
 
     final coach = ref.watch(coachProgressProvider).valueOrNull;
-    final streakText = game != null ? '${game.streak.current}' : '—';
-    final xpText = game != null ? '${game.xp}' : '—';
-    final seedsText = game != null ? '${game.gems}' : '—';
-    final levelNum = game?.level ?? 1;
+    final streakValue = game == null
+        ? '—'
+        : l10n.profileStreakDays(game.streak.current);
+    final levelLabel = l10n.profileLevelLabel(game?.level ?? 1);
+    final xpValue =
+        game == null ? '—' : l10n.profileXpValue('${game.xp}');
     final leagueText = game != null && game.leagueId.isNotEmpty
         ? leagueTierLabel(l10n, game.leagueId)
         : '—';
 
     final currency = finance?.currency ?? 'CAD';
-    final incomeCents = finance?.monthlyIncomeCents ?? 0;
-    final incomeText = incomeCents > 0
-        ? MoneyFormatter.format(
-            Money(cents: incomeCents, currency: currency),
-            locale: Localizations.localeOf(context).toString(),
-          )
-        : l10n.homeSetIncome;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -67,210 +62,69 @@ class ProfileScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.pagePadding,
-            8,
-            AppSpacing.pagePadding,
             16,
+            AppSpacing.pagePadding,
+            24,
           ),
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: _Pill(
-                    AppColors.flamePill,
-                    AppColors.flameText,
-                    '🔥  $streakText',
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _Pill(
-                    AppColors.seedPill,
-                    AppColors.seedText,
-                    '🌾  $seedsText',
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _Pill(
-                    AppColors.mint,
-                    AppColors.primaryDark,
-                    l10n.homeLevelPill(levelNum),
-                  ),
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton.icon(
-                  onPressed: () => showProfileEditSheet(context, ref),
-                  icon: const Icon(
-                    Icons.edit_outlined,
-                    size: 18,
-                    color: AppColors.primary,
-                  ),
-                  label: Text(
-                    l10n.editProfileBtn,
-                    style: const TextStyle(
-                      fontFamily: 'Nunito',
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => context.push('/settings'),
-                  icon: const Icon(
-                    Icons.settings,
-                    color: AppColors.textSecondary,
-                    size: 26,
-                  ),
-                ),
-              ],
-            ),
-            const Center(child: SiphoArt.happy(frame: 185)),
-            Align(
-              alignment: Alignment.centerRight,
-              child: GestureDetector(
-                onTap: () => context.go('/shop'),
-                child: Container(
-                  height: 34,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.seedPill,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    l10n.profileShop,
-                    style: const TextStyle(
-                      fontFamily: 'Nunito',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.seedText,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            // Frame 21 · Profil privé · Épuré
             GestureDetector(
               onTap: () => showProfileEditSheet(context, ref),
+              behavior: HitTestBehavior.opaque,
               child: Text(
                 name,
-                textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontFamily: 'Nunito',
-                  fontSize: 30,
-                  fontWeight: FontWeight.w900,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  height: 1.3,
                   color: AppColors.primaryDark,
                 ),
               ),
             ),
+            const SizedBox(height: 8),
             Text(
-              member,
-              textAlign: TextAlign.center,
+              spaceLead,
               style: const TextStyle(
                 fontFamily: 'Nunito',
-                fontSize: 13,
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                height: 1.3,
                 color: AppColors.textSecondary,
               ),
             ),
+            const SizedBox(height: 20),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: SiphoArt.happy(frame: 110),
+            ),
+            const SizedBox(height: 20),
+            _InfoRow(
+              label: l10n.profileStreakLabel,
+              value: streakValue,
+            ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                _Stat('🔥', streakText, l10n.profileStreakLabel),
-                const SizedBox(width: 9),
-                _Stat('⭐', xpText, l10n.profileXpLabel),
-              ],
+            _InfoRow(label: levelLabel, value: xpValue),
+            const SizedBox(height: 16),
+            _InfoRow(
+              label: l10n.profileLeagueLabel,
+              value: leagueText,
+              onTap: () => context.go('/leaderboard'),
             ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                _Stat(
-                  '🏆',
-                  leagueText,
-                  l10n.profileLeagueLabel,
-                  onTap: () => context.go('/leaderboard'),
-                ),
-                const SizedBox(width: 9),
-                _Stat(
-                  '📚',
-                  '$lessons',
-                  l10n.profileLessonsLabel,
-                  onTap: () => context.go('/learn'),
-                ),
-              ],
+            const SizedBox(height: 16),
+            _InfoRow(
+              label: l10n.profileLessonsLabel,
+              value: '$lessons',
+              onTap: () => context.go('/learn'),
             ),
-            const SizedBox(height: 18),
-            if (coach != null) ...[
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.coachEducationCardTitle,
-                      style: const TextStyle(
-                        fontFamily: 'Nunito',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.primaryDark,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      l10n.coachEducationLevel(
-                        _coachStageLabel(l10n, coach.stageId),
-                        coach.educationScore,
-                      ),
-                      style: const TextStyle(
-                        fontFamily: 'Nunito',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      l10n.coachEducationCardHint,
-                      style: const TextStyle(
-                        fontFamily: 'Nunito',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: LinearProgressIndicator(
-                        value: (coach.educationScore / 100).clamp(0.0, 1.0),
-                        minHeight: 8,
-                        backgroundColor: AppColors.border,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-            ],
-            Text(
-              l10n.profileBadges,
-              style: const TextStyle(
-                fontFamily: 'Nunito',
-                fontSize: 17,
-                fontWeight: FontWeight.w900,
-                color: AppColors.primaryDark,
-              ),
+            const SizedBox(height: 20),
+            const Divider(height: 1, color: AppColors.line),
+            const SizedBox(height: 20),
+            _NavRow(
+              label: l10n.profileBadges,
+              onTap: null,
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Wrap(
               spacing: 12,
               runSpacing: 12,
@@ -289,95 +143,94 @@ class ProfileScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  l10n.profileGoals,
-                  style: const TextStyle(
-                    fontFamily: 'Nunito',
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.primaryDark,
-                  ),
+            _NavRow(
+              label: l10n.profileGoals,
+              subtitle: null,
+              trailing: IconButton(
+                onPressed: () =>
+                    showAddGoalSheet(context, currency: currency),
+                icon: const Icon(
+                  Icons.add_rounded,
+                  color: AppColors.primary,
+                  size: 22,
                 ),
-                TextButton.icon(
-                  onPressed: () =>
-                      showAddGoalSheet(context, currency: currency),
-                  icon: const Icon(Icons.add, size: 18, color: AppColors.primary),
-                  label: Text(
-                    l10n.addGoalTitle,
-                    style: const TextStyle(
-                      fontFamily: 'Nunito',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
-              ],
+                tooltip: l10n.addGoalTitle,
+              ),
             ),
             const SizedBox(height: 8),
             _GoalsSection(currency: currency),
-            const SizedBox(height: 16),
-            Material(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              child: InkWell(
-                onTap: () => showProfileEditSheet(context, ref),
-                borderRadius: BorderRadius.circular(16),
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              l10n.editProfileTitle,
-                              style: const TextStyle(
-                                fontFamily: 'Nunito',
-                                fontSize: 15,
-                                fontWeight: FontWeight.w900,
-                                color: AppColors.primaryDark,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              [
-                                if ((finance?.countryCode ?? '').isNotEmpty)
-                                  finance!.countryCode,
-                                currency,
-                                incomeText,
-                              ].join(' · '),
-                              style: const TextStyle(
-                                fontFamily: 'Nunito',
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
+            if (coach != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.soft,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.coachEducationCardTitle,
+                      style: const TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryDark,
                       ),
-                      const Icon(
-                        Icons.chevron_right,
-                        color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      l10n.coachEducationLevel(
+                        _coachStageLabel(l10n, coach.stageId),
+                        coach.educationScore,
                       ),
-                    ],
-                  ),
+                      style: const TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: LinearProgressIndicator(
+                        value: (coach.educationScore / 100).clamp(0.0, 1.0),
+                        minHeight: 8,
+                        backgroundColor: AppColors.border,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
+            ],
+            const SizedBox(height: 16),
+            _NavRow(
+              label: l10n.profileShop,
+              onTap: () => context.go('/shop'),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
+            _NavRow(
+              label: l10n.profilePublic,
+              subtitle: l10n.profilePublicHint,
+              onTap: () => showProfileEditSheet(context, ref),
+            ),
+            const SizedBox(height: 16),
+            _NavRow(
+              label: l10n.profileSettingsRow,
+              onTap: () => context.push('/settings'),
+            ),
+            const SizedBox(height: 24),
             SiphoButton3D(
               label: l10n.profileSignOut,
               height: 48,
               color: AppColors.primaryDark,
               shadowColor: AppColors.ink,
               onPressed: () async {
-                await ref.read(authNotifierProvider.notifier).signOut();
+                await ref.read(authRepositoryProvider).signOut();
                 if (context.mounted) context.go('/login');
               },
             ),
@@ -388,63 +241,131 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
-class _Stat extends StatelessWidget {
-  const _Stat(this.emoji, this.value, this.label, {this.onTap});
+/// Ligne info style Figma 21 (libellé à gauche, valeur à droite).
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({
+    required this.label,
+    required this.value,
+    this.onTap,
+  });
 
-  final String emoji;
-  final String value;
   final String label;
+  final String value;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
+    final row = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontFamily: 'Nunito',
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              height: 1.3,
+              color: AppColors.primaryDark,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          value,
+          style: const TextStyle(
+            fontFamily: 'Nunito',
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            height: 1.3,
+            color: AppColors.primaryDark,
+          ),
+        ),
+      ],
+    );
+    if (onTap == null) return row;
+    return Semantics(
+      button: true,
+      label: '$label, $value',
       child: GestureDetector(
         onTap: onTap,
-        child: Container(
-          height: 68,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
+        behavior: HitTestBehavior.opaque,
+        child: row,
+      ),
+    );
+  }
+}
+
+/// Ligne de navigation style Figma (libellé + →).
+class _NavRow extends StatelessWidget {
+  const _NavRow({
+    required this.label,
+    this.subtitle,
+    this.onTap,
+    this.trailing,
+  });
+
+  final String label;
+  final String? subtitle;
+  final VoidCallback? onTap;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(emoji, style: const TextStyle(fontSize: 24)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      value,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontFamily: 'Nunito',
-                        fontSize: 21,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.primaryDark,
-                      ),
-                    ),
-                    Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontFamily: 'Nunito',
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
+              Text(
+                label,
+                style: const TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  height: 1.3,
+                  color: AppColors.primaryDark,
                 ),
               ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 3),
+                Text(
+                  subtitle!,
+                  style: const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    height: 1.3,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
+        trailing ??
+            const Text(
+              '→',
+              style: TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                height: 1.3,
+                color: AppColors.primaryDark,
+              ),
+            ),
+      ],
+    );
+    if (onTap == null) return content;
+    return Semantics(
+      button: true,
+      label: label,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: content,
       ),
     );
   }
@@ -507,35 +428,6 @@ class _Badge extends StatelessWidget {
           locked ? Icons.lock : icon,
           color: locked ? AppColors.badgeLock : AppColors.badgeGold,
           size: 28,
-        ),
-      ),
-    );
-  }
-}
-
-class _Pill extends StatelessWidget {
-  const _Pill(this.background, this.foreground, this.label);
-
-  final Color background;
-  final Color foreground;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 36,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: 'Nunito',
-          fontSize: 14,
-          fontWeight: FontWeight.w800,
-          color: foreground,
         ),
       ),
     );

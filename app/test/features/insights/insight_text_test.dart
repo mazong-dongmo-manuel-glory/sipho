@@ -82,7 +82,7 @@ void main() {
     const prefs = NotifPrefs.optedIn;
     final again = NotifPrefs.fromMap(prefs.toMap());
     expect(again.streakReminder, isTrue);
-    expect(again.economy, isFalse);
+    expect(again.economy, isTrue);
     expect(again.toMap()['streakReminder'], isTrue);
   });
 }

@@ -18,20 +18,38 @@
   "loginSubtitle": "Sign in to continue",
   "signInWithGoogle": "Continue with Google",
   "signInWithApple": "Continue with Apple",
-  "welcomeWordmark": "SIPHO",
-  "welcomeTitle": "Welcome\nto Sipho!",
-  "welcomeSubtitle": "The gamified guide to\nyour financial prosperity",
-  "welcomeLegal": "By continuing, you accept our terms\nand our privacy policy.",
+  "authErrorGeneric": "Sign-in failed. Please try again in a moment.",
+  "authErrorAppleDisabled": "Apple Sign-In isn’t enabled on this project. Try again later or use Google.",
+  "authErrorInvalidCredential": "Invalid Apple credential. Try again or use another account.",
+  "authErrorNetwork": "No connection. Check your network and try again.",
+  "welcomeWordmark": "sipho",
+  "welcomeTitle": "Your future self\nsays thank you.",
+  "welcomeSubtitle": "Two minutes to set the first foundations.",
+  "welcomeLegal": "By continuing, you accept our terms and our privacy policy.",
+  "loginExpertTitle": "You don’t need to be an expert.",
+  "loginExpertBody": "You’ll learn your money, at your pace. No judgment.",
+  "loginCreateAccount": "Create my account",
   "settingsPrivacyPolicy": "Privacy policy",
   "@settingsPrivacyPolicy": {"description": "Settings row that opens the public privacy policy URL"},
   "logoutBtn": "Sign out",
   "splashTagline": "Give yourself a gift:\nyour future.",
+  "splashLead": "Money that grows.\nOne good habit at a time.",
+  "splashKicker": "SI-PO · “GIFT” IN ZULU",
+  "splashCta": "Take the first step",
   "splashFooter": "ONE SMALL STEP. A BIG FUTURE.",
-  "onboardingNameHeading": "Let's get acquainted",
-  "onboardingNameLead": "Your adventure starts here.",
-  "onboardingNameBubble": "Hi! I'm Sipho. What's your name?",
+  "onboardingNameHeading": "Shall we get acquainted?",
+  "onboardingNameLead": "01 / 05 · About 2 minutes",
+  "onboardingNameBubbleTitle": "I'm Sipho.",
+  "onboardingNameBubble": "\"See-fo? No, See-po!\"\nAnd you, what's your name?",
   "onboardingNameLabel": "YOUR FIRST NAME",
-  "onboardingNameHelper": "A lovely name for a fresh start.",
+  "onboardingNameHelper": "You can change it later.",
+  "onboardingStepLead": "{step} / {total} · About 2 minutes",
+  "@onboardingStepLead": {
+    "placeholders": {
+      "step": {"type": "String"},
+      "total": {"type": "String"}
+    }
+  },
   "onboardingCountryHeading": "Where do you live?",
   "onboardingCountryLead": "We adapt your nest to your life.",
   "onboardingUseLocation": "Use my location",
@@ -59,14 +77,18 @@
   "onboardingIncomeHint": "Net income per month · you can skip",
   "onboardingIncomeSkip": "I'LL SET THIS LATER",
   "onboardingBuildNest": "BUILD MY NEST",
-  "onboardingNestTitle": "Let's build your nest!",
+  "onboardingNestTitle": "One strand at a time.",
+  "onboardingNestLead": "05 / 05 · Recurring expenses.",
   "onboardingNestStrands": "{count} strands woven",
   "@onboardingNestStrands": {
     "placeholders": {"count": {"type": "int"}}
   },
   "onboardingNestQuestion": "Do you pay rent?",
-  "onboardingNestHint": "Let's add this strand to your base.",
-  "onboardingNestSwipe": "Swipe right for yes →",
+  "onboardingNestHint": "Right: yes. Left: no.",
+  "onboardingNestSwipe": "← No                            Yes →",
+  "onboardingNestYesRent": "Yes, add rent",
+  "onboardingNestSkip": "No, skip",
+  "onboardingNestFooter": "Next: internet, phone…\nGroceries and transport become envelopes.",
   "fixedSocle": "My base",
   "fixedRent": "Rent",
   "fixedPerMonth": "per month · CAD",
@@ -74,18 +96,38 @@
   "fixedAuto": "Automatic payment",
   "fixedAdd": "ADD TO MY NEST",
   "nestReadyKicker": "A BEAUTIFUL FIRST STEP",
-  "nestReadyTitle": "Your nest is ready!",
+  "nestReadyTitle": "Your nest is ready.",
+  "nestReadyLead": "It's only the beginning, and that already matters.",
   "nestReadyXp": "+50 XP",
+  "nestReadyXpCardTitle": "+50 XP · First step",
+  "nestReadyXpCardBody": "For building your foundation.",
   "nestReadyBadge": "Builder",
-  "notifFlameTitle": "Keep the flame going?",
-  "notifFlameBody": "Can I remind you to keep your flame? Two reminders a day, max. Promise.",
-  "notifFlameYes": "YES, REMIND ME",
-  "notifLater": "Later",
-  "homeHello": "Hello {name}!",
+  "nestReadyBadgeRow": "Badge \"Nest built\"",
+  "nestReadyDisclaimer": "Badges don't grant XP.\nYour money stays private.",
+  "nestReadyCta": "Discover my home",
+  "notifFlameTitle": "Stay in touch?",
+  "notifFlameLead": "You've already done the important part.",
+  "notifFlameCardTitle": "Your nest is waiting.",
+  "notifFlameCardBody": "30 seconds to keep your flame.",
+  "notifFlameBody": "Short, rare messages.\nYou choose which ones, and you can turn them all off.",
+  "notifFlameYes": "Allow notifications",
+  "notifLater": "Not now",
+  "homeHello": "Hello {name}",
   "@homeHello": {
     "placeholders": {"name": {"type": "String"}}
   },
   "homeFutureLine": "Your future is taking shape.",
+  "homeEveryStep": "Every small step counts.",
+  "homeStreakDays": "{count}-day streak",
+  "@homeStreakDays": {"placeholders": {"count": {"type": "int"}}},
+  "homeSeedsLevel": "{seeds} seeds · Lvl {level}",
+  "@homeSeedsLevel": {"placeholders": {"seeds": {"type": "String"}, "level": {"type": "int"}}},
+  "homeComfortable": "Comfortable",
+  "homeTight": "Tight",
+  "homeUnderZero": "Below zero",
+  "homeQuestCount": "{done} of {total}",
+  "@homeQuestCount": {"placeholders": {"done": {"type": "int"}, "total": {"type": "int"}}},
+  "homeOnTrackLine": "Your streak is holding. You’re on track.",
   "homeLevelPill": "LV. {level}",
   "@homeLevelPill": {
     "placeholders": {"level": {"type": "int"}}
@@ -119,6 +161,13 @@
   "homeNextExpense": "Next bill · tomorrow",
   "homePaid": "Paid ✓",
   "homeQuests": "Today's quests",
+  "homeQuestsProgress": "{done} of {total}",
+  "@homeQuestsProgress": {
+    "placeholders": {
+      "done": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
   "homeQuestsEmpty": "Your quests for today are on their way. Check back in a moment!",
   "homeBudgetDayTitle": "Day under budget!",
   "homeBudgetDayBody": "You stayed within your budget yesterday. +{xp} XP for your consistency.",
@@ -273,6 +322,14 @@
       }
     }
   },
+  "homeFxChip": "1 {base} = {rate} {quote}",
+  "@homeFxChip": {
+    "placeholders": {
+      "base": {"type": "String"},
+      "rate": {"type": "String"},
+      "quote": {"type": "String"}
+    }
+  },
   "expenseDeleted": "Expense removed",
   "onboardingSaveError": "Couldn't save your profile. Try again.",
   "notifSettingsTitle": "Notifications",
@@ -300,8 +357,9 @@
   "navRanking": "Ranking",
   "navProfile": "Profile",
   "addExpenseTitle": "New expense",
+  "addExpenseSteps": "1. Amount   →   2. Category   →   3. Confirm",
   "addExpenseCta": "ADD",
-  "addExpenseScan": "Scan",
+  "addExpenseScan": "Scan a receipt",
   "catRent": "Rent",
   "catInternet": "Internet",
   "catEnergy": "Energy",
@@ -310,6 +368,66 @@
   "catTransport": "Transport",
   "catRestaurants": "Restaurants",
   "catShopping": "Shopping",
+  "catFamily": "Family / transfers",
+  "catInsurance": "Insurance",
+  "catWater": "Water",
+  "familyRecipientHint": "Who is this for?",
+  "familyFeeLabel": "Transfer fee (optional)",
+  "familyFeeHint": "0.00",
+  "familyMonthTitle": "Sent to family",
+  "familyMonthBody": "{count} transfers · fees {fees}",
+  "@familyMonthBody": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "fees": {"type": "String"}
+    }
+  },
+  "onTrackTitle": "You're on the right track",
+  "onTrackBody": "{days} days in a row, and this month still holds.",
+  "@onTrackBody": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "onTrackLogging": "You're logging expenses. That's the habit that counts.",
+  "onTrackCatchUpTitle": "We can catch this up",
+  "onTrackCatchUpBody": "Living money went below zero. One small action is enough.",
+  "onTrackStartTitle": "The first step counts",
+  "onTrackStartBody": "Log an expense or finish a lesson. Sipho is with you.",
+  "recapKickerMonth": "YOUR {month} WITH SIPHO",
+  "@recapKickerMonth": {
+    "placeholders": {
+      "month": {"type": "String"}
+    }
+  },
+  "recapSpentTitleMonth": "In {month},\nyou logged",
+  "@recapSpentTitleMonth": {
+    "placeholders": {
+      "month": {"type": "String"}
+    }
+  },
+  "recapFocusDrop": "−{percent} %",
+  "@recapFocusDrop": {
+    "placeholders": {
+      "percent": {"type": "int"}
+    }
+  },
+  "recapFocusShare": "{percent} % of the month",
+  "@recapFocusShare": {
+    "placeholders": {
+      "percent": {"type": "int"}
+    }
+  },
+  "recapEmptyTitle": "Nothing logged this month yet",
+  "recapEmptyBody": "Your recap fills in from the expenses you actually enter.",
+  "recapShareReal": "My {month} with Sipho: {count} expenses logged, {saved} set aside versus last month.",
+  "@recapShareReal": {
+    "placeholders": {
+      "month": {"type": "String"},
+      "count": {"type": "int"},
+      "saved": {"type": "String"}
+    }
+  },
   "rewardAdded": "✓  {amount} added · {category}",
   "@rewardAdded": {
     "placeholders": {
@@ -343,7 +461,9 @@
   "expensesBase": "My base",
   "expensesCharts": "Charts",
   "expensesMonth": "November 2026",
-  "expensesSpentKicker": "SPENT THIS MONTH",
+  "expensesSpentKicker": "VARIABLE SPENDING THIS MONTH",
+  "expensesFixedApart": "Fixed bills, kept apart",
+  "expensesSeeBills": "See the due dates →",
   "expensesToday": "TODAY",
   "expensesNov10": "10 NOVEMBER",
   "expenseBreakfast": "Restaurants · breakfast",
@@ -352,7 +472,7 @@
   "expenseScannedBadge": "scanned",
   "expenseLeisure": "Leisure · 25.00 € → 36.80 $",
   "socleTitle": "My base",
-  "socleSubtitle": "Your strands, neatly arranged.",
+  "socleSubtitle": "Fixed on one side. Envelopes on the other.",
   "socleCalendar": "NOVEMBER 2026",
   "socleWeekdays": "M    T    W    T    F    S    S",
   "soclePaidOn": "{day} · Paid ✓",
@@ -432,8 +552,15 @@
   "chartsFixedLabel": "Fixed (nest)",
   "chartsVariableLabel": "Variable",
   "chartsSixMonths": "Last 6 months",
-  "budgetTitle": "Budgets",
-  "budgetIntro": "Share of this month's spending",
+  "budgetTitle": "Your money, clearly",
+  "budgetIntro": "Here's how this month looks so far.",
+  "budgetStatusOk": "Comfortable",
+  "budgetStatusWarn": "Watch out",
+  "budgetStatusOver": "Slow down?",
+  "budgetSiphoAdviceTitle": "Uh-oh. Slowing down?",
+  "budgetSiphoAdviceBody": "We can fix this this week.",
+  "budgetGraphsTitle": "Your charts",
+  "budgetGraphsSubtitle": "4 simple views, no jargon",
   "chartsGroceries": "Groceries    42%",
   "chartsRestaurants": "Restaurants    28%",
   "chartsTransport": "Transport    18%",
@@ -443,8 +570,39 @@
   "chartsLeisureBudget": "Leisure · 95%",
   "chartsSlowDown": "Shall we slow down a bit?",
   "chartsSummary": "12% less than last month 🎉",
-  "learnTitle": "Learn, one small step at a time",
+  "learnTitle": "One small step\nto learn.",
+  "learnPathLead": "Your path · 4 core units",
   "learnYourTurn": "YOUR TURN",
+  "learnSlotPending": "Not ready yet",
+  "learnAvailable": "Available",
+  "friendsChallengeTitle": "Challenge {name} ⚔️",
+  "@friendsChallengeTitle": {
+    "placeholders": {"name": {"type": "String"}}
+  },
+  "friendsChallengeSubtitle": "Pick a friendly challenge to motivate each other:",
+  "friendsChallengeSend": "Send challenge",
+  "friendsChallengeSent": "Challenge \"{title}\" sent to {name}! ⚔️",
+  "@friendsChallengeSent": {
+    "placeholders": {
+      "title": {"type": "String"},
+      "name": {"type": "String"}
+    }
+  },
+  "friendsChallengeSendError": "Couldn’t send the challenge. Try again.",
+  "friendsChallengeYou": "You",
+  "friendsChallengeAccept": "Accept ⚔️",
+  "friendsChallengeWaiting": "Waiting for {name}…",
+  "@friendsChallengeWaiting": {
+    "placeholders": {"name": {"type": "String"}}
+  },
+  "friendsChallengeWon": "🏆 Challenge won! Congrats!",
+  "friendsChallengeFinishedBy": "🏁 Challenge finished by {name}",
+  "@friendsChallengeFinishedBy": {
+    "placeholders": {"name": {"type": "String"}}
+  },
+  "friendsChallengesSection": "1v1 challenges ⚔️",
+  "friendsChallengeTooltip": "Challenge",
+  "friendsChallengeFriendFallback": "your friend",
   "learnUnit3": "Unit 3: The TFSA 🇨🇦",
   "learnUnitLabel": "UNIT {number}",
   "@learnUnitLabel": {
@@ -594,16 +752,27 @@
   "leaguePromotion": "↑  PROMOTION ZONE · TOP 7",
   "leagueRelegation": "↓  RELEGATION ZONE · LAST 5",
   "profileMember": "Member since Nov 2026",
+  "profileSpaceSince": "Your space · Since {date}",
+  "@profileSpaceSince": {"placeholders": {"date": {"type": "String"}}},
   "profileShop": "Shop",
   "profileStreak": "18 days",
   "profileStreakLabel": "Best streak",
+  "profileStreakDays": "{count} days",
+  "@profileStreakDays": {"placeholders": {"count": {"type": "int"}}},
   "profileXp": "2,480",
   "profileXpLabel": "Total XP",
+  "profileLevelLabel": "Level {level}",
+  "@profileLevelLabel": {"placeholders": {"level": {"type": "int"}}},
+  "profileXpValue": "{xp} XP",
+  "@profileXpValue": {"placeholders": {"xp": {"type": "String"}}},
   "profileLeague": "Gold",
   "profileLeagueLabel": "League",
   "profileLessons": "24",
-  "profileLessonsLabel": "Lessons",
+  "profileLessonsLabel": "Lessons completed",
   "profileBadges": "My badges",
+  "profilePublic": "My public profile",
+  "profilePublicHint": "Amounts are never shared",
+  "profileSettingsRow": "Settings",
   "badgeFirstLesson": "First lesson",
   "badgeFirstLessonHint": "Finish your first lesson.",
   "badgeUnit1": "Budget basics",
@@ -727,19 +896,23 @@
   "adviceLater": "Later",
   "adviceDisclaimer": "Educational content, not personalized financial advice.",
   "settingsTitle": "At your pace",
-  "settingsSubtitle": "Notifications and sounds",
+  "settingsSubtitle": "You're in control.",
+  "settingsEnabled": "On",
+  "settingsDisabled": "Off",
+  "settingsEnabledF": "On",
+  "settingsDisabledF": "Off",
   "settingsStreak": "Streak reminders",
   "settingsBudget": "Budget alerts",
   "settingsFriends": "Friends and league",
   "settingsTips": "Tips",
-  "settingsEconomy": "Economy news",
-  "settingsRecap": "Monthly recap",
+  "settingsEconomy": "News and rates",
+  "settingsRecap": "Recaps",
   "settingsSounds": "Sounds",
   "settingsHaptics": "Vibration",
   "settingsVoice": "Sipho's voice",
-  "settingsReminder": "Preferred reminder time",
+  "settingsReminder": "Reminder time",
   "settingsReminderTime": "7 PM",
-  "settingsSleep": "Promise, I'll respect your sleep.",
+  "settingsSleep": "Each category can be turned off.\nPromise, I'll respect your sleep.",
   "recapKicker": "YOUR OCTOBER WITH SIPHO",
   "recapSpentTitle": "In October,\nyou logged",
   "recapSpentCount": "64",
@@ -821,7 +994,6 @@
   "fixedExpensePaid": "Paid ✓",
   "economyTitle": "Economy",
   "shopTitle": "Shop",
-  "settingsTitle": "Settings",
   "settingsAccount": "Account",
   "settingsNotifications": "Notifications",
   "settingsLanguage": "Language",
@@ -911,5 +1083,36 @@
   "lessonSaveErrorAuth": "Your session expired. Sign in again, then try again.",
   "lessonSaveErrorRefused": "This lesson could not be validated (it may still be locked).",
   "lessonSaveError": "Your progress couldn't be saved. Check your connection and try again.",
-  "fixedMarkPaidError": "Couldn't mark this bill as paid. Try again."
+  "fixedMarkPaidError": "Couldn't mark this bill as paid. Try again.",
+  "ecoTipCatAll": "All 🌈",
+  "ecoTipCatBudget": "Budget 🛒",
+  "ecoTipCatSaving": "Saving 🌱",
+  "ecoTipCatEconomy": "Economy 📉",
+  "ecoTipCatSecurity": "Security 🛡️",
+  "ecoTipCatInvest": "Investing 🧺",
+  "ecoTipCatLifestyle": "Daily Life 💡",
+  "ecoTipActionLabel": "ACTION STEP",
+  "ecoTipSource": "Source",
+  "ecoTipShuffle": "ANOTHER TIP 🎲",
+  "ecoMetricInflation": "Annual Inflation",
+  "ecoMetricPolicyRate": "Policy Rate",
+  "ecoMetricSavingsBenchmark": "Savings Benchmark",
+  "ecoFxTitle": "Exchange rates",
+  "ecoFxBlurb": "European Central Bank reference, via Frankfurter. Sipho never invents a rate.",
+  "ecoFxEmpty": "Rates are not in yet.",
+  "ecoNewsTitle": "Sourced headlines",
+  "ecoNewsSubtitle": "Sourced archives · Not today’s news",
+  "ecoIndicatorsUnavailable": "Official indicators unavailable.",
+  "ecoWhatItMeans": "What this means for you",
+  "ecoBenchmarkDisclaimer": "Official benchmark indicators dated {date}. Educational purposes.",
+  "@ecoBenchmarkDisclaimer": {
+    "placeholders": {"date": {"type": "String"}}
+  },
+  "ecoNewsEmpty": "No headlines for this country yet. They appear after the next server fetch.",
+  "ecoNewsFooter": "Older figures · Open the sources\nRefresh before you decide.",
+  "ecoNewsRefresh": "See the latest figures",
+  "ecoNewsSiphoQuote": "Sipho: “{quote}”",
+  "@ecoNewsSiphoQuote": {
+    "placeholders": {"quote": {"type": "String"}}
+  }
 }

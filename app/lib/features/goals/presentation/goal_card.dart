@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
+import 'package:sipho/app/theme/app_radius.dart';
 import 'package:sipho/core/money/money.dart';
 import 'package:sipho/core/money/money_formatter.dart';
 import 'package:sipho/core/widgets/gauge_horizontal.dart';
@@ -39,14 +40,14 @@ class GoalCard extends StatelessWidget {
 
     return Material(
       color: AppColors.surface,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: AppRadius.cardRadius,
       child: InkWell(
         onTap: onTap ?? onDeposit,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: AppRadius.cardRadius,
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: AppRadius.cardRadius,
             border: Border.all(
               color: goal.isCompleted
                   ? AppColors.primary.withValues(alpha: 0.5)

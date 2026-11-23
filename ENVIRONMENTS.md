@@ -153,7 +153,74 @@ Remote Config : `scan_quota_per_day`, `ai_model`.
 
 ---
 
-## 5. Checklist console
+## 5. Sign in with Apple (iOS + Android)
+
+Configurée le **2026-11-22** sur le compte Apple Team **`B2K3M34M6S`** (Manuel Glory Mazong Dongmo).  
+La **même** clé Apple Auth et le **même** Services ID servent les deux projets Firebase.
+
+### Identifiants Apple Developer
+
+| Élément | Valeur |
+|---|---|
+| Team ID | `B2K3M34M6S` |
+| App ID (primary, Sign in with Apple) | `com.cargonomade.sipho.staging` (description « Sipho Staging ») |
+| Services ID | `com.cargonomade.sipho.signin` (description « Sipho Sign in with Apple ») |
+| Auth Key (Sign in with Apple) | Key ID **`8Q8KF2BT48`** — fichier local typique `AuthKey_8Q8KF2BT48.p8` (**ne pas committer**) |
+
+Domaines / return URLs enregistrés sur le Services ID :
+
+- Domaines : `sipho-staging.firebaseapp.com`, `sipho-f5a01.firebaseapp.com`
+- Return URLs :
+  - `https://sipho-staging.firebaseapp.com/__/auth/handler`
+  - `https://sipho-f5a01.firebaseapp.com/__/auth/handler`
+
+### Firebase Auth → provider Apple
+
+Sur **chaque** projet (`sipho-staging` et `sipho-f5a01`) :
+
+1. Authentication → Sign-in method → **Apple** → Enable
+2. **Services ID** : `com.cargonomade.sipho.signin`
+3. **OAuth code flow configuration** (obligatoire pour Android) :
+   - Apple team ID : `B2K3M34M6S` (**aucun espace** avant/après)
+   - Key ID : `8Q8KF2BT48` (**aucun espace** avant/après)
+   - Private key : contenu du `.p8` (BEGIN/END PRIVATE KEY), **vrais** retours à la ligne — pas la séquence littérale `\n`
+
+Sans le code flow → erreur client  
+`[firebase_auth/operation-not-allowed] … Code flow is not enabled for Apple.`
+
+Espaces ou `\n` littéraux dans Team/Key/`.p8` →  
+`[firebase_auth/invalid-credential]` (Android HTTP 400 / iOS « Invalid OAuth response from apple.com »),  
+message UI : « Identifiant Apple invalide… ».
+
+Vérif rapide (doit renvoyer un `authUri` appleid.apple.com) :
+
+```bash
+# Remplacer API_KEY par la Web API key du projet (firebase_options_*.dart)
+curl -s -X POST "https://identitytoolkit.googleapis.com/v1/accounts:createAuthUri?key=API_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"providerId":"apple.com","continueUri":"https://sipho-staging.firebaseapp.com/__/auth/handler"}'
+```
+
+### App Flutter
+
+| Plateforme | Implémentation (`AuthRepository.signInWithApple`) |
+|---|---|
+| iOS / macOS | Natif `SignInWithApple` + nonce → `signInWithCredential` |
+| Android | `AppleAuthProvider` + `signInWithProvider` (Custom Tabs) |
+
+Constantes Dart : `kAppleTeamId`, `kAppleServicesId`, `kAppleSignInKeyId`,  
+`kAppleAuthHandlerStaging` / `kAppleAuthHandlerProd` dans  
+`app/lib/core/firebase/firebase_environment.dart`.
+
+### Rotation / regen
+
+Si la clé `.p8` est perdue : créer une **nouvelle** Auth Key Sign in with Apple dans  
+Apple Developer → Keys, mettre à jour Key ID + private key dans **les deux** consoles Firebase,  
+mettre à jour `kAppleSignInKeyId` et cette section.
+
+---
+
+## 6. Checklist console
 
 ### `sipho-staging` (dev — affiché sipho-dev)
 - [x] Firestore rules + indexes
@@ -162,11 +229,13 @@ Remote Config : `scan_quota_per_day`, `ai_model`.
 - [x] Apps Android/iOS `com.cargonomade.sipho.staging` + options Dart générées
 - [x] App Check debug tokens Android/iOS enregistrés (locaux CLI — ne pas committer)
 - [ ] Storage Firebase : **Get Started** console puis `firebase deploy --only storage --project sipho-staging`
-- [ ] Auth : activer Google / Apple / Phone (+ SHA Android, APNs iOS)
+- [x] Auth Google + Apple (OAuth code flow Android, Services ID `com.cargonomade.sipho.signin`)
+- [ ] Auth Phone (+ SHA Android, APNs iOS)
 - [ ] FCM / APNs production-like pour tests push
 - [x] Seed packs pays + leçon unit_1 (Firestore REST 2026-11-20 ; `import.ts` → ADC si rejoué)
 
 ### `sipho-f5a01` (prod)
 - [x] Firestore rules/indexes déployés
-- [ ] Vérifier Auth, Storage, App Check, FCM, secrets
+- [x] Auth Apple OAuth code flow (même Services ID / Key ID que staging)
+- [ ] Vérifier Auth Google / Phone, Storage, App Check, FCM, secrets
 - [ ] Packages **sans** `.staging` : `com.cargonomade.sipho`

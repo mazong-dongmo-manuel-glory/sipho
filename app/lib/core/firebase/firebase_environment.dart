@@ -28,6 +28,28 @@ const kExpectedProjectByFlavor = <String, String>{
   'prod': kProdFirebaseProjectId,
 };
 
+// --- Sign in with Apple (shared Apple Developer team / Services ID) ---
+// Full setup: ENVIRONMENTS.md § « Sign in with Apple », AGENTS.md.
+// Private key (.p8) lives only in Firebase Console — never commit it.
+
+/// Apple Developer Team ID (Xcode `DEVELOPMENT_TEAM`).
+const kAppleTeamId = 'B2K3M34M6S';
+
+/// Apple Services ID for Android / web OAuth (Sign in with Apple).
+/// Primary App ID: `com.cargonomade.sipho.staging`.
+const kAppleServicesId = 'com.cargonomade.sipho.signin';
+
+/// Apple Auth Key ID (Sign in with Apple) — same key on staging + prod Firebase.
+const kAppleSignInKeyId = '8Q8KF2BT48';
+
+/// Firebase Auth return URL for [kStagingFirebaseProjectId].
+const kAppleAuthHandlerStaging =
+    'https://sipho-staging.firebaseapp.com/__/auth/handler';
+
+/// Firebase Auth return URL for [kProdFirebaseProjectId].
+const kAppleAuthHandlerProd =
+    'https://sipho-f5a01.firebaseapp.com/__/auth/handler';
+
 /// Fails fast when a flavor's Firebase options are still placeholders
 /// or point at the wrong project for that flavor.
 void assertFirebaseConfigured(

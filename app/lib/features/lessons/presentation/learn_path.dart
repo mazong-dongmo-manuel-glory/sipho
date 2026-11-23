@@ -2,27 +2,40 @@ import 'package:flutter/material.dart';
 import 'package:sipho/app/l10n/app_localizations.dart';
 import 'package:sipho/app/theme/app_colors.dart';
 import 'package:sipho/core/widgets/sipho_art.dart';
+import 'package:sipho/features/lessons/domain/country_lesson_catalog_extra.dart';
 import 'package:sipho/features/lessons/domain/lesson_catalog.dart';
 
 const _font = 'Nunito';
 
-/// Where a lesson stands on the path. Lessons are linear: only the next one is playable.
-enum LessonNodeState { done, current, locked }
+/// Where a lesson stands on the path.
+///
+/// Path units are linear. Country slots unlock independently: the first
+/// incomplete is `current`; other incompletes are `available` (playable).
+enum LessonNodeState { done, current, available, locked }
 
 LessonNodeState lessonNodeState({
   required String lessonId,
   required Set<String> completed,
   required String? nextId,
-  /// Country slots: every incomplete lesson is playable (server has no path gate).
   bool unlockIndependently = false,
 }) {
   if (completed.contains(lessonId)) return LessonNodeState.done;
-  if (unlockIndependently) return LessonNodeState.current;
   if (lessonId == nextId) return LessonNodeState.current;
+  if (unlockIndependently) return LessonNodeState.available;
   return LessonNodeState.locked;
 }
 
 const _swing = [0.0, 0.55, 0.9, 0.55, 0.0, -0.55, -0.9, -0.55];
+
+/// A country slot still waiting for its lesson has no question yet.
+bool lessonIsPendingSlot(CatalogLesson lesson) =>
+    isCountrySlotId(lesson.id) && !lesson.steps.any((step) => step.isQuestion);
+
+String _lessonMeta(AppLocalizations l10n, CatalogLesson lesson) {
+  if (lessonIsPendingSlot(lesson)) return l10n.learnSlotPending;
+  return '${l10n.learnLessonMinutes(lesson.minutes)} · '
+      '${l10n.learnLessonSteps(lesson.steps.length)}';
+}
 
 /// Horizontal position of the [index]-th node of a unit, from -1 (far left) to 1 (far right).
 /// The nodes wind like a snake instead of standing in a column.
@@ -60,6 +73,8 @@ class LearnUnitSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final unit = progress.unit;
+    final showGift = unit.bonusXp > 0 || unit.bonusSeeds > 0;
+    var keyedCurrent = false;
     return Column(
       children: [
         LearnUnitBanner(progress: progress, language: language),
@@ -73,9 +88,13 @@ class LearnUnitSection extends StatelessWidget {
               nextId: nextId,
               unlockIndependently: unlockIndependently,
             );
+            final attachKey = state == LessonNodeState.current &&
+                currentKey != null &&
+                !keyedCurrent;
+            if (attachKey) keyedCurrent = true;
             return LessonPathNode(
               key: ValueKey('path-node-${lesson.id}'),
-              anchorKey: state == LessonNodeState.current ? currentKey : null,
+              anchorKey: attachKey ? currentKey : null,
               lesson: lesson,
               state: state,
               offset: pathNodeOffset(i),
@@ -83,11 +102,12 @@ class LearnUnitSection extends StatelessWidget {
               onTap: () => onLessonTap(lesson, state),
             );
           }),
-        UnitGiftNode(
-          reached: progress.completed,
-          caption: l10n.learnUnitGiftLabel,
-          reward: '+${unit.bonusXp} XP · +${unit.bonusSeeds} 🌾',
-        ),
+        if (showGift)
+          UnitGiftNode(
+            reached: progress.completed,
+            caption: l10n.learnUnitGiftLabel,
+            reward: '+${unit.bonusXp} XP · +${unit.bonusSeeds} 🌾',
+          ),
         const SizedBox(height: 20),
       ],
     );
@@ -247,6 +267,7 @@ class LessonPathNode extends StatelessWidget {
     final stateLabel = switch (state) {
       LessonNodeState.done => l10n.learnDone,
       LessonNodeState.current => l10n.learnYourTurn,
+      LessonNodeState.available => l10n.learnAvailable,
       LessonNodeState.locked => l10n.learnLocked,
     };
 
@@ -260,13 +281,13 @@ class LessonPathNode extends StatelessWidget {
         _RoundNode(state: state),
         const SizedBox(height: 8),
         SizedBox(
-          width: 150,
+          width: 168,
           child: Column(
             children: [
               Text(
                 '${lesson.emoji} ${lesson.title(language)}',
                 textAlign: TextAlign.center,
-                maxLines: 2,
+                maxLines: 3,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontFamily: _font,
@@ -279,8 +300,7 @@ class LessonPathNode extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                '${l10n.learnLessonMinutes(lesson.minutes)} · '
-                '${l10n.learnLessonSteps(lesson.steps.length)}',
+                _lessonMeta(l10n, lesson),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontFamily: _font,
@@ -352,6 +372,12 @@ class _RoundNode extends StatelessWidget {
         ),
       LessonNodeState.current => (
           AppColors.primary,
+          AppColors.primaryDark,
+          Icons.play_arrow_rounded,
+          Colors.white,
+        ),
+      LessonNodeState.available => (
+          AppColors.weaveGreen,
           AppColors.primaryDark,
           Icons.play_arrow_rounded,
           Colors.white,

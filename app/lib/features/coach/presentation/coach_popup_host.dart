@@ -110,11 +110,24 @@ class _CoachPopupHostState extends ConsumerState<CoachPopupHost>
       return;
     }
 
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: true,
-      builder: (ctx) => _CoachTipDialog(tip: tip, l10n: l10n),
-    );
+    // Host sits above the router navigator in MaterialApp.builder — use the
+    // GoRouter navigator context, not this widget's context.
+    final navContext =
+        ref.read(routerProvider).routerDelegate.navigatorKey.currentContext;
+    if (navContext == null || !navContext.mounted) {
+      _dialogOpen = false;
+      return;
+    }
+
+    try {
+      await showDialog<void>(
+        context: navContext,
+        barrierDismissible: true,
+        builder: (ctx) => _CoachTipDialog(tip: tip, l10n: l10n),
+      );
+    } catch (e) {
+      debugPrint('Coach popup skipped: $e');
+    }
     _dialogOpen = false;
   }
 

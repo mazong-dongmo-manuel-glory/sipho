@@ -83,8 +83,8 @@ void main() {
     test('catalog templates are properly defined', () {
       expect(PredefinedChallengeTemplate.catalog, isNotEmpty);
       for (final t in PredefinedChallengeTemplate.catalog) {
-        expect(t.title, isNotEmpty);
-        expect(t.description, isNotEmpty);
+        expect(t.title('fr'), isNotEmpty);
+        expect(t.description('fr'), isNotEmpty);
         expect(t.targetCount, greaterThan(0));
         expect(t.rewardXp, greaterThan(0));
         expect(t.durationDays, greaterThan(0));

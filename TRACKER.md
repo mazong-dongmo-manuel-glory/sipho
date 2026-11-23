@@ -191,7 +191,7 @@
 | Apps Android/iOS | ✅ | ✅ `com.cargonomade.sipho.staging` + `firebase_options_dev/staging.dart` |
 | App Check debug tokens | — | ✅ Android + iOS (`cursor-qa` / `cursor-qa-ios`) — secrets locaux CLI |
 | Storage (Firebase) | ✅ | ⬜ **bloqué sans console** : « Get Started » obligatoire ; bucket GCS `sipho-staging-receipts` créé mais **pas** reconnu comme Firebase Storage |
-| Auth Google / Apple / Phone | (prod) | ⬜ **aucun IdP activé** — OAuth/SHA/APNs console requis |
+| Auth Google / Apple / Phone | Apple OAuth code flow ✅ staging+prod (Services ID `com.cargonomade.sipho.signin`, Key `8Q8KF2BT48`) ; Google ✅ staging | ⬜ Phone + SHA/APNs ; Google prod à confirmer |
 | FCM / APNs | ✅ | ⬜ après Auth + clés APNs / google-services en build |
 | Seed `countries/*` + `lessons/*` | — | ✅ **2026-11-20** : CA, CI, CM, FR, SN, generic + `unit_1_budget_basics` (Firestore REST / token Firebase CLI ; `import.ts` Admin SDK exige encore ADC) |
 

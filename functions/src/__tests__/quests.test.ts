@@ -2,6 +2,7 @@ import {
   DAILY_QUEST_TEMPLATES,
   MAX_DAILY_QUESTS,
   dailyQuestId,
+  hasMissedDailyQuest,
 } from "../shared/dailyQuests";
 import {
   QUEST_REWARD_BOUNDS,
@@ -90,6 +91,29 @@ describe("classifyClaim", () => {
   test("never trusts a malformed document", () => {
     expect(classifyClaim({ status: "active", progress: "9", target: "1" })).toBe("not-completed");
     expect(classifyClaim({ status: "active", progress: 0, target: 0 })).toBe("not-completed");
+  });
+});
+
+describe("catch-up quest", () => {
+  test("opens when a previous daily quest was left unfinished", () => {
+    expect(
+      hasMissedDailyQuest(
+        [{ dayKey: "2026-11-21", period: "daily", status: "expired", progress: 0, target: 3 }],
+        "2026-11-22"
+      )
+    ).toBe(true);
+    expect(
+      hasMissedDailyQuest(
+        [{ dayKey: "2026-11-21", period: "daily", status: "claimed", progress: 3, target: 3 }],
+        "2026-11-22"
+      )
+    ).toBe(false);
+    expect(
+      hasMissedDailyQuest(
+        [{ dayKey: "2026-11-22", period: "daily", status: "active", progress: 0, target: 3 }],
+        "2026-11-22"
+      )
+    ).toBe(false);
   });
 });
 

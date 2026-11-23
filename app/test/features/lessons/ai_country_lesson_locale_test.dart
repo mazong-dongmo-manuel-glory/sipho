@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sipho/features/lessons/domain/ai_country_lesson.dart';
+import 'package:sipho/features/lessons/domain/lesson_catalog.dart';
 
 void main() {
   group('resolveLocalizedField', () {
@@ -25,60 +26,66 @@ void main() {
         'Only',
       );
     });
+  });
 
-    test('keeps monolingual strings as-is', () {
+  group('sanitizeMonolingualTitle', () {
+    test('drops English half after & for French UI', () {
       expect(
-        resolveLocalizedField('Plain', preferredLocale: 'en'),
-        'Plain',
+        sanitizeMonolingualTitle('Mutuelle & Health Buffers', 'fr'),
+        'Mutuelle',
+      );
+    });
+
+    test('keeps clean monolingual titles', () {
+      expect(
+        sanitizeMonolingualTitle('Mutuelle et reste à charge', 'fr'),
+        'Mutuelle et reste à charge',
       );
     });
   });
 
-  test('AiCountryLesson.fromJson picks bilingual title by preferredLocale', () {
-    final json = <String, dynamic>{
-      'title': {'fr': 'Titre FR', 'en': 'Title EN'},
-      'objective': {'fr': 'Obj FR', 'en': 'Obj EN'},
-      'emoji': '🇨🇦',
-      'steps': [
-        {
-          'type': 'info',
-          'emoji': '📘',
-          'title': {'fr': 'Info FR', 'en': 'Info EN'},
-          'body': {'fr': 'Corps FR', 'en': 'Body EN'},
-          'points': [
-            {'fr': 'P1 FR', 'en': 'P1 EN'},
-          ],
-        },
-        {
-          'type': 'quiz',
-          'question': {'fr': 'Q FR?', 'en': 'Q EN?'},
-          'choices': [
-            {'fr': 'A FR', 'en': 'A EN', 'correct': true},
-            {'fr': 'B FR', 'en': 'B EN', 'correct': false},
-          ],
-          'explanation': {'fr': 'Ex FR', 'en': 'Ex EN'},
-        },
-      ],
-      'takeaways': [
-        {'fr': 'T FR', 'en': 'T EN'},
-      ],
-    };
-
-    final en = AiCountryLesson.fromJson(
-      'ca_slot_01',
-      json,
-      preferredLocale: 'en',
+  test('resolveCountryLesson ignores AI in the wrong UI language', () {
+    const placeholder = CatalogLesson(
+      id: 'fr_slot_01',
+      emoji: '🇫🇷',
+      minutes: 3,
+      titleFr: 'Créneau',
+      titleEn: 'Slot',
+      objective: LText('Obj FR', 'Obj EN'),
+      steps: [],
+      takeaways: [],
     );
-    expect(en.title, 'Title EN');
-    expect(en.objective, 'Obj EN');
-    expect(en.locale, 'en');
-
-    final fr = AiCountryLesson.fromJson(
-      'ca_slot_01',
-      json,
-      preferredLocale: 'fr',
+    const ai = AiCountryLesson(
+      slotId: 'fr_slot_01',
+      emoji: '🏥',
+      title: 'Health buffers',
+      objective: 'Learn buffers',
+      steps: [
+        InfoStep(
+          emoji: '📘',
+          title: LText('A', 'A'),
+          body: LText('B', 'B'),
+          points: [],
+        ),
+        QuizStep(
+          question: LText('Q?', 'Q?'),
+          choices: [
+            LessonChoice(fr: 'A', en: 'A', correct: true),
+            LessonChoice(fr: 'B', en: 'B', correct: false),
+          ],
+          explanation: LText('E', 'E'),
+        ),
+      ],
+      takeaways: [LText('T', 'T')],
+      locale: 'en',
     );
-    expect(fr.title, 'Titre FR');
-    expect(fr.locale, 'fr');
+    expect(
+      resolveCountryLesson(placeholder, ai, uiLanguage: 'fr').titleFr,
+      'Créneau',
+    );
+    expect(
+      resolveCountryLesson(placeholder, ai, uiLanguage: 'en').titleEn,
+      'Health buffers',
+    );
   });
 }

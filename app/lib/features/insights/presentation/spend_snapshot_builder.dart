@@ -23,15 +23,18 @@ SpendSnapshot buildCurrentSpendSnapshot({
 
   final categories = <String, int>{};
   for (final tx in transactions) {
-    final cents = tx.amountMainCents ?? tx.amountCents;
+    final cents = tx.spendMainCents;
     if (cents > 0) {
       categories[tx.category] = (categories[tx.category] ?? 0) + cents;
     }
   }
 
-  final fixedCents =
-      fixed.fold<int>(0, (total, item) => total + item.amountCents);
+  final fixedCents = fixed
+      .where((item) => item.type != 'envelope')
+      .fold<int>(0, (total, item) => total + item.amountCents);
   final incomeCents = finance?.monthlyIncomeCents ?? 0;
+  final spentCents =
+      categories.values.fold<int>(0, (a, b) => a + b);
 
   return SpendSnapshot(
     locale: Localizations.localeOf(context).languageCode,
@@ -43,11 +46,7 @@ SpendSnapshot buildCurrentSpendSnapshot({
     fixedCents: fixedCents,
     remainingCents: summary != null && summary.hasIncome
         ? summary.remainingCents
-        : (incomeCents > 0
-            ? incomeCents -
-                fixedCents -
-                categories.values.fold<int>(0, (a, b) => a + b)
-            : null),
+        : (incomeCents > 0 ? incomeCents - fixedCents - spentCents : null),
     goal: finance?.goal ?? '',
     focusTopic: focusTopic,
     completedLessonIds: finance?.completedLessonIds ?? const [],

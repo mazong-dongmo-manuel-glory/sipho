@@ -5,7 +5,6 @@ import { deadlineGuard, forEachDocument } from "../shared/pagination";
 import { ensureDailyQuests, expireDailyQuests } from "../shared/dailyQuests";
 import { awardBudgetDayIfEarned } from "./budgetDay";
 import {
-  diffDateKeys,
   localDateKey,
   offsetRangesForLocalWindow,
   resolveUserTime,
@@ -117,51 +116,14 @@ export async function processUserRollover(
       game.streak.lastActiveDay === yesterdayKey || game.streak.lastActiveDay === todayKey;
 
     if (!activeRecently && game.streak.current > 0) {
-      // Days since last activity up to yesterday (1 = missed yesterday only).
-      const gap =
-        game.streak.lastActiveDay != null
-          ? Math.max(1, diffDateKeys(game.streak.lastActiveDay, yesterdayKey))
-          : 1;
-      const freezesToSpend = Math.min(game.streak.freezes, gap);
-
-      if (freezesToSpend >= gap && gap > 0) {
-        // Enough freezes to bridge every missed day (one freeze per day).
+      if (game.streak.freezes > 0) {
         tx.update(gameRef, {
-          "streak.freezes": game.streak.freezes - freezesToSpend,
+          "streak.freezes": game.streak.freezes - 1,
           "streak.lastActiveDay": yesterdayKey,
           lastRolloverDay: todayKey,
           updatedAt: FieldValue.serverTimestamp(),
         });
-        logger.info("streak freezes applied", { uid, freezesToSpend, gap });
-      } else if (freezesToSpend > 0 && freezesToSpend < gap) {
-        // Partial bridge then break: spend all freezes, still short of the gap.
-        const brokenAt = now.toISOString();
-        tx.update(gameRef, {
-          "streak.freezes": 0,
-          "streak.current": 0,
-          "streak.brokenAt": brokenAt,
-          "streak.brokenCurrent": game.streak.current,
-          lastRolloverDay: todayKey,
-          updatedAt: FieldValue.serverTimestamp(),
-        });
-        tx.set(
-          publicRef,
-          { streak: 0, updatedAt: FieldValue.serverTimestamp() },
-          { merge: true }
-        );
-        tx.set(db().collection(`users/${uid}/events`).doc(), {
-          type: "STREAK_BROKEN",
-          wasStreak: game.streak.current,
-          freezesSpent: freezesToSpend,
-          gap,
-          at: FieldValue.serverTimestamp(),
-        });
-        logger.info("streak broken after partial freezes", {
-          uid,
-          wasStreak: game.streak.current,
-          freezesToSpend,
-          gap,
-        });
+        logger.info("streak freeze applied", { uid });
       } else {
         const brokenAt = now.toISOString();
         tx.update(gameRef, {
@@ -181,7 +143,7 @@ export async function processUserRollover(
           wasStreak: game.streak.current,
           at: FieldValue.serverTimestamp(),
         });
-        logger.info("streak broken", { uid, wasStreak: game.streak.current, gap });
+        logger.info("streak broken", { uid, wasStreak: game.streak.current });
       }
       return;
     }

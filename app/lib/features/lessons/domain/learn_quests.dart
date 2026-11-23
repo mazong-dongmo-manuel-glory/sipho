@@ -32,13 +32,18 @@ class ServerQuestRecord {
 /// Maximum number of daily quests the Home tab shows (README: 3 per day).
 const int kHomeMaxDailyQuests = 3;
 
-/// The server-issued daily quests to show on Home: only `period == 'daily'`,
-/// never claimed/expired ones, unfinished first, capped at [kHomeMaxDailyQuests].
+/// The server-issued quests to show on Home: today's daily quests, plus a
+/// catch-up quest when one is active. Claimed and expired rows are hidden.
 List<ServerQuestRecord> dailyQuestsForHome(List<ServerQuestRecord> quests) {
+  bool visible(ServerQuestRecord q) =>
+      q.status != 'claimed' && q.status != 'expired';
+  final catchup = [
+    for (final q in quests)
+      if (q.period == 'catchup' && visible(q)) q,
+  ];
   final daily = [
     for (final q in quests)
-      if (q.period == 'daily' && q.status != 'claimed' && q.status != 'expired')
-        q,
+      if (q.period == 'daily' && visible(q)) q,
   ];
   bool done(ServerQuestRecord q) =>
       q.status == 'completed' || q.progress >= q.target;
@@ -48,7 +53,8 @@ List<ServerQuestRecord> dailyQuestsForHome(List<ServerQuestRecord> quests) {
     final byDone = (done(a.$2) ? 1 : 0).compareTo(done(b.$2) ? 1 : 0);
     return byDone != 0 ? byDone : a.$1.compareTo(b.$1);
   });
-  return [for (final e in indexed.take(kHomeMaxDailyQuests)) e.$2];
+  final orderedDaily = [for (final e in indexed) e.$2];
+  return [...catchup, ...orderedDaily].take(kHomeMaxDailyQuests).toList();
 }
 
 /// Where tapping a quest row on Home leads.

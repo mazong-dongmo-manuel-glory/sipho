@@ -1455,23 +1455,32 @@ class UnitProgress {
 
 /// Progress of each unit. A unit opens once the previous unit is finished,
 /// the same rule as lessons (the server enforces it in `completeLesson`).
+///
+/// [startIndex] continues numbering when a second list is appended to the
+/// path (country modules come after the core units).
+///
+/// [initiallyUnlocked] is false when this list must wait for an earlier part
+/// of the path. A unit still shows as open once its own lessons are done.
 List<UnitProgress> unitProgressList(
   List<CatalogUnit> units,
-  Set<String> completed,
-) {
+  Set<String> completed, {
+  int startIndex = 0,
+  bool initiallyUnlocked = true,
+}) {
   final result = <UnitProgress>[];
-  var previousCompleted = true;
+  var previousCompleted = initiallyUnlocked;
   for (var i = 0; i < units.length; i++) {
     final done = units[i].lessons.where((l) => completed.contains(l.id)).length;
+    final unitDone = units[i].lessons.isNotEmpty && done >= units[i].lessons.length;
     result.add(
       UnitProgress(
         unit: units[i],
-        index: i,
+        index: startIndex + i,
         done: done,
-        unlocked: previousCompleted,
+        unlocked: previousCompleted || unitDone,
       ),
     );
-    previousCompleted = done >= units[i].lessons.length;
+    previousCompleted = previousCompleted && unitDone;
   }
   return result;
 }

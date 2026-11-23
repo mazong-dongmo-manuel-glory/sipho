@@ -8,6 +8,7 @@ class SiphoTransaction {
     required this.category,
     this.merchant,
     this.note,
+    this.feeCents,
     required this.date,
     this.source = 'manual',
     this.receiptPath,
@@ -23,11 +24,22 @@ class SiphoTransaction {
   final String category;
   final String? merchant;
   final String? note;
+
+  /// Transfer fee in cents, only for a family transfer. Never a double.
+  /// Same currency unit as [amountMainCents] when that is set, else [amountCents].
+  final int? feeCents;
   final String date; // ISO YYYY-MM-DD
   final String source; // manual | receipt | bank
   final String? receiptPath;
   final String? fixedExpenseId;
   final DateTime createdAt;
+
+  /// Principal + fee in the main currency (for budget / recap totals).
+  int get spendMainCents {
+    final amount = amountMainCents ?? amountCents;
+    final fee = feeCents ?? 0;
+    return amount + (fee > 0 ? fee : 0);
+  }
 
   factory SiphoTransaction.fromJson(Map<String, dynamic> json) =>
       SiphoTransaction(
@@ -39,6 +51,7 @@ class SiphoTransaction {
         category: json['category'] as String? ?? 'other',
         merchant: json['merchant'] as String?,
         note: json['note'] as String?,
+        feeCents: (json['feeCents'] as num?)?.toInt(),
         date: json['date'] as String? ?? '',
         source: json['source'] as String? ?? 'manual',
         receiptPath: json['receiptPath'] as String?,
@@ -57,6 +70,7 @@ class SiphoTransaction {
         'category': category,
         'merchant': merchant,
         'note': note,
+        'feeCents': feeCents,
         'date': date,
         'source': source,
         'receiptPath': receiptPath,
@@ -73,6 +87,7 @@ class SiphoTransaction {
     String? category,
     String? merchant,
     String? note,
+    int? feeCents,
     String? date,
     String? source,
     String? receiptPath,
@@ -88,6 +103,7 @@ class SiphoTransaction {
         category: category ?? this.category,
         merchant: merchant ?? this.merchant,
         note: note ?? this.note,
+        feeCents: feeCents ?? this.feeCents,
         date: date ?? this.date,
         source: source ?? this.source,
         receiptPath: receiptPath ?? this.receiptPath,
