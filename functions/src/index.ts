@@ -16,6 +16,7 @@ export { dailyRollover } from './gamification/dailyRollover';
 export { joinLeague, onGameXpChange, leagueWeekly } from './gamification/league';
 export { onGameBadgeCheck, onUserOnboardingDone } from './gamification/badges';
 export { buyShopItem } from './gamification/shop';
+export { equipShopItem } from './gamification/equipShopItem';
 
 // Stats & Users
 export { onUserCreate } from './stats/onUserCreate';

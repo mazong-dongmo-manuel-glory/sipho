@@ -39,10 +39,23 @@ class Money {
   bool get isPositive => cents > 0;
   bool get isZero => cents == 0;
 
-  /// Formate le montant selon la locale (ex: "18,50 $ CAD" ou "$18.50")
+  bool get _isCfa =>
+      currency.toUpperCase() == 'XAF' || currency.toUpperCase() == 'XOF';
+
+  /// Formate le montant selon la locale (ex: "18,50 $" ou "18 500 FCFA")
   String format([String? locale]) {
+    final loc = locale ?? 'fr_CA';
+    if (_isCfa) {
+      final major = cents / 100.0;
+      final digits = cents % 100 == 0 ? 0 : 2;
+      final number = NumberFormat.decimalPatternDigits(
+        locale: loc,
+        decimalDigits: digits,
+      ).format(major);
+      return '$number ${_getCurrencySymbol(currency)}';
+    }
     final format = NumberFormat.currency(
-      locale: locale ?? 'fr_CA',
+      locale: loc,
       name: currency,
       symbol: _getCurrencySymbol(currency),
       decimalDigits: (cents % 100 == 0) ? 0 : 2,
@@ -50,15 +63,21 @@ class Money {
     return format.format(cents / 100.0);
   }
 
-  /// Format compact sans décimales (ex: "950 $")
+  /// Format compact sans décimales (ex: "950 $" · "100 000 FCFA")
   String formatWhole([String? locale]) {
+    final loc = locale ?? 'fr_CA';
+    final major = (cents / 100.0).round();
+    if (_isCfa) {
+      final number = NumberFormat.decimalPattern(loc).format(major);
+      return '$number ${_getCurrencySymbol(currency)}';
+    }
     final format = NumberFormat.currency(
-      locale: locale ?? 'fr_CA',
+      locale: loc,
       name: currency,
       symbol: _getCurrencySymbol(currency),
       decimalDigits: 0,
     );
-    return format.format((cents / 100.0).round());
+    return format.format(major);
   }
 
   static String _getCurrencySymbol(String currencyCode) {

@@ -1,48 +1,124 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import '../../../app/l10n/app_localizations.dart';
 import '../../../core/theme/sipho_colors.dart';
+import '../../../core/theme/sipho_palette.dart';
 import '../../../core/theme/sipho_typography.dart';
 import '../../../core/widgets/sipho_button_3d.dart';
+import '../../../core/widgets/sipho_list_row.dart';
+import '../data/auth_repository.dart';
+import '../data/user_profile_provider.dart';
+import '../data/user_repository.dart';
 
-/// Frame 02 · Bienvenue · Épuré (Figma 2:28913).
-/// Fond #FCFCF9, carte surface douce #F0F4EF, boutons Apple, Google et Créer mon compte.
-class LoginScreen extends StatelessWidget {
+/// Frame 02 · Bienvenue — Google / Apple.
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends ConsumerState<LoginScreen> {
+  bool _busy = false;
+
+  Future<void> _afterAuth() async {
+    final auth = ref.read(authRepositoryProvider);
+    final uid = auth.currentUser?.uid;
+    if (uid == null) return;
+    final profile = await ref.read(userRepositoryProvider).getProfile(uid);
+    if (!mounted) return;
+    if (profile?.onboardingDone == true) {
+      ref.read(userProfileProvider.notifier).updateProfile(
+            displayName: profile!.displayName,
+            countryCode: profile.countryCode,
+            currency: profile.currency,
+            monthlyIncomeCents: profile.monthlyIncomeCents,
+            onboardingDone: true,
+          );
+      context.go('/home');
+    } else {
+      context.go('/onboarding');
+    }
+  }
+
+  String _messageFor(FirebaseAuthException e, AppLocalizations l10n) {
+    return switch (e.code) {
+      'operation-not-allowed' || 'admin-restricted-operation' =>
+        l10n.authErrorAppleDisabled,
+      'invalid-credential' || 'invalid-app-credential' =>
+        l10n.authErrorInvalidCredential,
+      'network-request-failed' => l10n.authErrorNetwork,
+      'canceled' || 'aborted' || 'web-context-canceled' =>
+        l10n.authErrorGeneric,
+      _ => l10n.authErrorGeneric,
+    };
+  }
+
+  Future<void> _run(Future<UserCredential> Function() signIn) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final l10n = AppLocalizations.of(context);
+    try {
+      await signIn();
+      await _afterAuth();
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      debugPrint('Auth failed [${e.code}]: ${e.message}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_messageFor(e, l10n)),
+          backgroundColor: SiphoColors.primaryDark,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      debugPrint('Auth failed: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.authErrorGeneric),
+          backgroundColor: SiphoColors.primaryDark,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final auth = ref.read(authRepositoryProvider);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFCF9),
+      backgroundColor: SiphoPalette.background(context),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Titre "Ton futur toi te dit merci."
               Text(
-                'Ton futur toi\nte dit merci.',
+                l10n.welcomeTitle,
                 style: SiphoTypography.title.copyWith(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
-                  color: SiphoColors.primaryDark,
+                  color: SiphoPalette.textPrimary(context),
                   height: 1.25,
                 ),
               ),
               const SizedBox(height: 8),
-
-              // Sous-titre
               Text(
-                'Deux minutes pour poser les premières bases.',
+                l10n.welcomeSubtitle,
                 style: SiphoTypography.body.copyWith(
-                  color: SiphoColors.textSecondary,
+                  color: SiphoPalette.textSecondary(context),
                   fontSize: 16,
                 ),
               ),
               const SizedBox(height: 16),
-
-              // Mascotte Sipho / Salue
               SizedBox(
                 width: 112,
                 height: 112,
@@ -52,29 +128,22 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-
-              // Carte douce "Pas besoin d'être expert."
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0F4EF),
-                  borderRadius: BorderRadius.circular(24),
-                ),
+              SiphoSoftCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Pas besoin d’être expert.',
+                      l10n.loginExpertTitle,
                       style: SiphoTypography.bodyBold.copyWith(
-                        color: SiphoColors.primaryDark,
+                        color: SiphoPalette.textPrimary(context),
                         fontSize: 16,
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'On apprend à comprendre son argent, à son rythme. Sans jugement.',
+                      l10n.loginExpertBody,
                       style: SiphoTypography.body.copyWith(
-                        color: SiphoColors.primaryDark,
+                        color: SiphoPalette.textPrimary(context),
                         fontSize: 15,
                       ),
                     ),
@@ -82,44 +151,48 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-
-              // Continuer avec Apple (secondaire / relief doux)
               SiphoButton3D(
-                label: 'Continuer avec Apple',
+                label: l10n.signInWithApple,
                 variant: SiphoButtonVariant.outline,
-                icon: const Icon(Icons.apple, color: SiphoColors.primaryDark, size: 22),
-                onPressed: () => context.go('/onboarding'),
+                icon: Icon(Icons.apple, color: SiphoPalette.textPrimary(context), size: 22),
+                onPressed: _busy ? null : () => _run(auth.signInWithApple),
               ),
               const SizedBox(height: 10),
-
-              // Continuer avec Google (secondaire / relief doux)
               SiphoButton3D(
-                label: 'Continuer avec Google',
+                label: l10n.signInWithGoogle,
                 variant: SiphoButtonVariant.outline,
-                icon: const Icon(Icons.g_mobiledata, color: SiphoColors.primaryDark, size: 26),
-                onPressed: () => context.go('/onboarding'),
+                icon: Icon(Icons.g_mobiledata, color: SiphoPalette.textPrimary(context), size: 26),
+                onPressed: _busy ? null : () => _run(auth.signInWithGoogle),
               ),
               const SizedBox(height: 14),
-
-              // Mentions
               Text(
-                'En continuant, tu acceptes nos conditions et notre politique de confidentialité.',
+                l10n.welcomeLegal,
                 style: SiphoTypography.label.copyWith(
                   fontSize: 12,
-                  color: SiphoColors.textSecondary,
+                  color: SiphoPalette.textSecondary(context),
                   height: 1.3,
                 ),
               ),
-
               const Spacer(),
-
-              // Bouton Créer mon compte (primaire vert foncé)
               SiphoButton3D(
-                label: 'Créer mon compte',
-                variant: SiphoButtonVariant.primary,
-                onPressed: () => context.go('/onboarding'),
+                label: _busy ? '…' : l10n.loginCreateAccount,
+                variant: SiphoButtonVariant.dark,
+                onPressed: _busy ? null : () => _run(auth.signInWithGoogle),
               ),
-              const SizedBox(height: 8),
+              if (kDebugMode) ...[
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: _busy
+                      ? null
+                      : () => _run(auth.signInAnonymously),
+                  child: Text(
+                    'Continuer sans compte (debug)',
+                    style: SiphoTypography.bodyBold.copyWith(
+                      color: SiphoPalette.textSecondary(context),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

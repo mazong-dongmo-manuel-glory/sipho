@@ -1,120 +1,218 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/sipho_colors.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../app/l10n/app_localizations.dart';
+import '../../../core/theme/sipho_palette.dart';
 import '../../../core/theme/sipho_typography.dart';
+import '../../../core/widgets/sipho_button_3d.dart';
+import '../../../core/widgets/sipho_list_row.dart';
+import '../../auth/data/auth_repository.dart';
+import '../data/league_provider.dart';
 
-/// Frame 20 · Ligue Or & Classement - FIGMA.md §43 & Specification_Sipho.pdf §4.5.
-class LeaderboardScreen extends StatelessWidget {
+/// Frame 20 · Ligue · classement réel via `joinLeague` + members.
+class LeaderboardScreen extends ConsumerWidget {
   const LeaderboardScreen({super.key});
 
+  String _tierLabel(AppLocalizations l10n, String tier) {
+    return switch (tier) {
+      'bronze' => l10n.leagueTierBronze,
+      'silver' => l10n.leagueTierSilver,
+      'gold' => l10n.leagueTierGold,
+      'sapphire' => l10n.leagueTierSapphire,
+      'ruby' => l10n.leagueTierRuby,
+      'emerald' => l10n.leagueTierEmerald,
+      'amethyst' => l10n.leagueTierAmethyst,
+      'pearl' => l10n.leagueTierPearl,
+      'obsidian' => l10n.leagueTierObsidian,
+      'diamond' => l10n.leagueTierDiamond,
+      _ => tier,
+    };
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final league = ref.watch(leagueProvider);
+    final uid = ref.watch(authUidProvider);
+    final myIndex = league.members.indexWhere((m) => m.uid == uid);
+    final myRank = myIndex >= 0 ? myIndex + 1 : null;
+    final myXp = myIndex >= 0 ? league.members[myIndex].weeklyXp : 0;
+    final ahead = myIndex > 0 ? league.members[myIndex - 1].weeklyXp - myXp : 0;
+
     return Scaffold(
-      backgroundColor: SiphoColors.background,
-      appBar: AppBar(
-        title: const Text('Classement', style: SiphoTypography.title),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        children: [
-          // En-tête de la ligue
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: SiphoColors.surface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: SiphoColors.border, width: 1.5),
+      backgroundColor: SiphoPalette.background(context),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+          children: [
+            Text(
+              l10n.leagueTitleThe(_tierLabel(l10n, league.tier)),
+              style: SiphoTypography.title.copyWith(
+                fontSize: 28,
+                color: SiphoPalette.textPrimary(context),
+                height: 1.3,
+              ),
             ),
-            child: Row(
+            const SizedBox(height: 8),
+            Text(
+              league.week.isEmpty ? l10n.leagueGroupWeek : l10n.leagueGroupWeek,
+              style: SiphoTypography.body.copyWith(
+                fontSize: 16,
+                color: SiphoPalette.textSecondary(context),
+                height: 1.3,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
               children: [
-                const Text('🏆', style: TextStyle(fontSize: 40)),
-                const SizedBox(width: 16),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('LIGUE OR', style: SiphoTypography.label.copyWith(letterSpacing: 1.2, fontWeight: FontWeight.w800)),
-                      const SizedBox(height: 4),
-                      Text('Top 7 promus en Saphir', style: SiphoTypography.bodyBold),
-                      Text('Fin de la ligue dans 2j 14h', style: SiphoTypography.label),
-                    ],
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: l10n.leagueTab,
+                          style: SiphoTypography.bodyBold.copyWith(
+                            fontSize: 16,
+                            color: SiphoPalette.textPrimary(context),
+                          ),
+                        ),
+                        WidgetSpan(
+                          alignment: PlaceholderAlignment.baseline,
+                          baseline: TextBaseline.alphabetic,
+                          child: GestureDetector(
+                            onTap: () => context.push('/friends'),
+                            child: Text(
+                              '     ${l10n.leagueFriends}',
+                              style: SiphoTypography.bodyBold.copyWith(
+                                fontSize: 16,
+                                color: SiphoPalette.textSecondary(context),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                ),
+                IconButton(
+                  onPressed: () => ref.read(leagueProvider.notifier).refresh(),
+                  icon: Icon(Icons.refresh, color: SiphoPalette.textPrimary(context)),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 20),
-
-          // Lignes de classement
-          _LeaderboardRow(rank: 1, name: 'Koffi A.', xp: 840, isTop: true),
-          _LeaderboardRow(rank: 2, name: 'Sarah M.', xp: 790, isTop: true),
-          _LeaderboardRow(rank: 3, name: 'Amina (Toi)', xp: 750, isMe: true),
-          _LeaderboardRow(rank: 4, name: 'Alexandre B.', xp: 620),
-          _LeaderboardRow(rank: 5, name: 'Fatou D.', xp: 580),
-          _LeaderboardRow(rank: 6, name: 'Marc-André L.', xp: 540),
-          _LeaderboardRow(rank: 7, name: 'Chloé R.', xp: 510),
-        ],
-      ),
-    );
-  }
-}
-
-class _LeaderboardRow extends StatelessWidget {
-  final int rank;
-  final String name;
-  final int xp;
-  final bool isMe;
-  final bool isTop;
-
-  const _LeaderboardRow({
-    required this.rank,
-    required this.name,
-    required this.xp,
-    this.isMe = false,
-    this.isTop = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: isMe ? SiphoColors.primaryLight : SiphoColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isMe ? SiphoColors.primary : SiphoColors.border,
-          width: isMe ? 2.0 : 1.5,
+            const SizedBox(height: 12),
+            Text(
+              l10n.leagueXpOnly,
+              style: SiphoTypography.label.copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                color: SiphoPalette.textSecondary(context),
+                height: 1.3,
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (league.loading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 32),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (league.error != null)
+              Column(
+                children: [
+                  Text(
+                    l10n.authErrorGeneric,
+                    style: SiphoTypography.body.copyWith(color: SiphoPalette.textSecondary(context)),
+                  ),
+                  const SizedBox(height: 12),
+                  SiphoButton3D(
+                    label: l10n.retryBtn,
+                    variant: SiphoButtonVariant.dark,
+                    onPressed: () => ref.read(leagueProvider.notifier).refresh(),
+                  ),
+                ],
+              )
+            else if (league.members.isEmpty)
+              Text(
+                'Ta ligue se remplit. Reviens dans un instant.',
+                style: SiphoTypography.body.copyWith(color: SiphoPalette.textSecondary(context)),
+              )
+            else
+              ...List.generate(league.members.length, (i) {
+                final m = league.members[i];
+                final isMe = m.uid == uid;
+                final title =
+                    '${i + 1}   ${m.pseudo}${isMe ? ' ${l10n.leagueYouInline}' : ''}';
+                return Column(
+                  children: [
+                    SiphoListRow(
+                      title: title,
+                      trailing: l10n.leagueXpValue(m.weeklyXp),
+                    ),
+                    const SiphoSeparator(margin: EdgeInsets.symmetric(vertical: 14)),
+                  ],
+                );
+              }),
+            if (myRank != null && ahead > 0)
+              SiphoSoftCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.leagueNearLevel(ahead, myRank),
+                      style: SiphoTypography.bodyBold.copyWith(
+                        fontSize: 16,
+                        color: SiphoPalette.textPrimary(context),
+                        height: 1.3,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.leaguePromoRules,
+                      style: SiphoTypography.body.copyWith(
+                        fontSize: 16,
+                        color: SiphoPalette.textPrimary(context),
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 16),
+            Text(
+              l10n.leagueSeeGroup(league.members.length),
+              style: SiphoTypography.label.copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                color: SiphoPalette.textSecondary(context),
+                height: 1.3,
+              ),
+            ),
+            GestureDetector(
+              onTap: () => context.push('/podium'),
+              child: Text(
+                l10n.leaguePodiumSunday,
+                style: SiphoTypography.label.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  color: SiphoPalette.textPrimary(context),
+                  height: 1.3,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SiphoListRow(
+              title: 'Les dix ligues',
+              showChevron: true,
+              onTap: () => context.push('/leagues'),
+            ),
+            const SiphoSeparator(),
+            SiphoListRow(
+              title: 'Coffres de progression',
+              showChevron: true,
+              onTap: () => context.push('/chests'),
+            ),
+          ],
         ),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 28,
-            child: Text(
-              '$rank',
-              style: SiphoTypography.bodyBold.copyWith(
-                color: isTop ? SiphoColors.accentGold : SiphoColors.textSecondary,
-                fontSize: 16,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              name,
-              style: SiphoTypography.bodyBold.copyWith(
-                color: isMe ? SiphoColors.primary : SiphoColors.textPrimary,
-              ),
-            ),
-          ),
-          Text(
-            '$xp XP',
-            style: SiphoTypography.label.copyWith(
-              fontWeight: FontWeight.w800,
-              color: SiphoColors.textPrimary,
-            ),
-          ),
-        ],
       ),
     );
   }

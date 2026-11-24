@@ -740,6 +740,132 @@ abstract class AppLocalizations {
   /// **'Your streak is holding. You’re on track.'**
   String get homeOnTrackLine;
 
+  /// No description provided for @homeMonthRemainingKicker.
+  ///
+  /// In en, this message translates to:
+  /// **'{month} · LEFT TO LIVE ON'**
+  String homeMonthRemainingKicker(String month);
+
+  /// No description provided for @homeComfortableCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'✓  Comfortable'**
+  String get homeComfortableCheck;
+
+  /// No description provided for @homeTightCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'✓  Tight'**
+  String get homeTightCheck;
+
+  /// No description provided for @homeUnderZeroCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Below zero'**
+  String get homeUnderZeroCheck;
+
+  /// No description provided for @homeBreakdownEpure.
+  ///
+  /// In en, this message translates to:
+  /// **'{income} income − {fixed} base − {spent}'**
+  String homeBreakdownEpure(String income, String fixed, String spent);
+
+  /// No description provided for @homeCheckOncePaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Check once paid'**
+  String get homeCheckOncePaid;
+
+  /// No description provided for @homeTakeLesson.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a lesson'**
+  String get homeTakeLesson;
+
+  /// No description provided for @homeReadEco.
+  ///
+  /// In en, this message translates to:
+  /// **'Read the eco card'**
+  String get homeReadEco;
+
+  /// No description provided for @homeSpendWeekHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending · 7 days'**
+  String get homeSpendWeekHeading;
+
+  /// No description provided for @homeSpendWeekEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No expenses this week yet.'**
+  String get homeSpendWeekEmpty;
+
+  /// No description provided for @homeFxHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Today’s rate'**
+  String get homeFxHeading;
+
+  /// No description provided for @homeFxLine.
+  ///
+  /// In en, this message translates to:
+  /// **'1 {base} ≈ {rate} {currency}'**
+  String homeFxLine(String base, String rate, String currency);
+
+  /// No description provided for @homeFxUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate unavailable right now.'**
+  String get homeFxUnavailable;
+
+  /// No description provided for @homeTipHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick tip'**
+  String get homeTipHeading;
+
+  /// No description provided for @homeTipFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Log one expense today — Sipho will help you see clearly.'**
+  String get homeTipFallback;
+
+  /// No description provided for @fabAddManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Log an expense'**
+  String get fabAddManual;
+
+  /// No description provided for @fabAddScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan a receipt (AI)'**
+  String get fabAddScan;
+
+  /// No description provided for @fabAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get fabAddTitle;
+
+  /// No description provided for @expenseScanCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan with camera'**
+  String get expenseScanCta;
+
+  /// No description provided for @homeQuestNote3.
+  ///
+  /// In en, this message translates to:
+  /// **'Log 3 expenses'**
+  String get homeQuestNote3;
+
+  /// No description provided for @homeQuestOneMore.
+  ///
+  /// In en, this message translates to:
+  /// **'One more action for this quest.'**
+  String get homeQuestOneMore;
+
   /// No description provided for @homeLevelPill.
   ///
   /// In en, this message translates to:
@@ -827,6 +953,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Income wasn\'t saved. Try again.'**
   String get incomeSaveError;
+
+  /// No description provided for @homeGaugeSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Left to live on'**
+  String get homeGaugeSheetTitle;
+
+  /// No description provided for @homeGaugeSheetLead.
+  ///
+  /// In en, this message translates to:
+  /// **'History, income and this month’s budget.'**
+  String get homeGaugeSheetLead;
+
+  /// No description provided for @homeGaugeIncomeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly budget (income)'**
+  String get homeGaugeIncomeLabel;
+
+  /// No description provided for @homeGaugeIncomeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 2800'**
+  String get homeGaugeIncomeHint;
+
+  /// No description provided for @homeGaugeIncomeSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Income saved'**
+  String get homeGaugeIncomeSaved;
+
+  /// No description provided for @homeGaugeHistoryHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense history'**
+  String get homeGaugeHistoryHeading;
+
+  /// No description provided for @homeGaugeHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No expenses this month.'**
+  String get homeGaugeHistoryEmpty;
+
+  /// No description provided for @homeGaugeSeeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See all expenses'**
+  String get homeGaugeSeeAll;
+
+  /// No description provided for @homeGaugeBudgets.
+  ///
+  /// In en, this message translates to:
+  /// **'Category limits'**
+  String get homeGaugeBudgets;
+
+  /// No description provided for @homeGaugeEditExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit expense'**
+  String get homeGaugeEditExpense;
+
+  /// No description provided for @homeGaugeMerchant.
+  ///
+  /// In en, this message translates to:
+  /// **'Merchant'**
+  String get homeGaugeMerchant;
+
+  /// No description provided for @homeGaugeAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get homeGaugeAmount;
+
+  /// No description provided for @homeGaugeSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get homeGaugeSave;
+
+  /// No description provided for @homeGaugeCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get homeGaugeCancel;
 
   /// No description provided for @expenseSaveError.
   ///
@@ -1914,6 +2124,18 @@ abstract class AppLocalizations {
   /// **'10 NOVEMBER'**
   String get expensesNov10;
 
+  /// No description provided for @expensesSeeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See all transactions  →'**
+  String get expensesSeeAll;
+
+  /// No description provided for @expensesMonthPicker.
+  ///
+  /// In en, this message translates to:
+  /// **'{month}  ↓'**
+  String expensesMonthPicker(String month);
+
   /// No description provided for @expenseBreakfast.
   ///
   /// In en, this message translates to:
@@ -2403,7 +2625,7 @@ abstract class AppLocalizations {
   /// No description provided for @learnUnit3.
   ///
   /// In en, this message translates to:
-  /// **'Unit 3: The TFSA 🇨🇦'**
+  /// **'03 · READ YOUR ACCOUNTS'**
   String get learnUnit3;
 
   /// No description provided for @learnUnitLabel.
@@ -2463,7 +2685,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizCheck.
   ///
   /// In en, this message translates to:
-  /// **'CHECK'**
+  /// **'Check'**
   String get quizCheck;
 
   /// No description provided for @quizTryAgain.
@@ -2921,6 +3143,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{tier} League'**
   String leagueTitleNamed(String tier);
+
+  /// No description provided for @leagueTitleThe.
+  ///
+  /// In en, this message translates to:
+  /// **'The {tier} League'**
+  String leagueTitleThe(String tier);
+
+  /// No description provided for @leagueGroupWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This week’s group · Ends Sunday'**
+  String get leagueGroupWeek;
+
+  /// No description provided for @leagueXpOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Ranking on XP only.'**
+  String get leagueXpOnly;
+
+  /// No description provided for @leagueNearLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'{xp} XP to go for level {level}'**
+  String leagueNearLevel(int xp, int level);
+
+  /// No description provided for @leaguePromoRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Top 7: promotion · Last 5: relegation'**
+  String get leaguePromoRules;
+
+  /// No description provided for @leagueSeeGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} players · See the whole group →'**
+  String leagueSeeGroup(int count);
+
+  /// No description provided for @leaguePodiumSunday.
+  ///
+  /// In en, this message translates to:
+  /// **'The podium lands on Sunday.'**
+  String get leaguePodiumSunday;
+
+  /// No description provided for @leagueCountryCity.
+  ///
+  /// In en, this message translates to:
+  /// **'Country · City'**
+  String get leagueCountryCity;
+
+  /// No description provided for @leagueYouInline.
+  ///
+  /// In en, this message translates to:
+  /// **'· you'**
+  String get leagueYouInline;
 
   /// No description provided for @leagueEndsIn.
   ///
@@ -4739,6 +5015,1818 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sipho: “{quote}”'**
   String ecoNewsSiphoQuote(String quote);
+
+  /// No description provided for @expenseAmountHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'How much?'**
+  String get expenseAmountHeading;
+
+  /// No description provided for @expenseStepLead.
+  ///
+  /// In en, this message translates to:
+  /// **'{step} / {total}'**
+  String expenseStepLead(String step, String total);
+
+  /// No description provided for @expenseCategoryHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Where does it go?'**
+  String get expenseCategoryHeading;
+
+  /// No description provided for @expenseCategoryLead.
+  ///
+  /// In en, this message translates to:
+  /// **'2 / 3 · Amount: {amount}'**
+  String expenseCategoryLead(String amount);
+
+  /// No description provided for @expenseConfirmHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Before saving'**
+  String get expenseConfirmHeading;
+
+  /// No description provided for @expenseConfirmLead.
+  ///
+  /// In en, this message translates to:
+  /// **'3 / 3 · You confirm.'**
+  String get expenseConfirmLead;
+
+  /// No description provided for @expenseConfirmCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get expenseConfirmCategory;
+
+  /// No description provided for @expenseConfirmDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get expenseConfirmDate;
+
+  /// No description provided for @expenseConfirmMerchant.
+  ///
+  /// In en, this message translates to:
+  /// **'Merchant'**
+  String get expenseConfirmMerchant;
+
+  /// No description provided for @expenseConfirmEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit a detail  →'**
+  String get expenseConfirmEdit;
+
+  /// No description provided for @expenseConfirmPrivacyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing automatic.'**
+  String get expenseConfirmPrivacyTitle;
+
+  /// No description provided for @expenseConfirmPrivacyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sipho never creates an expense without you.'**
+  String get expenseConfirmPrivacyBody;
+
+  /// No description provided for @lifeIncomeHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'And in your life?'**
+  String get lifeIncomeHeading;
+
+  /// No description provided for @lifeIncomeLead.
+  ///
+  /// In en, this message translates to:
+  /// **'04 / 05 · Only what you want to share.'**
+  String get lifeIncomeLead;
+
+  /// No description provided for @lifeStageStudies.
+  ///
+  /// In en, this message translates to:
+  /// **'Studies'**
+  String get lifeStageStudies;
+
+  /// No description provided for @lifeStageActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Working life'**
+  String get lifeStageActive;
+
+  /// No description provided for @lifeStageTransition.
+  ///
+  /// In en, this message translates to:
+  /// **'Transition'**
+  String get lifeStageTransition;
+
+  /// No description provided for @lifeStageRetired.
+  ///
+  /// In en, this message translates to:
+  /// **'Retirement'**
+  String get lifeStageRetired;
+
+  /// No description provided for @lifeIncomeOptionalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly income · Optional'**
+  String get lifeIncomeOptionalLabel;
+
+  /// No description provided for @lifeIncomeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'2,800 CAD'**
+  String get lifeIncomeHint;
+
+  /// No description provided for @lifeIncomeNoIncomeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Without income, we can’t compute remaining to live.'**
+  String get lifeIncomeNoIncomeHint;
+
+  /// No description provided for @lifeIncomeSkipIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue without income'**
+  String get lifeIncomeSkipIncome;
+
+  /// No description provided for @goalsHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'My goals'**
+  String get goalsHeading;
+
+  /// No description provided for @goalsLead.
+  ///
+  /// In en, this message translates to:
+  /// **'One project at a time. No pressure.'**
+  String get goalsLead;
+
+  /// No description provided for @goalsEmptyLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet — and that’s fine.'**
+  String get goalsEmptyLead;
+
+  /// No description provided for @goalsEmptyCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A first goal'**
+  String get goalsEmptyCardTitle;
+
+  /// No description provided for @goalsEmptyCardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a simple project. Sipho helps you move.'**
+  String get goalsEmptyCardBody;
+
+  /// No description provided for @goalsNewCta.
+  ///
+  /// In en, this message translates to:
+  /// **'New goal'**
+  String get goalsNewCta;
+
+  /// No description provided for @goalsSampleTravel.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip to Cameroon'**
+  String get goalsSampleTravel;
+
+  /// No description provided for @goalsSampleEmergency.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency fund'**
+  String get goalsSampleEmergency;
+
+  /// No description provided for @goalsNotStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Not started yet'**
+  String get goalsNotStarted;
+
+  /// No description provided for @goalsSeeEmptyState.
+  ///
+  /// In en, this message translates to:
+  /// **'See empty state'**
+  String get goalsSeeEmptyState;
+
+  /// No description provided for @milestoneHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'One month covered.'**
+  String get milestoneHeading;
+
+  /// No description provided for @milestoneLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Your emergency fund is growing.'**
+  String get milestoneLead;
+
+  /// No description provided for @milestoneKicker.
+  ///
+  /// In en, this message translates to:
+  /// **'1 MONTH OF NEST · 1 / 3 OF TARGET'**
+  String get milestoneKicker;
+
+  /// No description provided for @milestoneCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'First milestone'**
+  String get milestoneCardTitle;
+
+  /// No description provided for @milestoneCardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'A badge for this step. No XP tied to the amount saved.'**
+  String get milestoneCardBody;
+
+  /// No description provided for @subTrimmedHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription trimmed'**
+  String get subTrimmedHeading;
+
+  /// No description provided for @subTrimmedLead.
+  ///
+  /// In en, this message translates to:
+  /// **'You just freed a little air.'**
+  String get subTrimmedLead;
+
+  /// No description provided for @subTrimmedKicker.
+  ///
+  /// In en, this message translates to:
+  /// **'PER MONTH · STREAMING REDUCED'**
+  String get subTrimmedKicker;
+
+  /// No description provided for @subTrimmedCard.
+  ///
+  /// In en, this message translates to:
+  /// **'A lighter subscription = one more strand for your nest.'**
+  String get subTrimmedCard;
+
+  /// No description provided for @lessonCardHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'What’s an emergency fund?'**
+  String get lessonCardHeading;
+
+  /// No description provided for @lessonCardLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving · 1 / 4'**
+  String get lessonCardLead;
+
+  /// No description provided for @lessonCardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'A liquid reserve for surprises — without touching your daily budget.'**
+  String get lessonCardBody;
+
+  /// No description provided for @lessonCardSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Source: FCAC · Building an emergency fund'**
+  String get lessonCardSource;
+
+  /// No description provided for @lessonTfHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'An emergency fund\nmust be accessible.'**
+  String get lessonTfHeading;
+
+  /// No description provided for @lessonTfLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving · 3 / 4'**
+  String get lessonTfLead;
+
+  /// No description provided for @lessonTfTrue.
+  ///
+  /// In en, this message translates to:
+  /// **'True'**
+  String get lessonTfTrue;
+
+  /// No description provided for @lessonTfFalse.
+  ///
+  /// In en, this message translates to:
+  /// **'False'**
+  String get lessonTfFalse;
+
+  /// No description provided for @lessonTfCorrect.
+  ///
+  /// In en, this message translates to:
+  /// **'Right. Accessible ≠ invested in stocks.'**
+  String get lessonTfCorrect;
+
+  /// No description provided for @lessonTfWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Not quite — it should stay liquid.'**
+  String get lessonTfWrong;
+
+  /// No description provided for @lessonTfHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Take your time. No pressure here.'**
+  String get lessonTfHint;
+
+  /// No description provided for @lessonSimHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'You get a \$200 bonus.'**
+  String get lessonSimHeading;
+
+  /// No description provided for @lessonSimLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mini-simulation · 4 / 4'**
+  String get lessonSimLead;
+
+  /// No description provided for @lessonSimOptA.
+  ///
+  /// In en, this message translates to:
+  /// **'Spend it all now'**
+  String get lessonSimOptA;
+
+  /// No description provided for @lessonSimOptB.
+  ///
+  /// In en, this message translates to:
+  /// **'Put \$150 in the cushion'**
+  String get lessonSimOptB;
+
+  /// No description provided for @lessonSimOptC.
+  ///
+  /// In en, this message translates to:
+  /// **'Wait without deciding'**
+  String get lessonSimOptC;
+
+  /// No description provided for @lessonSimFeedbackGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Solid. Your cushion grows without total sacrifice.'**
+  String get lessonSimFeedbackGood;
+
+  /// No description provided for @lessonSimFeedbackOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Possible — see what your nest prefers.'**
+  String get lessonSimFeedbackOther;
+
+  /// No description provided for @badgeEarnedHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'New badge!'**
+  String get badgeEarnedHeading;
+
+  /// No description provided for @badgeEarnedLead.
+  ///
+  /// In en, this message translates to:
+  /// **'A milestone, not a race.'**
+  String get badgeEarnedLead;
+
+  /// No description provided for @badgeEarnedName.
+  ///
+  /// In en, this message translates to:
+  /// **'Nest built'**
+  String get badgeEarnedName;
+
+  /// No description provided for @badgeEarnedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You set your base. No XP on this badge.'**
+  String get badgeEarnedBody;
+
+  /// No description provided for @badgeEarnedCta.
+  ///
+  /// In en, this message translates to:
+  /// **'See my badges'**
+  String get badgeEarnedCta;
+
+  /// No description provided for @publicProfileHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Public profile'**
+  String get publicProfileHeading;
+
+  /// No description provided for @publicProfileLead.
+  ///
+  /// In en, this message translates to:
+  /// **'What friends see — never amounts.'**
+  String get publicProfileLead;
+
+  /// No description provided for @publicProfileLeague.
+  ///
+  /// In en, this message translates to:
+  /// **'Gold league'**
+  String get publicProfileLeague;
+
+  /// No description provided for @publicProfileStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak'**
+  String get publicProfileStreak;
+
+  /// No description provided for @publicProfileLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Level'**
+  String get publicProfileLevel;
+
+  /// No description provided for @publicProfileBadges.
+  ///
+  /// In en, this message translates to:
+  /// **'Badges'**
+  String get publicProfileBadges;
+
+  /// No description provided for @publicProfileLessons.
+  ///
+  /// In en, this message translates to:
+  /// **'Lessons'**
+  String get publicProfileLessons;
+
+  /// No description provided for @publicProfilePrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Amounts, income and expenses stay private.'**
+  String get publicProfilePrivacy;
+
+  /// No description provided for @familySupportHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Family support'**
+  String get familySupportHeading;
+
+  /// No description provided for @familySupportLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan without guilt.'**
+  String get familySupportLead;
+
+  /// No description provided for @familySupportKicker.
+  ///
+  /// In en, this message translates to:
+  /// **'THIS MONTH · FAMILY ENVELOPES'**
+  String get familySupportKicker;
+
+  /// No description provided for @familySupportPlanned.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned transfer'**
+  String get familySupportPlanned;
+
+  /// No description provided for @familySupportExtra.
+  ///
+  /// In en, this message translates to:
+  /// **'Extra help'**
+  String get familySupportExtra;
+
+  /// No description provided for @familySupportTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a soft ceiling. Your nest matters too.'**
+  String get familySupportTip;
+
+  /// No description provided for @travelModeHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Travel mode'**
+  String get travelModeHeading;
+
+  /// No description provided for @travelModeLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter local currency; we convert.'**
+  String get travelModeLead;
+
+  /// No description provided for @travelModeToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable travel mode'**
+  String get travelModeToggle;
+
+  /// No description provided for @travelModeCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip currency'**
+  String get travelModeCurrency;
+
+  /// No description provided for @travelModeFxHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference rate'**
+  String get travelModeFxHint;
+
+  /// No description provided for @travelModeFxBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Official source · never invented'**
+  String get travelModeFxBody;
+
+  /// No description provided for @travelModeCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Budgets stay in your home currency.'**
+  String get travelModeCard;
+
+  /// No description provided for @ecoHubHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Eco info'**
+  String get ecoHubHeading;
+
+  /// No description provided for @ecoHubLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Always a source and a date. Never invented.'**
+  String get ecoHubLead;
+
+  /// No description provided for @ecoHubCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Food inflation · Canada'**
+  String get ecoHubCardTitle;
+
+  /// No description provided for @ecoHubCardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'3.4% · ≈ +\$11/mo on groceries'**
+  String get ecoHubCardBody;
+
+  /// No description provided for @ecoHubCardSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Source · StatCan · Nov 12, 2026'**
+  String get ecoHubCardSource;
+
+  /// No description provided for @ecoHistoryHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Indicator history'**
+  String get ecoHistoryHeading;
+
+  /// No description provided for @ecoHistoryLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Sourced, dated archives.'**
+  String get ecoHistoryLead;
+
+  /// No description provided for @ecoHistoryItem1.
+  ///
+  /// In en, this message translates to:
+  /// **'Food inflation'**
+  String get ecoHistoryItem1;
+
+  /// No description provided for @ecoHistoryItem2.
+  ///
+  /// In en, this message translates to:
+  /// **'Policy rate'**
+  String get ecoHistoryItem2;
+
+  /// No description provided for @ecoHistoryItem3.
+  ///
+  /// In en, this message translates to:
+  /// **'Overall CPI'**
+  String get ecoHistoryItem3;
+
+  /// No description provided for @ecoUnavailableHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Indicators unavailable'**
+  String get ecoUnavailableHeading;
+
+  /// No description provided for @ecoUnavailableLead.
+  ///
+  /// In en, this message translates to:
+  /// **'The server couldn’t refresh figures.'**
+  String get ecoUnavailableLead;
+
+  /// No description provided for @ecoUnavailableCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing invented'**
+  String get ecoUnavailableCardTitle;
+
+  /// No description provided for @ecoUnavailableCardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sipho prefers an empty screen to a fake number.'**
+  String get ecoUnavailableCardBody;
+
+  /// No description provided for @newsArchivesHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'News · Archives'**
+  String get newsArchivesHeading;
+
+  /// No description provided for @newsArchivesLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Not today’s feed — sourced archives.'**
+  String get newsArchivesLead;
+
+  /// No description provided for @newsArchivesItem1.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost of living and basket'**
+  String get newsArchivesItem1;
+
+  /// No description provided for @newsArchivesItem2.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfers and diaspora'**
+  String get newsArchivesItem2;
+
+  /// No description provided for @newsArchivesItem3.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving and rates'**
+  String get newsArchivesItem3;
+
+  /// No description provided for @ecoQuizHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Economy quiz'**
+  String get ecoQuizHeading;
+
+  /// No description provided for @ecoQuizLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly · 1 question, 1 source'**
+  String get ecoQuizLead;
+
+  /// No description provided for @ecoQuizQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'What is a policy rate for?'**
+  String get ecoQuizQuestion;
+
+  /// No description provided for @ecoQuizOptA.
+  ///
+  /// In en, this message translates to:
+  /// **'Set the price of bread'**
+  String get ecoQuizOptA;
+
+  /// No description provided for @ecoQuizOptB.
+  ///
+  /// In en, this message translates to:
+  /// **'Guide the cost of credit'**
+  String get ecoQuizOptB;
+
+  /// No description provided for @ecoQuizOptC.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace your budget'**
+  String get ecoQuizOptC;
+
+  /// No description provided for @ecoQuizCorrect.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes — it influences borrowing and saving.'**
+  String get ecoQuizCorrect;
+
+  /// No description provided for @ecoQuizWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Not quite. Re-read the Eco card.'**
+  String get ecoQuizWrong;
+
+  /// No description provided for @ecoAlertsHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Economy alerts'**
+  String get ecoAlertsHeading;
+
+  /// No description provided for @ecoAlertsLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Gentle, rare, always sourced.'**
+  String get ecoAlertsLead;
+
+  /// No description provided for @ecoAlertsRates.
+  ///
+  /// In en, this message translates to:
+  /// **'Policy rate'**
+  String get ecoAlertsRates;
+
+  /// No description provided for @ecoAlertsFx.
+  ///
+  /// In en, this message translates to:
+  /// **'FX'**
+  String get ecoAlertsFx;
+
+  /// No description provided for @ecoAlertsInflation.
+  ///
+  /// In en, this message translates to:
+  /// **'Inflation'**
+  String get ecoAlertsInflation;
+
+  /// No description provided for @homeEmptyHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome Amina'**
+  String get homeEmptyHeading;
+
+  /// No description provided for @homeEmptyLead.
+  ///
+  /// In en, this message translates to:
+  /// **'We start with what you know.'**
+  String get homeEmptyLead;
+
+  /// No description provided for @homeEmptyKicker.
+  ///
+  /// In en, this message translates to:
+  /// **'REMAINING TO LIVE NOT CALCULATED'**
+  String get homeEmptyKicker;
+
+  /// No description provided for @homeEmptyCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A first good habit'**
+  String get homeEmptyCardTitle;
+
+  /// No description provided for @homeEmptyCardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Lay the first base of your budget.'**
+  String get homeEmptyCardBody;
+
+  /// No description provided for @homeEmptyCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Build my nest'**
+  String get homeEmptyCta;
+
+  /// No description provided for @homeLoadingHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading your nest…'**
+  String get homeLoadingHeading;
+
+  /// No description provided for @homeLoadingLead.
+  ///
+  /// In en, this message translates to:
+  /// **'One more second.'**
+  String get homeLoadingLead;
+
+  /// No description provided for @homeErrorHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Home unavailable'**
+  String get homeErrorHeading;
+
+  /// No description provided for @homeErrorLead.
+  ///
+  /// In en, this message translates to:
+  /// **'The connection slipped.'**
+  String get homeErrorLead;
+
+  /// No description provided for @homeErrorCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get homeErrorCardTitle;
+
+  /// No description provided for @homeErrorCardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your data is safe on the server.'**
+  String get homeErrorCardBody;
+
+  /// No description provided for @homeTightHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Getting tight'**
+  String get homeTightHeading;
+
+  /// No description provided for @homeTightLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Little left — no panic.'**
+  String get homeTightLead;
+
+  /// No description provided for @homeTightKicker.
+  ///
+  /// In en, this message translates to:
+  /// **'REMAINING · END OF MONTH'**
+  String get homeTightKicker;
+
+  /// No description provided for @homeTightCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Gentle tip'**
+  String get homeTightCardTitle;
+
+  /// No description provided for @homeTightCardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Postpone a non-urgent purchase.'**
+  String get homeTightCardBody;
+
+  /// No description provided for @homeTightCta.
+  ///
+  /// In en, this message translates to:
+  /// **'See expenses'**
+  String get homeTightCta;
+
+  /// No description provided for @homeUnderHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Below zero'**
+  String get homeUnderHeading;
+
+  /// No description provided for @homeUnderLead.
+  ///
+  /// In en, this message translates to:
+  /// **'The nest is under strain.'**
+  String get homeUnderLead;
+
+  /// No description provided for @homeUnderKicker.
+  ///
+  /// In en, this message translates to:
+  /// **'NEGATIVE REMAINING'**
+  String get homeUnderKicker;
+
+  /// No description provided for @homeUnderCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Let’s recalibrate'**
+  String get homeUnderCardTitle;
+
+  /// No description provided for @homeUnderCardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Check envelopes and your base.'**
+  String get homeUnderCardBody;
+
+  /// No description provided for @homeUnderCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Open budgets'**
+  String get homeUnderCta;
+
+  /// No description provided for @homeBackHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Glad you’re back'**
+  String get homeBackHeading;
+
+  /// No description provided for @homeBackLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Your streak can resume without pressure.'**
+  String get homeBackLead;
+
+  /// No description provided for @homeBackCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Back after a break'**
+  String get homeBackCardTitle;
+
+  /// No description provided for @homeBackCardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'One short lesson can relight the flame.'**
+  String get homeBackCardBody;
+
+  /// No description provided for @homeBackCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get homeBackCta;
+
+  /// No description provided for @homeWellDoneHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Well done'**
+  String get homeWellDoneHeading;
+
+  /// No description provided for @homeWellDoneLead.
+  ///
+  /// In en, this message translates to:
+  /// **'One more good habit.'**
+  String get homeWellDoneLead;
+
+  /// No description provided for @homeWellDoneKicker.
+  ///
+  /// In en, this message translates to:
+  /// **'SERVER REWARD'**
+  String get homeWellDoneKicker;
+
+  /// No description provided for @homeWellDoneCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily quest'**
+  String get homeWellDoneCardTitle;
+
+  /// No description provided for @homeWellDoneCardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Log an expense · done'**
+  String get homeWellDoneCardBody;
+
+  /// No description provided for @homeWellDoneQuests.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily quests'**
+  String get homeWellDoneQuests;
+
+  /// No description provided for @homeWellDoneQuestsSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Log · Learn · Read'**
+  String get homeWellDoneQuestsSub;
+
+  /// No description provided for @expensesEmptyHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses'**
+  String get expensesEmptyHeading;
+
+  /// No description provided for @expensesEmptyLead.
+  ///
+  /// In en, this message translates to:
+  /// **'This month is still empty.'**
+  String get expensesEmptyLead;
+
+  /// No description provided for @expensesEmptyKicker.
+  ///
+  /// In en, this message translates to:
+  /// **'SPENT THIS MONTH'**
+  String get expensesEmptyKicker;
+
+  /// No description provided for @expensesEmptyCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'First trace'**
+  String get expensesEmptyCardTitle;
+
+  /// No description provided for @expensesEmptyCardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an expense or scan a receipt.'**
+  String get expensesEmptyCardBody;
+
+  /// No description provided for @expensesEmptyCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get expensesEmptyCta;
+
+  /// No description provided for @expensesErrorHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses unavailable'**
+  String get expensesErrorHeading;
+
+  /// No description provided for @expensesErrorLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t load the list.'**
+  String get expensesErrorLead;
+
+  /// No description provided for @expensesErrorCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get expensesErrorCardTitle;
+
+  /// No description provided for @expensesErrorCardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing was lost.'**
+  String get expensesErrorCardBody;
+
+  /// No description provided for @expensesLoadingHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading…'**
+  String get expensesLoadingHeading;
+
+  /// No description provided for @expensesLoadingLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Sorting your envelopes.'**
+  String get expensesLoadingLead;
+
+  /// No description provided for @notifExamplesHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification examples'**
+  String get notifExamplesHeading;
+
+  /// No description provided for @notifExamplesLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Tone and frequency — no spam.'**
+  String get notifExamplesLead;
+
+  /// No description provided for @notifExamplesStreakTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak'**
+  String get notifExamplesStreakTitle;
+
+  /// No description provided for @notifExamplesStreakBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your flame holds 4 more hours. A micro-lesson?'**
+  String get notifExamplesStreakBody;
+
+  /// No description provided for @notifExamplesBudgetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget'**
+  String get notifExamplesBudgetTitle;
+
+  /// No description provided for @notifExamplesBudgetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Groceries at 80% · \$42 left this week.'**
+  String get notifExamplesBudgetBody;
+
+  /// No description provided for @notifExamplesLeagueTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'League'**
+  String get notifExamplesLeagueTitle;
+
+  /// No description provided for @notifExamplesLeagueBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunday podium. You’re 4th — still in play.'**
+  String get notifExamplesLeagueBody;
+
+  /// No description provided for @tenLeaguesHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'The ten leagues'**
+  String get tenLeaguesHeading;
+
+  /// No description provided for @tenLeaguesLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Bronze to diamond — same pace for all.'**
+  String get tenLeaguesLead;
+
+  /// No description provided for @leagueBronze.
+  ///
+  /// In en, this message translates to:
+  /// **'Bronze'**
+  String get leagueBronze;
+
+  /// No description provided for @leagueSilver.
+  ///
+  /// In en, this message translates to:
+  /// **'Silver'**
+  String get leagueSilver;
+
+  /// No description provided for @leagueGold.
+  ///
+  /// In en, this message translates to:
+  /// **'Gold'**
+  String get leagueGold;
+
+  /// No description provided for @leagueSapphire.
+  ///
+  /// In en, this message translates to:
+  /// **'Sapphire'**
+  String get leagueSapphire;
+
+  /// No description provided for @leagueRuby.
+  ///
+  /// In en, this message translates to:
+  /// **'Ruby'**
+  String get leagueRuby;
+
+  /// No description provided for @leagueEmerald.
+  ///
+  /// In en, this message translates to:
+  /// **'Emerald'**
+  String get leagueEmerald;
+
+  /// No description provided for @leagueAmethyst.
+  ///
+  /// In en, this message translates to:
+  /// **'Amethyst'**
+  String get leagueAmethyst;
+
+  /// No description provided for @leaguePearl.
+  ///
+  /// In en, this message translates to:
+  /// **'Pearl'**
+  String get leaguePearl;
+
+  /// No description provided for @leagueObsidian.
+  ///
+  /// In en, this message translates to:
+  /// **'Obsidian'**
+  String get leagueObsidian;
+
+  /// No description provided for @leagueDiamond.
+  ///
+  /// In en, this message translates to:
+  /// **'Diamond'**
+  String get leagueDiamond;
+
+  /// No description provided for @podiumHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunday podium'**
+  String get podiumHeading;
+
+  /// No description provided for @podiumLead.
+  ///
+  /// In en, this message translates to:
+  /// **'The week closes — well done everyone.'**
+  String get podiumLead;
+
+  /// No description provided for @podiumFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'Amounts stay private. Only league XP counts.'**
+  String get podiumFooter;
+
+  /// No description provided for @chestsHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress chests'**
+  String get chestsHeading;
+
+  /// No description provided for @chestsLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit rewards — via the server.'**
+  String get chestsLead;
+
+  /// No description provided for @chestsChest1.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit 1 chest'**
+  String get chestsChest1;
+
+  /// No description provided for @chestsChest1Sub.
+  ///
+  /// In en, this message translates to:
+  /// **'Opened'**
+  String get chestsChest1Sub;
+
+  /// No description provided for @chestsChest2.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit 2 chest'**
+  String get chestsChest2;
+
+  /// No description provided for @chestsChest2Sub.
+  ///
+  /// In en, this message translates to:
+  /// **'3 lessons left'**
+  String get chestsChest2Sub;
+
+  /// No description provided for @chestsChest3.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit 3 chest'**
+  String get chestsChest3;
+
+  /// No description provided for @chestsChest3Sub.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked'**
+  String get chestsChest3Sub;
+
+  /// No description provided for @androidErrorHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Oops'**
+  String get androidErrorHeading;
+
+  /// No description provided for @androidErrorLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Android couldn’t open this screen.'**
+  String get androidErrorLead;
+
+  /// No description provided for @androidErrorCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Technical error'**
+  String get androidErrorCardTitle;
+
+  /// No description provided for @androidErrorCardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again. If it persists, close and reopen Sipho.'**
+  String get androidErrorCardBody;
+
+  /// No description provided for @rewardHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Logged.'**
+  String get rewardHeading;
+
+  /// No description provided for @rewardLead.
+  ///
+  /// In en, this message translates to:
+  /// **'One more good habit.'**
+  String get rewardLead;
+
+  /// No description provided for @rewardSavedLine.
+  ///
+  /// In en, this message translates to:
+  /// **'✓  {amount} saved'**
+  String rewardSavedLine(String amount);
+
+  /// No description provided for @rewardXpLine.
+  ///
+  /// In en, this message translates to:
+  /// **'+{xp} XP for logging'**
+  String rewardXpLine(int xp);
+
+  /// No description provided for @rewardQuestProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'2 of 3 actions for your quest.'**
+  String get rewardQuestProgress;
+
+  /// No description provided for @rewardDisclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'You earn for logging.\nNot for spending.'**
+  String get rewardDisclaimer;
+
+  /// No description provided for @streakHelpHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'A helping hand'**
+  String get streakHelpHeading;
+
+  /// No description provided for @streakHelpLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Your flame can resume within 24h.'**
+  String get streakHelpLead;
+
+  /// No description provided for @streakHelpCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Repair with seeds'**
+  String get streakHelpCardTitle;
+
+  /// No description provided for @streakHelpCardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The server decides. No client-side XP inventing.'**
+  String get streakHelpCardBody;
+
+  /// No description provided for @streakHelpCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Typical cost · 100 seeds (country pack)'**
+  String get streakHelpCost;
+
+  /// No description provided for @streakHelpCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Request repair'**
+  String get streakHelpCta;
+
+  /// No description provided for @streakHelpSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get streakHelpSkip;
+
+  /// No description provided for @recapHabitsKicker.
+  ///
+  /// In en, this message translates to:
+  /// **'YOUR OCTOBER WITH SIPHO'**
+  String get recapHabitsKicker;
+
+  /// No description provided for @recapHabitsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'In October you logged'**
+  String get recapHabitsTitle;
+
+  /// No description provided for @recapHabitsValue.
+  ///
+  /// In en, this message translates to:
+  /// **'64 expenses'**
+  String get recapHabitsValue;
+
+  /// No description provided for @recapHabitsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Every note is another strand for your nest.'**
+  String get recapHabitsBody;
+
+  /// No description provided for @recapCompareKicker.
+  ///
+  /// In en, this message translates to:
+  /// **'YOUR OCTOBER WITH SIPHO'**
+  String get recapCompareKicker;
+
+  /// No description provided for @recapCompareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Compared to September'**
+  String get recapCompareTitle;
+
+  /// No description provided for @recapCompareValue.
+  ///
+  /// In en, this message translates to:
+  /// **'−12%'**
+  String get recapCompareValue;
+
+  /// No description provided for @recapCompareBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You spent less while logging more often.'**
+  String get recapCompareBody;
+
+  /// No description provided for @recapGoalKicker.
+  ///
+  /// In en, this message translates to:
+  /// **'YOUR OCTOBER WITH SIPHO'**
+  String get recapGoalKicker;
+
+  /// No description provided for @recapGoalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your goal'**
+  String get recapGoalTitle;
+
+  /// No description provided for @recapGoalValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Understand my money'**
+  String get recapGoalValue;
+
+  /// No description provided for @recapGoalBody.
+  ///
+  /// In en, this message translates to:
+  /// **'3 lessons done · keep going.'**
+  String get recapGoalBody;
+
+  /// No description provided for @recapStreakKicker.
+  ///
+  /// In en, this message translates to:
+  /// **'YOUR STREAK'**
+  String get recapStreakKicker;
+
+  /// No description provided for @recapStreakTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Active days this month'**
+  String get recapStreakTitle;
+
+  /// No description provided for @recapStreakValue.
+  ///
+  /// In en, this message translates to:
+  /// **'18'**
+  String get recapStreakValue;
+
+  /// No description provided for @recapStreakBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Consistency beats intensity. Future you knows.'**
+  String get recapStreakBody;
+
+  /// No description provided for @recapBadgesKicker.
+  ///
+  /// In en, this message translates to:
+  /// **'YOUR BADGES'**
+  String get recapBadgesKicker;
+
+  /// No description provided for @recapBadgesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlocked this month'**
+  String get recapBadgesTitle;
+
+  /// No description provided for @recapBadgesValue.
+  ///
+  /// In en, this message translates to:
+  /// **'2'**
+  String get recapBadgesValue;
+
+  /// No description provided for @recapBadgesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'No XP on a badge — just the milestone pride.'**
+  String get recapBadgesBody;
+
+  /// No description provided for @recapDecemberKicker.
+  ///
+  /// In en, this message translates to:
+  /// **'DECEMBER RECAP'**
+  String get recapDecemberKicker;
+
+  /// No description provided for @recapDecemberTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your year ends gently'**
+  String get recapDecemberTitle;
+
+  /// No description provided for @recapDecemberValue.
+  ///
+  /// In en, this message translates to:
+  /// **'12 months'**
+  String get recapDecemberValue;
+
+  /// No description provided for @recapDecemberBody.
+  ///
+  /// In en, this message translates to:
+  /// **'A clearer nest than in January. Onward.'**
+  String get recapDecemberBody;
+
+  /// No description provided for @recapBackHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to the nest'**
+  String get recapBackHome;
+
+  /// No description provided for @chartsHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Your charts'**
+  String get chartsHeading;
+
+  /// No description provided for @chartsLead.
+  ///
+  /// In en, this message translates to:
+  /// **'4 simple views, no jargon'**
+  String get chartsLead;
+
+  /// No description provided for @chartsDaysTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'By day'**
+  String get chartsDaysTitle;
+
+  /// No description provided for @chartsDaysSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Week bars'**
+  String get chartsDaysSub;
+
+  /// No description provided for @chartsCatsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'By category'**
+  String get chartsCatsTitle;
+
+  /// No description provided for @chartsCatsSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Month ring'**
+  String get chartsCatsSub;
+
+  /// No description provided for @chartsSixTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Six months'**
+  String get chartsSixTitle;
+
+  /// No description provided for @chartsSixSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Trend curve'**
+  String get chartsSixSub;
+
+  /// No description provided for @chartsStructureTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed vs variable'**
+  String get chartsStructureTitle;
+
+  /// No description provided for @chartsStructureSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Month structure'**
+  String get chartsStructureSub;
+
+  /// No description provided for @chartsInsight.
+  ///
+  /// In en, this message translates to:
+  /// **'You spent 12% less than last month.'**
+  String get chartsInsight;
+
+  /// No description provided for @chartsDaysDetailLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Your week at a glance.'**
+  String get chartsDaysDetailLead;
+
+  /// No description provided for @chartsDaysPeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Busiest day'**
+  String get chartsDaysPeak;
+
+  /// No description provided for @chartsDaysCats.
+  ///
+  /// In en, this message translates to:
+  /// **'Top category'**
+  String get chartsDaysCats;
+
+  /// No description provided for @chartsSixDetailLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Gentle trend over six months.'**
+  String get chartsSixDetailLead;
+
+  /// No description provided for @chartsSixInsight.
+  ///
+  /// In en, this message translates to:
+  /// **'The line is down — your nest breathes easier.'**
+  String get chartsSixInsight;
+
+  /// No description provided for @chartsStructureFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Nest (fixed)'**
+  String get chartsStructureFixed;
+
+  /// No description provided for @chartsStructureVar.
+  ///
+  /// In en, this message translates to:
+  /// **'Variable'**
+  String get chartsStructureVar;
+
+  /// No description provided for @simHubHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulators'**
+  String get simHubHeading;
+
+  /// No description provided for @simHubLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Educational · country pack rules, never regulated advice.'**
+  String get simHubLead;
+
+  /// No description provided for @simRetirementTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Retirement'**
+  String get simRetirementTitle;
+
+  /// No description provided for @simRetirementSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Simple projection for your country'**
+  String get simRetirementSub;
+
+  /// No description provided for @simDebtTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt'**
+  String get simDebtTitle;
+
+  /// No description provided for @simDebtSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare faster payoff'**
+  String get simDebtSub;
+
+  /// No description provided for @simCompoundTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Compound interest'**
+  String get simCompoundTitle;
+
+  /// No description provided for @simCompoundSub.
+  ///
+  /// In en, this message translates to:
+  /// **'See time work for you'**
+  String get simCompoundSub;
+
+  /// No description provided for @simEduDisclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'Educational only · not financial advice.'**
+  String get simEduDisclaimer;
+
+  /// No description provided for @simRetirementResult.
+  ///
+  /// In en, this message translates to:
+  /// **'ILLUSTRATIVE PROJECTION'**
+  String get simRetirementResult;
+
+  /// No description provided for @simMonthlyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly contribution · {amount}'**
+  String simMonthlyLabel(String amount);
+
+  /// No description provided for @simYearsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizon · {years} years'**
+  String simYearsLabel(String years);
+
+  /// No description provided for @simDebtBase.
+  ///
+  /// In en, this message translates to:
+  /// **'Without extra'**
+  String get simDebtBase;
+
+  /// No description provided for @simDebtFaster.
+  ///
+  /// In en, this message translates to:
+  /// **'With extra'**
+  String get simDebtFaster;
+
+  /// No description provided for @simMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} months'**
+  String simMonths(int count);
+
+  /// No description provided for @simDebtBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance · {amount}'**
+  String simDebtBalance(String amount);
+
+  /// No description provided for @simDebtExtra.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly extra · {amount}'**
+  String simDebtExtra(String amount);
+
+  /// No description provided for @simCompoundResult.
+  ///
+  /// In en, this message translates to:
+  /// **'At ~5%/yr (illustrative)'**
+  String get simCompoundResult;
+
+  /// No description provided for @simCompoundSeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting amount · {amount}'**
+  String simCompoundSeed(String amount);
+
+  /// No description provided for @learnUnit1.
+  ///
+  /// In en, this message translates to:
+  /// **'01 · BUDGET BASICS'**
+  String get learnUnit1;
+
+  /// No description provided for @learnUnit2.
+  ///
+  /// In en, this message translates to:
+  /// **'02 · SAVING'**
+  String get learnUnit2;
+
+  /// No description provided for @learnUnit4.
+  ///
+  /// In en, this message translates to:
+  /// **'04 · SMART CREDIT'**
+  String get learnUnit4;
+
+  /// No description provided for @learnUnit5.
+  ///
+  /// In en, this message translates to:
+  /// **'05 · FAMILY AND TRAVEL'**
+  String get learnUnit5;
+
+  /// No description provided for @learnUnit5Ready.
+  ///
+  /// In en, this message translates to:
+  /// **'One lesson ready soon'**
+  String get learnUnit5Ready;
+
+  /// No description provided for @learnUnit5Three.
+  ///
+  /// In en, this message translates to:
+  /// **'Three lessons in the unit'**
+  String get learnUnit5Three;
+
+  /// No description provided for @learnUnit6.
+  ///
+  /// In en, this message translates to:
+  /// **'06 · A FRESH START'**
+  String get learnUnit6;
+
+  /// No description provided for @learnUnit6Fresh.
+  ///
+  /// In en, this message translates to:
+  /// **'When you come back after a break.'**
+  String get learnUnit6Fresh;
+
+  /// No description provided for @learnSeeChests.
+  ///
+  /// In en, this message translates to:
+  /// **'See chests →'**
+  String get learnSeeChests;
+
+  /// No description provided for @learnJumpQuiz.
+  ///
+  /// In en, this message translates to:
+  /// **'Jump to quiz →'**
+  String get learnJumpQuiz;
+
+  /// No description provided for @friendsChallengesHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Friends and challenges'**
+  String get friendsChallengesHeading;
+
+  /// No description provided for @friendsTabFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Friends'**
+  String get friendsTabFriends;
+
+  /// No description provided for @friendsTabChallenges.
+  ///
+  /// In en, this message translates to:
+  /// **'Challenges'**
+  String get friendsTabChallenges;
+
+  /// No description provided for @friendsStreakTogether.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared streak'**
+  String get friendsStreakTogether;
+
+  /// No description provided for @friendsLevelPeer.
+  ///
+  /// In en, this message translates to:
+  /// **'Same pace'**
+  String get friendsLevelPeer;
+
+  /// No description provided for @friendsPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending request'**
+  String get friendsPending;
+
+  /// No description provided for @friendsChallengeActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Challenge of the week'**
+  String get friendsChallengeActive;
+
+  /// No description provided for @friendsChallengeActiveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Log 5 expenses before Sunday · with Nadia'**
+  String get friendsChallengeActiveBody;
+
+  /// No description provided for @friendsChallengeWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'5 logs together'**
+  String get friendsChallengeWeekly;
+
+  /// No description provided for @friendsChallengeWeeklySub.
+  ///
+  /// In en, this message translates to:
+  /// **'Never share amounts'**
+  String get friendsChallengeWeeklySub;
+
+  /// No description provided for @friendsChallengeInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite to a challenge'**
+  String get friendsChallengeInvite;
+
+  /// No description provided for @friendsChallengePrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Challenges compare actions, not balances.'**
+  String get friendsChallengePrivacy;
+
+  /// No description provided for @quizCorrectHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Correct!'**
+  String get quizCorrectHeading;
+
+  /// No description provided for @quizCorrectLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Accessible and liquid — that’s the base.'**
+  String get quizCorrectLead;
+
+  /// No description provided for @quizCorrectExplain.
+  ///
+  /// In en, this message translates to:
+  /// **'An emergency fund should be reachable quickly, without a forced sale.'**
+  String get quizCorrectExplain;
+
+  /// No description provided for @quizCorrectXp.
+  ///
+  /// In en, this message translates to:
+  /// **'+10 accuracy XP (server)'**
+  String get quizCorrectXp;
+
+  /// No description provided for @quizWrongHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Not quite — accessible cash remains the base.'**
+  String get quizWrongHint;
 }
 
 class _AppLocalizationsDelegate

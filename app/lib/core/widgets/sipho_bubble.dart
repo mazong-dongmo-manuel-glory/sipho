@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/sipho_colors.dart';
+import '../theme/sipho_palette.dart';
 import '../theme/sipho_typography.dart';
 
 /// Bulle de dialogue joyeuse pour la mascotte Sipho (FIGMA.md §47).
@@ -18,9 +19,9 @@ class SiphoBubble extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: SiphoColors.surface,
+        color: SiphoPalette.surface(context),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: SiphoColors.border, width: 1.5),
+        border: Border.all(color: SiphoPalette.border(context), width: 1.5),
         boxShadow: const [
           BoxShadow(
             color: Color(0x08000000),
@@ -46,7 +47,7 @@ class SiphoBubble extends StatelessWidget {
           Text(
             text,
             style: SiphoTypography.body.copyWith(
-              color: SiphoColors.textPrimary,
+              color: SiphoPalette.textPrimary(context),
               fontWeight: FontWeight.w600,
             ),
           ),

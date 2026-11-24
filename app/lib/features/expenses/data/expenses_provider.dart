@@ -1,71 +1,156 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/firebase/firebase_providers.dart';
 import '../../../core/money/money.dart';
+import '../../auth/data/auth_repository.dart';
+import '../../auth/data/user_profile_provider.dart';
 import '../domain/expense.dart';
 
 class ExpensesNotifier extends StateNotifier<List<Expense>> {
-  ExpensesNotifier()
-      : super([
-          Expense(
-            id: '1',
-            title: 'Restaurant La Banquise',
-            category: 'Restos',
-            emoji: '🍔',
-            amount: const Money(cents: 2450),
-            date: DateTime.now(),
-          ),
-          Expense(
-            id: '2',
-            title: 'IGA Trois-Rivières',
-            category: 'Épicerie',
-            emoji: '🛒',
-            amount: const Money(cents: 4849),
-            date: DateTime.now(),
-            hasReceipt: true,
-          ),
-          Expense(
-            id: '3',
-            title: 'Titre de transport',
-            category: 'Transport',
-            emoji: '🚌',
-            amount: const Money(cents: 375),
-            date: DateTime.now().subtract(const Duration(days: 1)),
-          ),
-          Expense(
-            id: '4',
-            title: 'Transfert famille',
-            category: 'Famille',
-            emoji: '💌',
-            amount: const Money(cents: 15000),
-            date: DateTime.now().subtract(const Duration(days: 1)),
-          ),
-        ]);
+  ExpensesNotifier(this._ref) : super(const []) {
+    _bind();
+  }
 
-  void addExpense({
+  final Ref _ref;
+  StreamSubscription? _sub;
+
+  void _bind() {
+    _ref.listen<String?>(authUidProvider, (prev, uid) {
+      _sub?.cancel();
+      if (uid == null) {
+        state = const [];
+        return;
+      }
+      final db = _ref.read(firestoreProvider);
+      _sub = db
+          .collection('users')
+          .doc(uid)
+          .collection('transactions')
+          .orderBy('date', descending: true)
+          .limit(200)
+          .snapshots()
+          .listen((snap) {
+        state = snap.docs
+            .map((d) => Expense.fromFirestore(d.id, d.data()))
+            .toList();
+      }, onError: (_) {});
+    }, fireImmediately: true);
+  }
+
+  Future<void> addExpense({
     required String title,
     required String category,
     required String emoji,
     required Money amount,
-  }) {
-    final newExpense = Expense(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+    String source = 'manual',
+    int? amountMainCents,
+    double? fxRate,
+    String? entryCurrency,
+  }) async {
+    final uid = _ref.read(authUidProvider);
+    final mainCurrency = _ref.read(userProfileProvider).currency;
+    final expense = Expense(
+      id: 'local',
       title: title,
       category: category,
       emoji: emoji,
-      amount: amount,
+      amount: Money(
+        cents: amount.cents,
+        currency: entryCurrency ?? amount.currency,
+      ),
       date: DateTime.now(),
+      hasReceipt: source == 'receipt',
+      source: source,
+      amountMainCents: amountMainCents ?? amount.cents,
+      fxRate: fxRate,
     );
-    state = [newExpense, ...state];
+
+    // Optimistic
+    state = [
+      expense.copyWithId(DateTime.now().millisecondsSinceEpoch.toString()),
+      ...state,
+    ];
+
+    if (uid == null) return;
+    await _ref
+        .read(firestoreProvider)
+        .collection('users')
+        .doc(uid)
+        .collection('transactions')
+        .add(expense.toFirestore(mainCurrency: mainCurrency));
   }
 
-  int get totalCents => state.fold(0, (acc, e) => acc + e.amount.cents);
+  Future<void> updateExpense({
+    required String id,
+    String? title,
+    String? category,
+    Money? amount,
+  }) async {
+    final uid = _ref.read(authUidProvider);
+    if (uid == null || id.isEmpty) return;
+    final idx = state.indexWhere((e) => e.id == id);
+    if (idx < 0) return;
+    final current = state[idx];
+    final next = Expense(
+      id: current.id,
+      title: title ?? current.title,
+      category: category ?? current.category,
+      emoji: current.emoji,
+      amount: amount ?? current.amount,
+      date: current.date,
+      hasReceipt: current.hasReceipt,
+      source: current.source,
+    );
+    state = [...state]..[idx] = next;
+    final currency = _ref.read(userProfileProvider).currency;
+    await _ref
+        .read(firestoreProvider)
+        .collection('users')
+        .doc(uid)
+        .collection('transactions')
+        .doc(id)
+        .update({
+      if (title != null) 'merchant': title,
+      if (category != null) 'category': category,
+      if (amount != null) ...{
+        'amountCents': amount.cents,
+        'amountMainCents': amount.cents,
+        'currency': amount.currency.isNotEmpty ? amount.currency : currency,
+      },
+    });
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
 }
 
-final expensesProvider = StateNotifierProvider<ExpensesNotifier, List<Expense>>((ref) {
-  return ExpensesNotifier();
+extension on Expense {
+  Expense copyWithId(String id) => Expense(
+        id: id,
+        title: title,
+        category: category,
+        emoji: emoji,
+        amount: amount,
+        date: date,
+        hasReceipt: hasReceipt,
+        source: source,
+        amountMainCents: amountMainCents,
+        fxRate: fxRate,
+      );
+}
+
+final expensesProvider =
+    StateNotifierProvider<ExpensesNotifier, List<Expense>>((ref) {
+  return ExpensesNotifier(ref);
 });
 
-/// Provider calculant le total des dépenses variables du mois
 final totalVariableExpensesCentsProvider = Provider<int>((ref) {
   final expenses = ref.watch(expensesProvider);
-  return expenses.fold(0, (acc, e) => acc + e.amount.cents);
+  final now = DateTime.now();
+  return expenses
+      .where((e) => e.date.year == now.year && e.date.month == now.month)
+      .fold(0, (acc, e) => acc + (e.amountMainCents ?? e.amount.cents));
 });

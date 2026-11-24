@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import '../theme/sipho_colors.dart';
+import '../theme/sipho_palette.dart';
 import '../theme/sipho_typography.dart';
 
-/// Barre de statut de jeu affichée en haut de l'écran (FIGMA.md §42) :
-/// - Flamme de série (🔥)
-/// - Graines d'or (🌾)
-/// - Niveau du joueur (⚡)
+/// Barre de statut de jeu affichée en haut de l'écran (FIGMA.md §42).
 class GameBar extends StatelessWidget {
   final int streakDays;
   final int seeds;
@@ -25,21 +22,20 @@ class GameBar extends StatelessWidget {
   });
 
   Widget _buildPill({
+    required BuildContext context,
     required Widget icon,
     required String value,
     required VoidCallback? onTap,
-    Color? backgroundColor,
-    Color? borderColor,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: backgroundColor ?? SiphoColors.surface,
+          color: SiphoPalette.surface(context),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: borderColor ?? SiphoColors.border,
+            color: SiphoPalette.border(context),
             width: 1.5,
           ),
         ),
@@ -52,7 +48,7 @@ class GameBar extends StatelessWidget {
               value,
               style: SiphoTypography.label.copyWith(
                 fontWeight: FontWeight.w800,
-                color: SiphoColors.textPrimary,
+                color: SiphoPalette.textPrimary(context),
               ),
             ),
           ],
@@ -68,20 +64,20 @@ class GameBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Flamme de série
           _buildPill(
+            context: context,
             icon: const Text('🔥', style: TextStyle(fontSize: 16)),
             value: '$streakDays',
             onTap: onStreakTap,
           ),
-          // Graines d'or
           _buildPill(
+            context: context,
             icon: const Text('🌾', style: TextStyle(fontSize: 16)),
             value: '$seeds',
             onTap: onSeedsTap,
           ),
-          // Niveau
           _buildPill(
+            context: context,
             icon: const Text('⚡', style: TextStyle(fontSize: 16)),
             value: 'Niv. $level',
             onTap: onLevelTap,

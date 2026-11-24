@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'app/l10n/app_localizations.dart';
 import 'app/routes.dart';
+import 'core/firebase/firebase_bootstrap.dart';
 import 'core/theme/sipho_theme.dart';
+import 'features/coach/presentation/coach_popup_host.dart';
+import 'features/notifications/data/device_registration.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await bootstrapFirebase();
   runApp(
     const ProviderScope(
       child: SiphoApp(),
@@ -13,8 +17,21 @@ void main() {
   );
 }
 
-class SiphoApp extends StatelessWidget {
+class SiphoApp extends ConsumerStatefulWidget {
   const SiphoApp({super.key});
+
+  @override
+  ConsumerState<SiphoApp> createState() => _SiphoAppState();
+}
+
+class _SiphoAppState extends ConsumerState<SiphoApp> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(deviceRegistrationProvider).ensureListening();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,19 +40,18 @@ class SiphoApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: SiphoTheme.lightTheme,
       darkTheme: SiphoTheme.darkTheme,
-      themeMode: ThemeMode.light,
+      themeMode: ThemeMode.system,
       routerConfig: siphoRouter,
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('fr', 'CA'),
-        Locale('fr', 'FR'),
-        Locale('en', 'CA'),
-        Locale('en', 'US'),
-      ],
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            if (child != null) Positioned.fill(child: child),
+            const CoachPopupHost(),
+          ],
+        );
+      },
     );
   }
 }

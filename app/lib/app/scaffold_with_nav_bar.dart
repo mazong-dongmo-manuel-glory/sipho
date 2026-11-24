@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../core/theme/sipho_colors.dart';
+import '../core/theme/sipho_palette.dart';
 import '../core/theme/sipho_typography.dart';
+import 'fab_add_sheet.dart';
+import 'l10n/app_localizations.dart';
 
-/// Barre de navigation inférieure à 5 onglets avec bouton flottant « + » vert (FIGMA.md §40 & §41).
+/// Navigation basse 5 onglets + FAB « + » bas-droite (Figma Épuré).
 class ScaffoldWithNavBar extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 
@@ -21,77 +24,62 @@ class ScaffoldWithNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final currentIndex = navigationShell.currentIndex;
 
+    final dark = SiphoPalette.isDark(context);
+
     return Scaffold(
+      backgroundColor: SiphoPalette.background(context),
       body: navigationShell,
-      floatingActionButton: Container(
-        width: 64,
-        height: 64,
+      floatingActionButton: _FabAdd(onPressed: () => showFabAddSheet(context)),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: SiphoColors.primary,
-          shape: BoxShape.circle,
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x331F9D55),
-              blurRadius: 10,
-              offset: Offset(0, 4),
-            ),
-          ],
-          border: Border.all(color: Colors.white, width: 3),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: () => context.push('/expenses/add'),
-            child: const Center(
-              child: Icon(Icons.add, color: Colors.white, size: 36),
-            ),
+          color: SiphoPalette.surface(context),
+          border: Border(
+            top: BorderSide(color: SiphoPalette.separator(context), width: 1),
           ),
         ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: SiphoColors.surface,
-          border: Border(top: BorderSide(color: SiphoColors.border, width: 1.5)),
-        ),
         child: SafeArea(
+          top: false,
           child: SizedBox(
-            height: 68,
+            height: 72,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _NavItem(
                   icon: Icons.home_rounded,
-                  label: 'Accueil',
+                  label: l10n.navHome,
                   isSelected: currentIndex == 0,
+                  dark: dark,
                   onTap: () => _onTap(0),
                 ),
                 _NavItem(
-                  icon: Icons.account_balance_wallet_rounded,
-                  label: 'Dépenses',
+                  icon: Icons.receipt_long_rounded,
+                  label: l10n.navExpenses,
                   isSelected: currentIndex == 1,
+                  dark: dark,
                   onTap: () => _onTap(1),
                 ),
-                const SizedBox(width: 48), // Espace pour le FAB central
                 _NavItem(
                   icon: Icons.school_rounded,
-                  label: 'Apprendre',
+                  label: l10n.navLearn,
                   isSelected: currentIndex == 2,
+                  dark: dark,
                   onTap: () => _onTap(2),
                 ),
                 _NavItem(
                   icon: Icons.emoji_events_rounded,
-                  label: 'Ligue',
+                  label: l10n.navRanking,
                   isSelected: currentIndex == 3,
+                  dark: dark,
                   onTap: () => _onTap(3),
                 ),
                 _NavItem(
                   icon: Icons.person_rounded,
-                  label: 'Profil',
+                  label: l10n.navProfile,
                   isSelected: currentIndex == 4,
+                  dark: dark,
                   onTap: () => _onTap(4),
                 ),
               ],
@@ -103,40 +91,135 @@ class ScaffoldWithNavBar extends StatelessWidget {
   }
 }
 
+class _FabAdd extends StatefulWidget {
+  final VoidCallback onPressed;
+
+  const _FabAdd({required this.onPressed});
+
+  @override
+  State<_FabAdd> createState() => _FabAddState();
+}
+
+class _FabAddState extends State<_FabAdd> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
+      onTap: widget.onPressed,
+      child: SizedBox(
+        width: 64,
+        height: 68,
+        child: Stack(
+          children: [
+            Positioned(
+              left: 0,
+              top: _pressed ? 4 : 4,
+              child: Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: SiphoPalette.textPrimary(context),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+            Positioned(
+              left: 0,
+              top: _pressed ? 4 : 0,
+              child: Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: SiphoColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Text(
+                    '+',
+                    style: TextStyle(
+                      fontFamily: SiphoTypography.fontFamily,
+                      fontSize: 34,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      height: 1,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _NavItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isSelected;
+  final bool dark;
   final VoidCallback onTap;
 
   const _NavItem({
     required this.icon,
     required this.label,
     required this.isSelected,
+    required this.dark,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = isSelected ? SiphoColors.primary : SiphoColors.textSecondary;
+    final color = isSelected
+        ? SiphoColors.primary
+        : (dark ? SiphoColors.darkTextSecondary : SiphoColors.textSecondary);
+    final pill = isSelected
+        ? (dark
+            ? SiphoColors.primary.withValues(alpha: 0.18)
+            : SiphoColors.primaryLight)
+        : Colors.transparent;
 
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 26),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            style: SiphoTypography.label.copyWith(
-              color: color,
-              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-              fontSize: 11,
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: 70,
+              height: 54,
+              decoration: BoxDecoration(
+                color: pill,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, color: color, size: 25),
+                  const SizedBox(height: 2),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: SiphoTypography.label.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 10,
+                      height: 1.2,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

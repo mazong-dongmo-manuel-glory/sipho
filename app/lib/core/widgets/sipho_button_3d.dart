@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import '../theme/sipho_colors.dart';
+import '../theme/sipho_palette.dart';
 import '../theme/sipho_typography.dart';
 
 enum SiphoButtonVariant {
   primary,
+  /// CTA « Continuer » onboarding : face vert profond `#14342B`.
+  dark,
   secondary,
   accent,
   danger,
@@ -42,11 +45,20 @@ class _SiphoButton3DState extends State<SiphoButton3D> {
 
   bool get _isEnabled => widget.onPressed != null;
 
-  Color _getFaceColor() {
-    if (!_isEnabled) return const Color(0xFFE2E8F0);
+  Color _getFaceColor(BuildContext context) {
+    if (!_isEnabled) {
+      return SiphoPalette.isDark(context)
+          ? SiphoColors.darkBorder
+          : const Color(0xFFE2E8F0);
+    }
     switch (widget.variant) {
       case SiphoButtonVariant.primary:
         return SiphoColors.primary;
+      case SiphoButtonVariant.dark:
+        // Clair : vert profond. Sombre : vert Sipho (contraste sur fond #121B18).
+        return SiphoPalette.isDark(context)
+            ? SiphoColors.primary
+            : SiphoColors.primaryDark;
       case SiphoButtonVariant.secondary:
         return SiphoColors.accentGold;
       case SiphoButtonVariant.accent:
@@ -54,15 +66,21 @@ class _SiphoButton3DState extends State<SiphoButton3D> {
       case SiphoButtonVariant.danger:
         return SiphoColors.danger;
       case SiphoButtonVariant.outline:
-        return SiphoColors.surface;
+        return SiphoPalette.surface(context);
     }
   }
 
-  Color _getEdgeColor() {
-    if (!_isEnabled) return const Color(0xFFCBD5E1);
+  Color _getEdgeColor(BuildContext context) {
+    if (!_isEnabled) {
+      return SiphoPalette.isDark(context)
+          ? const Color(0xFF1A2622)
+          : const Color(0xFFCBD5E1);
+    }
     switch (widget.variant) {
       case SiphoButtonVariant.primary:
         return SiphoColors.primaryDark;
+      case SiphoButtonVariant.dark:
+        return const Color(0xFF0B1F19);
       case SiphoButtonVariant.secondary:
         return const Color(0xFFC79200);
       case SiphoButtonVariant.accent:
@@ -70,29 +88,31 @@ class _SiphoButton3DState extends State<SiphoButton3D> {
       case SiphoButtonVariant.danger:
         return const Color(0xFFB8282D);
       case SiphoButtonVariant.outline:
-        return SiphoColors.border;
+        return SiphoPalette.border(context);
     }
   }
 
-  Color _getTextColor() {
+  Color _getTextColor(BuildContext context) {
     if (!_isEnabled) return const Color(0xFF94A3B8);
     switch (widget.variant) {
       case SiphoButtonVariant.primary:
       case SiphoButtonVariant.accent:
       case SiphoButtonVariant.danger:
         return Colors.white;
+      case SiphoButtonVariant.dark:
+        return Colors.white;
       case SiphoButtonVariant.secondary:
         return SiphoColors.textPrimary;
       case SiphoButtonVariant.outline:
-        return SiphoColors.textPrimary;
+        return SiphoPalette.textPrimary(context);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final faceColor = _getFaceColor();
-    final edgeColor = _getEdgeColor();
-    final textColor = _getTextColor();
+    final faceColor = _getFaceColor(context);
+    final edgeColor = _getEdgeColor(context);
+    final textColor = _getTextColor(context);
     final effectiveDepth = _isPressed ? 0.0 : widget.depth;
     final paddingTop = _isPressed ? widget.depth : 0.0;
 
@@ -109,7 +129,7 @@ class _SiphoButton3DState extends State<SiphoButton3D> {
             child: Container(
               decoration: BoxDecoration(
                 color: edgeColor,
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(16),
               ),
             ),
           ),
@@ -122,9 +142,13 @@ class _SiphoButton3DState extends State<SiphoButton3D> {
             child: Container(
               decoration: BoxDecoration(
                 color: faceColor,
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(16),
                 border: widget.variant == SiphoButtonVariant.outline
-                    ? Border.all(color: edgeColor, width: 2)
+                    ? Border.all(
+                        color: SiphoPalette.textPrimary(context)
+                            .withValues(alpha: 0.14),
+                        width: 1.5,
+                      )
                     : null,
               ),
               child: Center(
@@ -137,9 +161,12 @@ class _SiphoButton3DState extends State<SiphoButton3D> {
                       const SizedBox(width: 8),
                     ],
                     Text(
-                      widget.label.toUpperCase(),
+                      widget.label,
                       style: SiphoTypography.button.copyWith(
                         color: textColor,
+                        fontSize: 16,
+                        letterSpacing: 0,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ],

@@ -358,6 +358,76 @@ class AppLocalizationsFr extends AppLocalizations {
   String get homeOnTrackLine => 'Ta série tient. Tu es sur la bonne voie.';
 
   @override
+  String homeMonthRemainingKicker(String month) {
+    return '$month · RESTE À VIVRE';
+  }
+
+  @override
+  String get homeComfortableCheck => '✓  Confortable';
+
+  @override
+  String get homeTightCheck => '✓  Juste';
+
+  @override
+  String get homeUnderZeroCheck => 'Sous zéro';
+
+  @override
+  String homeBreakdownEpure(String income, String fixed, String spent) {
+    return '$income de revenu − $fixed de socle − $spent';
+  }
+
+  @override
+  String get homeCheckOncePaid => 'Cocher une fois payé';
+
+  @override
+  String get homeTakeLesson => 'Faire une leçon';
+
+  @override
+  String get homeReadEco => 'Lire la carte éco';
+
+  @override
+  String get homeSpendWeekHeading => 'Dépenses · 7 jours';
+
+  @override
+  String get homeSpendWeekEmpty => 'Pas encore de dépenses cette semaine.';
+
+  @override
+  String get homeFxHeading => 'Taux du jour';
+
+  @override
+  String homeFxLine(String base, String rate, String currency) {
+    return '1 $base ≈ $rate $currency';
+  }
+
+  @override
+  String get homeFxUnavailable => 'Taux indisponible pour le moment.';
+
+  @override
+  String get homeTipHeading => 'Petit conseil';
+
+  @override
+  String get homeTipFallback =>
+      'Note une dépense aujourd’hui — Sipho t’aidera à voir clair.';
+
+  @override
+  String get fabAddManual => 'Noter une dépense';
+
+  @override
+  String get fabAddScan => 'Scanner un reçu (IA)';
+
+  @override
+  String get fabAddTitle => 'Ajouter';
+
+  @override
+  String get expenseScanCta => 'Scanner avec la caméra';
+
+  @override
+  String get homeQuestNote3 => 'Note 3 dépenses';
+
+  @override
+  String get homeQuestOneMore => 'Plus qu’une action pour cette quête.';
+
+  @override
   String homeLevelPill(int level) {
     return 'NIV. $level';
   }
@@ -409,6 +479,48 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get incomeSaveError => 'Le revenu n\'a pas été enregistré. Réessaie.';
+
+  @override
+  String get homeGaugeSheetTitle => 'Reste à vivre';
+
+  @override
+  String get homeGaugeSheetLead => 'Historique, revenu et budget du mois.';
+
+  @override
+  String get homeGaugeIncomeLabel => 'Budget mensuel (revenu)';
+
+  @override
+  String get homeGaugeIncomeHint => 'Ex. 2800';
+
+  @override
+  String get homeGaugeIncomeSaved => 'Revenu enregistré';
+
+  @override
+  String get homeGaugeHistoryHeading => 'Historique des dépenses';
+
+  @override
+  String get homeGaugeHistoryEmpty => 'Aucune dépense ce mois-ci.';
+
+  @override
+  String get homeGaugeSeeAll => 'Voir toutes les dépenses';
+
+  @override
+  String get homeGaugeBudgets => 'Limites par catégorie';
+
+  @override
+  String get homeGaugeEditExpense => 'Modifier la dépense';
+
+  @override
+  String get homeGaugeMerchant => 'Marchand';
+
+  @override
+  String get homeGaugeAmount => 'Montant';
+
+  @override
+  String get homeGaugeSave => 'Enregistrer';
+
+  @override
+  String get homeGaugeCancel => 'Annuler';
 
   @override
   String get expenseSaveError =>
@@ -1026,6 +1138,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get expensesNov10 => '10 NOVEMBRE';
 
   @override
+  String get expensesSeeAll => 'Voir toutes les transactions  →';
+
+  @override
+  String expensesMonthPicker(String month) {
+    return '$month  ↓';
+  }
+
+  @override
   String get expenseBreakfast => 'Restos · déjeuner';
 
   @override
@@ -1305,7 +1425,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get friendsChallengeFriendFallback => 'ton ami';
 
   @override
-  String get learnUnit3 => 'Unité 3 : Le CELI 🇨🇦';
+  String get learnUnit3 => '03 · LIRE SES COMPTES';
 
   @override
   String learnUnitLabel(int number) {
@@ -1337,13 +1457,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get quizKicker => 'LE FONDS D\'URGENCE';
 
   @override
-  String get quizQuestion => 'Où placer ton fonds d\'urgence ?';
+  String get quizQuestion => 'Où placer ton fonds d’urgence ?';
 
   @override
   String get quizHint => 'Choisis la meilleure réponse.';
 
   @override
-  String get quizCheck => 'VÉRIFIER';
+  String get quizCheck => 'Vérifier';
 
   @override
   String get quizTryAgain => 'RÉESSAYER';
@@ -1601,6 +1721,39 @@ class AppLocalizationsFr extends AppLocalizations {
   String leagueTitleNamed(String tier) {
     return 'Ligue $tier';
   }
+
+  @override
+  String leagueTitleThe(String tier) {
+    return 'La ligue $tier';
+  }
+
+  @override
+  String get leagueGroupWeek => 'Groupe de la semaine · Fin dimanche';
+
+  @override
+  String get leagueXpOnly => 'Classement sur l’XP uniquement.';
+
+  @override
+  String leagueNearLevel(int xp, int level) {
+    return 'Plus que $xp XP pour le niveau $level';
+  }
+
+  @override
+  String get leaguePromoRules => 'Top 7 : promotion · 5 derniers : relégation';
+
+  @override
+  String leagueSeeGroup(int count) {
+    return '$count participants · Voir tout le groupe →';
+  }
+
+  @override
+  String get leaguePodiumSunday => 'Le podium arrive dimanche.';
+
+  @override
+  String get leagueCountryCity => 'Pays · Ville';
+
+  @override
+  String get leagueYouInline => '· toi';
 
   @override
   String leagueEndsIn(String duration) {
@@ -2601,4 +2754,963 @@ class AppLocalizationsFr extends AppLocalizations {
   String ecoNewsSiphoQuote(String quote) {
     return 'Sipho : « $quote »';
   }
+
+  @override
+  String get expenseAmountHeading => 'Combien ?';
+
+  @override
+  String expenseStepLead(String step, String total) {
+    return '$step / $total';
+  }
+
+  @override
+  String get expenseCategoryHeading => 'Où le ranger ?';
+
+  @override
+  String expenseCategoryLead(String amount) {
+    return '2 / 3 · Montant : $amount';
+  }
+
+  @override
+  String get expenseConfirmHeading => 'Avant d’enregistrer';
+
+  @override
+  String get expenseConfirmLead => '3 / 3 · C’est toi qui confirmes.';
+
+  @override
+  String get expenseConfirmCategory => 'Catégorie';
+
+  @override
+  String get expenseConfirmDate => 'Date';
+
+  @override
+  String get expenseConfirmMerchant => 'Marchand';
+
+  @override
+  String get expenseConfirmEdit => 'Modifier un détail  →';
+
+  @override
+  String get expenseConfirmPrivacyTitle => 'Rien d’automatique.';
+
+  @override
+  String get expenseConfirmPrivacyBody =>
+      'Sipho ne crée aucune dépense sans ton accord.';
+
+  @override
+  String get lifeIncomeHeading => 'Et dans ta vie ?';
+
+  @override
+  String get lifeIncomeLead => '04 / 05 · Juste ce que tu veux partager.';
+
+  @override
+  String get lifeStageStudies => 'Études';
+
+  @override
+  String get lifeStageActive => 'Vie active';
+
+  @override
+  String get lifeStageTransition => 'Transition';
+
+  @override
+  String get lifeStageRetired => 'Retraite';
+
+  @override
+  String get lifeIncomeOptionalLabel => 'Ton revenu mensuel · Facultatif';
+
+  @override
+  String get lifeIncomeHint => '2 800 \$ CAD';
+
+  @override
+  String get lifeIncomeNoIncomeHint =>
+      'Sans revenu, on ne calcule pas de reste à vivre.';
+
+  @override
+  String get lifeIncomeSkipIncome => 'Continuer sans revenu';
+
+  @override
+  String get goalsHeading => 'Mes objectifs';
+
+  @override
+  String get goalsLead => 'Un projet à la fois. Sans pression.';
+
+  @override
+  String get goalsEmptyLead => 'Rien ici pour l’instant — et c’est ok.';
+
+  @override
+  String get goalsEmptyCardTitle => 'Un premier objectif';
+
+  @override
+  String get goalsEmptyCardBody =>
+      'Choisis un projet simple. Sipho t’aide à avancer.';
+
+  @override
+  String get goalsNewCta => 'Nouvel objectif';
+
+  @override
+  String get goalsSampleTravel => 'Voyage au Cameroun';
+
+  @override
+  String get goalsSampleEmergency => 'Fonds d’urgence';
+
+  @override
+  String get goalsNotStarted => 'Pas encore démarré';
+
+  @override
+  String get goalsSeeEmptyState => 'Voir l’état vide';
+
+  @override
+  String get milestoneHeading => 'Un mois à l’abri.';
+
+  @override
+  String get milestoneLead => 'Ton fonds d’urgence avance.';
+
+  @override
+  String get milestoneKicker => '1 MOIS DE SOCLE · 1 / 3 DE LA CIBLE';
+
+  @override
+  String get milestoneCardTitle => 'Premier objectif jalon';
+
+  @override
+  String get milestoneCardBody =>
+      'Un badge pour ce cap. Aucun XP lié au montant épargné.';
+
+  @override
+  String get subTrimmedHeading => 'Abonnement allégé';
+
+  @override
+  String get subTrimmedLead => 'Tu viens de libérer un peu d’air.';
+
+  @override
+  String get subTrimmedKicker => 'PAR MOIS · STREAMING RÉDUIT';
+
+  @override
+  String get subTrimmedCard =>
+      'Un abonnement allégé = un brin de plus pour ton nid.';
+
+  @override
+  String get lessonCardHeading => 'Un fonds d’urgence, c’est quoi ?';
+
+  @override
+  String get lessonCardLead => 'Épargner · 1 / 4';
+
+  @override
+  String get lessonCardBody =>
+      'C’est une réserve liquide pour les imprévus — sans toucher à ton budget du quotidien.';
+
+  @override
+  String get lessonCardSource => 'Source : ACFC · Établir un fonds d’urgence';
+
+  @override
+  String get lessonTfHeading => 'Un fonds d’urgence\ndoit être accessible.';
+
+  @override
+  String get lessonTfLead => 'Épargner · 3 / 4';
+
+  @override
+  String get lessonTfTrue => 'Vrai';
+
+  @override
+  String get lessonTfFalse => 'Faux';
+
+  @override
+  String get lessonTfCorrect => 'Exact. Accessible ≠ investi en bourse.';
+
+  @override
+  String get lessonTfWrong => 'Pas tout à fait — il doit rester liquide.';
+
+  @override
+  String get lessonTfHint =>
+      'Tu peux réfléchir tranquillement. Ici, aucune pression.';
+
+  @override
+  String get lessonSimHeading => 'Tu reçois un bonus de 200 \$.';
+
+  @override
+  String get lessonSimLead => 'Mini-simulation · 4 / 4';
+
+  @override
+  String get lessonSimOptA => 'Tout dépenser tout de suite';
+
+  @override
+  String get lessonSimOptB => 'Mettre 150 \$ dans le coussin';
+
+  @override
+  String get lessonSimOptC => 'Attendre sans décider';
+
+  @override
+  String get lessonSimFeedbackGood =>
+      'Solide. Ton coussin grandit sans tout sacrifier.';
+
+  @override
+  String get lessonSimFeedbackOther =>
+      'Possible — regarde ce que ton nid préfère.';
+
+  @override
+  String get badgeEarnedHeading => 'Nouveau badge !';
+
+  @override
+  String get badgeEarnedLead => 'Un cap, pas une course.';
+
+  @override
+  String get badgeEarnedName => 'Nid construit';
+
+  @override
+  String get badgeEarnedBody => 'Tu as posé ton socle. Aucun XP sur ce badge.';
+
+  @override
+  String get badgeEarnedCta => 'Voir mes badges';
+
+  @override
+  String get publicProfileHeading => 'Profil public';
+
+  @override
+  String get publicProfileLead =>
+      'Ce que tes amis voient — jamais de montants.';
+
+  @override
+  String get publicProfileLeague => 'Ligue Or';
+
+  @override
+  String get publicProfileStreak => 'Série';
+
+  @override
+  String get publicProfileLevel => 'Niveau';
+
+  @override
+  String get publicProfileBadges => 'Badges';
+
+  @override
+  String get publicProfileLessons => 'Leçons';
+
+  @override
+  String get publicProfilePrivacy =>
+      'Les montants, le revenu et les dépenses restent privés.';
+
+  @override
+  String get familySupportHeading => 'Soutien à la famille';
+
+  @override
+  String get familySupportLead => 'Prévoir sans culpabiliser.';
+
+  @override
+  String get familySupportKicker => 'CE MOIS · ENVELOPPES FAMILLE';
+
+  @override
+  String get familySupportPlanned => 'Envoi prévu';
+
+  @override
+  String get familySupportExtra => 'Coup de pouce';
+
+  @override
+  String get familySupportTip => 'Mets un plafond doux. Ton nid compte aussi.';
+
+  @override
+  String get travelModeHeading => 'Mode voyage';
+
+  @override
+  String get travelModeLead => 'Saisis dans la devise locale, on convertit.';
+
+  @override
+  String get travelModeToggle => 'Activer le mode voyage';
+
+  @override
+  String get travelModeCurrency => 'Devise du séjour';
+
+  @override
+  String get travelModeFxHint => 'Taux de référence';
+
+  @override
+  String get travelModeFxBody => 'Source officielle · jamais inventé';
+
+  @override
+  String get travelModeCard => 'Tes budgets restent en devise maison.';
+
+  @override
+  String get ecoHubHeading => 'Info éco';
+
+  @override
+  String get ecoHubLead =>
+      'Toujours une source et une date. Jamais d’invention.';
+
+  @override
+  String get ecoHubCardTitle => 'Inflation alimentaire · Canada';
+
+  @override
+  String get ecoHubCardBody => '3,4 % · ≈ +11 \$/mois sur ton budget épicerie';
+
+  @override
+  String get ecoHubCardSource => 'Source · StatCan · 12 nov. 2026';
+
+  @override
+  String get ecoHistoryHeading => 'Historique des indicateurs';
+
+  @override
+  String get ecoHistoryLead => 'Archives sourcées, datées.';
+
+  @override
+  String get ecoHistoryItem1 => 'Inflation alimentaire';
+
+  @override
+  String get ecoHistoryItem2 => 'Taux directeur';
+
+  @override
+  String get ecoHistoryItem3 => 'IPC global';
+
+  @override
+  String get ecoUnavailableHeading => 'Indicateurs indisponibles';
+
+  @override
+  String get ecoUnavailableLead =>
+      'Le serveur n’a pas pu rafraîchir les chiffres.';
+
+  @override
+  String get ecoUnavailableCardTitle => 'Rien d’inventé';
+
+  @override
+  String get ecoUnavailableCardBody =>
+      'Sipho préfère un écran vide à une fausse donnée.';
+
+  @override
+  String get newsArchivesHeading => 'Actus · Archives';
+
+  @override
+  String get newsArchivesLead => 'Pas le fil du jour — des archives sourcées.';
+
+  @override
+  String get newsArchivesItem1 => 'Coût de la vie et panier';
+
+  @override
+  String get newsArchivesItem2 => 'Transferts et diaspora';
+
+  @override
+  String get newsArchivesItem3 => 'Épargne et taux';
+
+  @override
+  String get ecoQuizHeading => 'Quiz économique';
+
+  @override
+  String get ecoQuizLead => 'Hebdo · 1 question, 1 source';
+
+  @override
+  String get ecoQuizQuestion => 'À quoi sert un taux directeur ?';
+
+  @override
+  String get ecoQuizOptA => 'Fixer le prix du pain';
+
+  @override
+  String get ecoQuizOptB => 'Orienter le coût du crédit';
+
+  @override
+  String get ecoQuizOptC => 'Remplacer ton budget';
+
+  @override
+  String get ecoQuizCorrect => 'Oui — il influence l’emprunt et l’épargne.';
+
+  @override
+  String get ecoQuizWrong => 'Pas tout à fait. Relis la carte Info éco.';
+
+  @override
+  String get ecoAlertsHeading => 'Alertes économiques';
+
+  @override
+  String get ecoAlertsLead => 'Douces, rares, et toujours sourcées.';
+
+  @override
+  String get ecoAlertsRates => 'Taux directeur';
+
+  @override
+  String get ecoAlertsFx => 'Change (FX)';
+
+  @override
+  String get ecoAlertsInflation => 'Inflation';
+
+  @override
+  String get homeEmptyHeading => 'Bienvenue Amina';
+
+  @override
+  String get homeEmptyLead => 'On commence avec ce que tu sais.';
+
+  @override
+  String get homeEmptyKicker => 'RESTE À VIVRE NON CALCULÉ';
+
+  @override
+  String get homeEmptyCardTitle => 'Une première bonne habitude';
+
+  @override
+  String get homeEmptyCardBody => 'Pose la première base de ton budget.';
+
+  @override
+  String get homeEmptyCta => 'Construire mon nid';
+
+  @override
+  String get homeLoadingHeading => 'On charge ton nid…';
+
+  @override
+  String get homeLoadingLead => 'Encore une seconde.';
+
+  @override
+  String get homeErrorHeading => 'Accueil indisponible';
+
+  @override
+  String get homeErrorLead => 'La connexion a glissé.';
+
+  @override
+  String get homeErrorCardTitle => 'Réessaie';
+
+  @override
+  String get homeErrorCardBody => 'Tes données sont en sécurité côté serveur.';
+
+  @override
+  String get homeTightHeading => 'On serre un peu';
+
+  @override
+  String get homeTightLead => 'Il reste peu — sans panique.';
+
+  @override
+  String get homeTightKicker => 'RESTE À VIVRE · FIN DE MOIS';
+
+  @override
+  String get homeTightCardTitle => 'Piste douce';
+
+  @override
+  String get homeTightCardBody => 'Repousse un achat non urgent.';
+
+  @override
+  String get homeTightCta => 'Voir les dépenses';
+
+  @override
+  String get homeUnderHeading => 'Sous zéro';
+
+  @override
+  String get homeUnderLead => 'Le nid est en tension.';
+
+  @override
+  String get homeUnderKicker => 'RESTE À VIVRE NÉGATIF';
+
+  @override
+  String get homeUnderCardTitle => 'On recalibre';
+
+  @override
+  String get homeUnderCardBody => 'Regarde les enveloppes et le socle.';
+
+  @override
+  String get homeUnderCta => 'Ouvrir les budgets';
+
+  @override
+  String get homeBackHeading => 'Content de te revoir';
+
+  @override
+  String get homeBackLead => 'Ta série peut reprendre sans pression.';
+
+  @override
+  String get homeBackCardTitle => 'Retour après une pause';
+
+  @override
+  String get homeBackCardBody =>
+      'Une petite leçon suffit pour rallumer la flamme.';
+
+  @override
+  String get homeBackCta => 'Reprendre';
+
+  @override
+  String get homeWellDoneHeading => 'Bien joué';
+
+  @override
+  String get homeWellDoneLead => 'Une bonne habitude de plus.';
+
+  @override
+  String get homeWellDoneKicker => 'RÉCOMPENSE SERVEUR';
+
+  @override
+  String get homeWellDoneCardTitle => 'Quête du jour';
+
+  @override
+  String get homeWellDoneCardBody => 'Noter une dépense · validé';
+
+  @override
+  String get homeWellDoneQuests => 'Quêtes du jour';
+
+  @override
+  String get homeWellDoneQuestsSub => 'Noter · Apprendre · Lire';
+
+  @override
+  String get expensesEmptyHeading => 'Dépenses';
+
+  @override
+  String get expensesEmptyLead => 'Ce mois est encore vide.';
+
+  @override
+  String get expensesEmptyKicker => 'DÉPENSÉ CE MOIS';
+
+  @override
+  String get expensesEmptyCardTitle => 'Première trace';
+
+  @override
+  String get expensesEmptyCardBody => 'Ajoute une dépense ou scanne un ticket.';
+
+  @override
+  String get expensesEmptyCta => 'Ajouter';
+
+  @override
+  String get expensesErrorHeading => 'Dépenses indisponibles';
+
+  @override
+  String get expensesErrorLead => 'Impossible de charger la liste.';
+
+  @override
+  String get expensesErrorCardTitle => 'Réessaie';
+
+  @override
+  String get expensesErrorCardBody => 'Rien n’a été perdu.';
+
+  @override
+  String get expensesLoadingHeading => 'Chargement…';
+
+  @override
+  String get expensesLoadingLead => 'On range tes enveloppes.';
+
+  @override
+  String get notifExamplesHeading => 'Exemples de notifications';
+
+  @override
+  String get notifExamplesLead => 'Ton et fréquence — sans spam.';
+
+  @override
+  String get notifExamplesStreakTitle => 'Série';
+
+  @override
+  String get notifExamplesStreakBody =>
+      'Ta flamme tient encore 4 heures. Une micro-leçon ?';
+
+  @override
+  String get notifExamplesBudgetTitle => 'Budget';
+
+  @override
+  String get notifExamplesBudgetBody =>
+      'Épicerie à 80 % · encore 42 \$ cette semaine.';
+
+  @override
+  String get notifExamplesLeagueTitle => 'Ligue';
+
+  @override
+  String get notifExamplesLeagueBody =>
+      'Dimanche : podium. Tu es 4e — encore jouable.';
+
+  @override
+  String get tenLeaguesHeading => 'Les dix ligues';
+
+  @override
+  String get tenLeaguesLead => 'Du bronze au diamant — même rythme pour tous.';
+
+  @override
+  String get leagueBronze => 'Bronze';
+
+  @override
+  String get leagueSilver => 'Argent';
+
+  @override
+  String get leagueGold => 'Or';
+
+  @override
+  String get leagueSapphire => 'Saphir';
+
+  @override
+  String get leagueRuby => 'Rubis';
+
+  @override
+  String get leagueEmerald => 'Émeraude';
+
+  @override
+  String get leagueAmethyst => 'Améthyste';
+
+  @override
+  String get leaguePearl => 'Perle';
+
+  @override
+  String get leagueObsidian => 'Obsidienne';
+
+  @override
+  String get leagueDiamond => 'Diamant';
+
+  @override
+  String get podiumHeading => 'Podium du dimanche';
+
+  @override
+  String get podiumLead => 'La semaine se clôt — bravo à tous.';
+
+  @override
+  String get podiumFooter =>
+      'Les montants restent privés. Seul l’XP de ligue compte.';
+
+  @override
+  String get chestsHeading => 'Coffres de progression';
+
+  @override
+  String get chestsLead => 'Récompenses d’unité — via le serveur.';
+
+  @override
+  String get chestsChest1 => 'Coffre Unité 1';
+
+  @override
+  String get chestsChest1Sub => 'Ouvert';
+
+  @override
+  String get chestsChest2 => 'Coffre Unité 2';
+
+  @override
+  String get chestsChest2Sub => '3 leçons restantes';
+
+  @override
+  String get chestsChest3 => 'Coffre Unité 3';
+
+  @override
+  String get chestsChest3Sub => 'Verrouillé';
+
+  @override
+  String get androidErrorHeading => 'Oups';
+
+  @override
+  String get androidErrorLead => 'Android n’a pas pu ouvrir cet écran.';
+
+  @override
+  String get androidErrorCardTitle => 'Erreur technique';
+
+  @override
+  String get androidErrorCardBody =>
+      'Réessaie. Si ça continue, ferme et rouvre Sipho.';
+
+  @override
+  String get rewardHeading => 'C’est noté.';
+
+  @override
+  String get rewardLead => 'Une bonne habitude de plus.';
+
+  @override
+  String rewardSavedLine(String amount) {
+    return '✓  $amount enregistrés';
+  }
+
+  @override
+  String rewardXpLine(int xp) {
+    return '+$xp XP pour ton suivi';
+  }
+
+  @override
+  String get rewardQuestProgress => '2 actions sur 3 pour ta quête.';
+
+  @override
+  String get rewardDisclaimer =>
+      'Tu gagnes pour avoir noté.\nPas pour avoir dépensé.';
+
+  @override
+  String get streakHelpHeading => 'Un coup de main';
+
+  @override
+  String get streakHelpLead => 'Ta flamme peut reprendre sous 24 h.';
+
+  @override
+  String get streakHelpCardTitle => 'Réparer avec des graines';
+
+  @override
+  String get streakHelpCardBody =>
+      'Le serveur décide. Aucun XP inventé côté app.';
+
+  @override
+  String get streakHelpCost => 'Coût typique · 100 graines (pack pays)';
+
+  @override
+  String get streakHelpCta => 'Demander la réparation';
+
+  @override
+  String get streakHelpSkip => 'Pas maintenant';
+
+  @override
+  String get recapHabitsKicker => 'TON OCTOBRE AVEC SIPHO';
+
+  @override
+  String get recapHabitsTitle => 'En octobre, tu as noté';
+
+  @override
+  String get recapHabitsValue => '64 dépenses';
+
+  @override
+  String get recapHabitsBody => 'Chaque note est un brin de plus pour ton nid.';
+
+  @override
+  String get recapCompareKicker => 'TON OCTOBRE AVEC SIPHO';
+
+  @override
+  String get recapCompareTitle => 'Comparé à septembre';
+
+  @override
+  String get recapCompareValue => '−12 %';
+
+  @override
+  String get recapCompareBody =>
+      'Tu as dépensé moins tout en notant plus souvent.';
+
+  @override
+  String get recapGoalKicker => 'TON OCTOBRE AVEC SIPHO';
+
+  @override
+  String get recapGoalTitle => 'Ton objectif';
+
+  @override
+  String get recapGoalValue => 'Comprendre mon argent';
+
+  @override
+  String get recapGoalBody => '3 leçons terminées · continue sur ta lancée.';
+
+  @override
+  String get recapStreakKicker => 'TA SÉRIE';
+
+  @override
+  String get recapStreakTitle => 'Jours actifs ce mois';
+
+  @override
+  String get recapStreakValue => '18';
+
+  @override
+  String get recapStreakBody =>
+      'La constance bat l’intensité. Ton futur toi le sait.';
+
+  @override
+  String get recapBadgesKicker => 'TES BADGES';
+
+  @override
+  String get recapBadgesTitle => 'Débloqués ce mois';
+
+  @override
+  String get recapBadgesValue => '2';
+
+  @override
+  String get recapBadgesBody =>
+      'Aucun XP sur un badge — juste la fierté du cap.';
+
+  @override
+  String get recapDecemberKicker => 'RÉCAP DE DÉCEMBRE';
+
+  @override
+  String get recapDecemberTitle => 'Ton année se termine en douceur';
+
+  @override
+  String get recapDecemberValue => '12 mois';
+
+  @override
+  String get recapDecemberBody =>
+      'Un nid plus clair qu’en janvier. On continue.';
+
+  @override
+  String get recapBackHome => 'Retour au nid';
+
+  @override
+  String get chartsHeading => 'Tes graphiques';
+
+  @override
+  String get chartsLead => '4 vues simples, sans jargon';
+
+  @override
+  String get chartsDaysTitle => 'Par jour';
+
+  @override
+  String get chartsDaysSub => 'Barres de la semaine';
+
+  @override
+  String get chartsCatsTitle => 'Par catégorie';
+
+  @override
+  String get chartsCatsSub => 'Anneau du mois';
+
+  @override
+  String get chartsSixTitle => 'Six mois';
+
+  @override
+  String get chartsSixSub => 'Courbe de tendance';
+
+  @override
+  String get chartsStructureTitle => 'Fixes vs variables';
+
+  @override
+  String get chartsStructureSub => 'Structure du mois';
+
+  @override
+  String get chartsInsight =>
+      'Tu as dépensé 12 % de moins que le mois dernier.';
+
+  @override
+  String get chartsDaysDetailLead => 'Ta semaine en un coup d’œil.';
+
+  @override
+  String get chartsDaysPeak => 'Jour le plus chargé';
+
+  @override
+  String get chartsDaysCats => 'Catégorie dominante';
+
+  @override
+  String get chartsSixDetailLead => 'Tendance douce sur six mois.';
+
+  @override
+  String get chartsSixInsight => 'La ligne descend — ton nid respire mieux.';
+
+  @override
+  String get chartsStructureFixed => 'Socle (fixes)';
+
+  @override
+  String get chartsStructureVar => 'Variables';
+
+  @override
+  String get simHubHeading => 'Simulateurs';
+
+  @override
+  String get simHubLead =>
+      'Éducatif · règles du pack pays, jamais de conseil réglementé.';
+
+  @override
+  String get simRetirementTitle => 'Retraite';
+
+  @override
+  String get simRetirementSub => 'Projection simple selon ton pays';
+
+  @override
+  String get simDebtTitle => 'Dettes';
+
+  @override
+  String get simDebtSub => 'Comparer remboursement accéléré';
+
+  @override
+  String get simCompoundTitle => 'Intérêts composés';
+
+  @override
+  String get simCompoundSub => 'Voir le temps travailler pour toi';
+
+  @override
+  String get simEduDisclaimer =>
+      'Éducatif seulement · pas un conseil financier.';
+
+  @override
+  String get simRetirementResult => 'PROJECTION ILLUSTRATIVE';
+
+  @override
+  String simMonthlyLabel(String amount) {
+    return 'Versement mensuel · $amount \$';
+  }
+
+  @override
+  String simYearsLabel(String years) {
+    return 'Horizon · $years ans';
+  }
+
+  @override
+  String get simDebtBase => 'Sans extra';
+
+  @override
+  String get simDebtFaster => 'Avec extra';
+
+  @override
+  String simMonths(int count) {
+    return '$count mois';
+  }
+
+  @override
+  String simDebtBalance(String amount) {
+    return 'Solde · $amount \$';
+  }
+
+  @override
+  String simDebtExtra(String amount) {
+    return 'Extra mensuel · $amount \$';
+  }
+
+  @override
+  String get simCompoundResult => 'À ~5 % / an (illustratif)';
+
+  @override
+  String simCompoundSeed(String amount) {
+    return 'Mise de départ · $amount \$';
+  }
+
+  @override
+  String get learnUnit1 => '01 · LES BASES DU BUDGET';
+
+  @override
+  String get learnUnit2 => '02 · ÉPARGNER';
+
+  @override
+  String get learnUnit4 => '04 · CRÉDIT MALIN';
+
+  @override
+  String get learnUnit5 => '05 · FAMILLE ET VOYAGE';
+
+  @override
+  String get learnUnit5Ready => 'Une leçon prête bientôt';
+
+  @override
+  String get learnUnit5Three => 'Trois leçons dans l’unité';
+
+  @override
+  String get learnUnit6 => '06 · UN NOUVEAU DÉPART';
+
+  @override
+  String get learnUnit6Fresh => 'Quand tu reprends après une pause.';
+
+  @override
+  String get learnSeeChests => 'Voir les coffres →';
+
+  @override
+  String get learnJumpQuiz => 'Aller au quiz →';
+
+  @override
+  String get friendsChallengesHeading => 'Amis et défis';
+
+  @override
+  String get friendsTabFriends => 'Amis';
+
+  @override
+  String get friendsTabChallenges => 'Défis';
+
+  @override
+  String get friendsStreakTogether => 'Série partagée';
+
+  @override
+  String get friendsLevelPeer => 'Même rythme';
+
+  @override
+  String get friendsPending => 'Demande en attente';
+
+  @override
+  String get friendsChallengeActive => 'Défi de la semaine';
+
+  @override
+  String get friendsChallengeActiveBody =>
+      'Noter 5 dépenses avant dimanche · avec Nadia';
+
+  @override
+  String get friendsChallengeWeekly => '5 notes ensemble';
+
+  @override
+  String get friendsChallengeWeeklySub => 'Jamais de montants partagés';
+
+  @override
+  String get friendsChallengeInvite => 'Inviter à un défi';
+
+  @override
+  String get friendsChallengePrivacy =>
+      'Les défis comparent des actions, pas des soldes.';
+
+  @override
+  String get quizCorrectHeading => 'Bonne réponse !';
+
+  @override
+  String get quizCorrectLead => 'Accessible et liquide — c’est la base.';
+
+  @override
+  String get quizCorrectExplain =>
+      'Un fonds d’urgence doit pouvoir être touché rapidement, sans vente forcée.';
+
+  @override
+  String get quizCorrectXp => '+10 XP de précision (serveur)';
+
+  @override
+  String get quizWrongHint =>
+      'Pas tout à fait — le liquide accessible reste la base.';
 }

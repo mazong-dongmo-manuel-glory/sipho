@@ -3,7 +3,7 @@
 > Suivi de l'avancement des maquettes Figma et de l'implémentation des écrans.
 
 **Fichier Figma :** [Sipho — Design](https://www.figma.com/design/nsdpHR62Ct0mjq1cgVGkwl/Untitled) (clé `nsdpHR62Ct0mjq1cgVGkwl`, page « Page 1 ». Le fichier s'appelle encore « Untitled » : à renommer.)
-**Dernière mise à jour :** 2026-11-22 (alignement pixel Flutter ← frames « · Épuré » : Phase 1 entrée/onboarding/home + typo/shell phases 2–4 ; Validé Manuel toujours ⬜)
+**Dernière mise à jour :** 2026-11-23 (91 frames numérotées couvertes : +28 partielles — sombre Accueil/Dépenses, suivi récompensé, quiz bonne réponse, cadeau ouvert, récaps 24/44–46, graphiques 47–48, simulateurs 49–51, parcours unités 3–6, amis/défis, série coup de main, Android 76–78, EN 80–82 ; Validé Manuel toujours ⬜)
 
 > Ancien lien du tracker (`node-id=2-29018`) : un nœud de 200 × 200 px, pas un écran. Ne pas l'utiliser.
 
