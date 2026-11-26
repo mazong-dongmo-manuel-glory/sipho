@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../app/l10n/app_localizations.dart';
+import '../../../core/feedback/feedback_cue.dart';
+import '../../../core/feedback/feedback_service.dart';
 import '../../../core/theme/sipho_colors.dart';
 import '../../../core/theme/sipho_typography.dart';
 import '../../../core/widgets/sipho_button_3d.dart';
@@ -37,9 +39,11 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
       if (mounted) setState(() => _status = 'Lecture du ticket…');
       final parsed = await service.uploadAndParse(file);
       if (!mounted) return;
+      ref.read(feedbackServiceProvider).play(SiphoCue.scanDone);
       context.push('/expenses/validate', extra: parsed.toExtra());
     } catch (e) {
       if (!mounted) return;
+      ref.read(feedbackServiceProvider).play(SiphoCue.softError);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${l10n.authErrorGeneric}\n$e'),

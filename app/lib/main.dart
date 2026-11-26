@@ -4,6 +4,7 @@ import 'app/l10n/app_localizations.dart';
 import 'app/routes.dart';
 import 'core/firebase/firebase_bootstrap.dart';
 import 'core/theme/sipho_theme.dart';
+import 'core/feedback/feedback_binder.dart';
 import 'features/coach/presentation/coach_popup_host.dart';
 import 'features/notifications/data/device_registration.dart';
 
@@ -48,6 +49,7 @@ class _SiphoAppState extends ConsumerState<SiphoApp> {
         return Stack(
           children: [
             if (child != null) Positioned.fill(child: child),
+            const FeedbackBinder(),
             const CoachPopupHost(),
           ],
         );

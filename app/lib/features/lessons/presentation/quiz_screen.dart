@@ -4,6 +4,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/l10n/app_localizations.dart';
 import '../../../core/ai/sipho_ai_client.dart';
+import '../../../core/feedback/feedback_cue.dart';
+import '../../../core/feedback/feedback_service.dart';
 import '../../../core/theme/sipho_colors.dart';
 import '../../../core/theme/sipho_palette.dart';
 import '../../../core/theme/sipho_typography.dart';
@@ -334,6 +336,11 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
                             _checked = true;
                             if (wrong) _everWrong = true;
                           });
+                          ref.read(feedbackServiceProvider).play(
+                                wrong
+                                    ? SiphoCue.lessonWrong
+                                    : SiphoCue.lessonCorrect,
+                              );
                           return;
                         }
                         if (!isCorrect) {

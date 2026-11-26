@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../app/l10n/app_localizations.dart';
+import '../../../core/feedback/feedback_settings.dart';
 import '../../../core/firebase/cloud_functions_service.dart';
 import '../../../core/theme/sipho_colors.dart';
 import '../../../core/theme/sipho_palette.dart';
@@ -108,6 +110,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final prefs = ref.watch(notifPrefsProvider);
     final notifier = ref.read(notifPrefsProvider.notifier);
+    final feedback = ref.watch(feedbackSettingsProvider);
+    final feedbackNotifier = ref.read(feedbackSettingsProvider.notifier);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: SiphoPalette.background(context),
@@ -171,6 +176,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               title: 'Heure du rappel',
               trailing: '${prefs.preferredHour} h',
               onTap: () => _pickHour(prefs),
+            ),
+            const SiphoSeparator(),
+            SiphoListRow(
+              title: l10n.settingsSounds,
+              trailing: feedback.sounds ? l10n.settingsEnabled : l10n.settingsDisabled,
+              onTap: () => feedbackNotifier.setSounds(!feedback.sounds),
+            ),
+            const SiphoSeparator(),
+            SiphoListRow(
+              title: l10n.settingsHaptics,
+              trailing:
+                  feedback.haptics ? l10n.settingsEnabledF : l10n.settingsDisabledF,
+              onTap: () => feedbackNotifier.setHaptics(!feedback.haptics),
+            ),
+            const SiphoSeparator(),
+            SiphoListRow(
+              title: l10n.settingsVoice,
+              trailing: feedback.voice ? l10n.settingsEnabledF : l10n.settingsDisabledF,
+              onTap: () => feedbackNotifier.setVoice(!feedback.voice),
             ),
             const SiphoSeparator(),
             SiphoListRow(

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/l10n/app_localizations.dart';
+import '../../../core/feedback/feedback_cue.dart';
+import '../../../core/feedback/feedback_service.dart';
 import '../../../core/theme/sipho_colors.dart';
 import '../../../core/theme/sipho_palette.dart';
 import '../../../core/theme/sipho_typography.dart';
@@ -12,7 +15,7 @@ import '../domain/lesson_content.dart';
 enum LessonStepKind { card, trueFalse, simulation }
 
 /// Frames 37 / 38 / 39 · Étapes de leçon (carte, vrai/faux, mini-simulation).
-class LessonStepsScreen extends StatefulWidget {
+class LessonStepsScreen extends ConsumerStatefulWidget {
   final LessonStepKind kind;
   final String lessonId;
   final String title;
@@ -25,13 +28,32 @@ class LessonStepsScreen extends StatefulWidget {
   });
 
   @override
-  State<LessonStepsScreen> createState() => _LessonStepsScreenState();
+  ConsumerState<LessonStepsScreen> createState() => _LessonStepsScreenState();
 }
 
-class _LessonStepsScreenState extends State<LessonStepsScreen> {
+class _LessonStepsScreenState extends ConsumerState<LessonStepsScreen> {
   bool? _trueFalseAnswer;
   bool _checked = false;
   int? _simChoice;
+
+  void _answerTrueFalse(bool answer, bool expected) {
+    setState(() {
+      _trueFalseAnswer = answer;
+      _checked = true;
+    });
+    ref.read(feedbackServiceProvider).play(
+          answer == expected ? SiphoCue.lessonCorrect : SiphoCue.lessonWrong,
+        );
+  }
+
+  void _answerSim(int index, int expected) {
+    final first = _simChoice == null;
+    setState(() => _simChoice = index);
+    if (!first) return;
+    ref.read(feedbackServiceProvider).play(
+          index == expected ? SiphoCue.lessonCorrect : SiphoCue.lessonWrong,
+        );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,8 +100,8 @@ class _LessonStepsScreenState extends State<LessonStepsScreen> {
                 children: [
                   if (widget.kind == LessonStepKind.card) ...[
                     SiphoPageHeader(
-                      title: l10n.lessonCardHeading,
-                      lead: l10n.lessonCardLead,
+                      title: widget.title,
+                      lead: '1 / 4',
                     ),
                     const SizedBox(height: 16),
                     Align(
@@ -113,8 +135,8 @@ class _LessonStepsScreenState extends State<LessonStepsScreen> {
                     ),
                   ] else if (widget.kind == LessonStepKind.trueFalse) ...[
                     SiphoPageHeader(
-                      title: l10n.lessonTfHeading,
-                      lead: l10n.lessonTfLead,
+                      title: content.tfStatement(fr),
+                      lead: '3 / 4',
                     ),
                     const SizedBox(height: 16),
                     Align(
@@ -132,28 +154,26 @@ class _LessonStepsScreenState extends State<LessonStepsScreen> {
                     SiphoButton3D(
                       label: l10n.lessonTfTrue,
                       variant: SiphoButtonVariant.dark,
-                      onPressed: () => setState(() {
-                        _trueFalseAnswer = true;
-                        _checked = true;
-                      }),
+                      onPressed: _checked
+                          ? null
+                          : () => _answerTrueFalse(true, content.tfAnswer),
                     ),
                     const SizedBox(height: 12),
                     SiphoButton3D(
                       label: l10n.lessonTfFalse,
                       variant: SiphoButtonVariant.outline,
-                      onPressed: () => setState(() {
-                        _trueFalseAnswer = false;
-                        _checked = true;
-                      }),
+                      onPressed: _checked
+                          ? null
+                          : () => _answerTrueFalse(false, content.tfAnswer),
                     ),
                     if (_checked) ...[
                       const SizedBox(height: 16),
                       Text(
-                        _trueFalseAnswer == true
-                            ? l10n.lessonTfCorrect
-                            : l10n.lessonTfWrong,
+                        _trueFalseAnswer == content.tfAnswer
+                            ? content.tfCorrect(fr)
+                            : content.tfWrong(fr),
                         style: SiphoTypography.bodyBold.copyWith(
-                          color: _trueFalseAnswer == true
+                          color: _trueFalseAnswer == content.tfAnswer
                               ? SiphoColors.primary
                               : SiphoColors.accentTerra,
                         ),
@@ -178,33 +198,25 @@ class _LessonStepsScreenState extends State<LessonStepsScreen> {
                     ),
                   ] else ...[
                     SiphoPageHeader(
-                      title: l10n.lessonSimHeading,
-                      lead: l10n.lessonSimLead,
+                      title: content.simPrompt(fr),
+                      lead: '4 / 4',
                     ),
                     const SizedBox(height: 20),
-                    _SimOption(
-                      label: l10n.lessonSimOptA,
-                      selected: _simChoice == 0,
-                      onTap: () => setState(() => _simChoice = 0),
-                    ),
-                    const SizedBox(height: 10),
-                    _SimOption(
-                      label: l10n.lessonSimOptB,
-                      selected: _simChoice == 1,
-                      onTap: () => setState(() => _simChoice = 1),
-                    ),
-                    const SizedBox(height: 10),
-                    _SimOption(
-                      label: l10n.lessonSimOptC,
-                      selected: _simChoice == 2,
-                      onTap: () => setState(() => _simChoice = 2),
-                    ),
+                    for (var i = 0; i < content.simOptions(fr).length; i++) ...[
+                      _SimOption(
+                        label: content.simOptions(fr)[i],
+                        selected: _simChoice == i,
+                        onTap: () => _answerSim(i, content.simCorrectIndex),
+                      ),
+                      if (i < content.simOptions(fr).length - 1)
+                        const SizedBox(height: 10),
+                    ],
                     if (_simChoice != null) ...[
                       const SizedBox(height: 16),
                       Text(
-                        _simChoice == 1
-                            ? l10n.lessonSimFeedbackGood
-                            : l10n.lessonSimFeedbackOther,
+                        _simChoice == content.simCorrectIndex
+                            ? content.simGood(fr)
+                            : content.simOther(fr),
                         style: SiphoTypography.bodyBold.copyWith(
                           color: SiphoPalette.textPrimary(context),
                         ),

@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/firebase/cloud_functions_service.dart';
+import '../../../core/feedback/feedback_cue.dart';
+import '../../../core/feedback/feedback_service.dart';
 import '../../../core/theme/sipho_colors.dart';
 import '../../../core/theme/sipho_palette.dart';
 import '../../../core/theme/sipho_typography.dart';
@@ -59,6 +61,7 @@ class _ChestScreenState extends ConsumerState<ChestScreen> {
         _busy = false;
         _error = 'Récompense indisponible pour le moment.';
       });
+      ref.read(feedbackServiceProvider).play(SiphoCue.softError);
       return;
     }
     setState(() {
@@ -72,6 +75,7 @@ class _ChestScreenState extends ConsumerState<ChestScreen> {
           (result['xp'] as num?)?.toInt() ??
           0;
     });
+    ref.read(feedbackServiceProvider).play(SiphoCue.giftOpened);
   }
 
   @override

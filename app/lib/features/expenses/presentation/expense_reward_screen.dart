@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/l10n/app_localizations.dart';
+import '../../../core/feedback/feedback_binder.dart';
+import '../../../core/feedback/feedback_cue.dart';
 import '../../../core/theme/sipho_palette.dart';
 import '../../../core/theme/sipho_typography.dart';
 import '../../../core/widgets/sipho_button_3d.dart';
@@ -76,6 +78,7 @@ class ExpenseRewardScreen extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
           child: Column(
             children: [
+              const PlayCueOnce(cue: SiphoCue.expenseAdded),
               Expanded(
                 child: ListView(
                   children: [

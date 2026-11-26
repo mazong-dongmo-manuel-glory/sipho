@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/feedback/feedback_cue.dart';
+import '../../../core/feedback/feedback_service.dart';
 import '../../../core/firebase/cloud_functions_service.dart';
 import '../../../core/theme/sipho_palette.dart';
 import '../../../core/theme/sipho_typography.dart';
@@ -52,6 +54,9 @@ class _LessonDoneScreenState extends ConsumerState<LessonDoneScreen> {
     if (serverXp != null) {
       setState(() => _awardedXp = serverXp);
     }
+    ref.read(feedbackServiceProvider).play(
+          result['status'] == 'error' ? SiphoCue.softError : SiphoCue.lessonDone,
+        );
   }
 
   @override

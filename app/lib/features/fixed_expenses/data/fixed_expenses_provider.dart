@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/feedback/feedback_cue.dart';
+import '../../../core/feedback/feedback_service.dart';
 import '../../../core/firebase/cloud_functions_service.dart';
 import '../../../core/firebase/firebase_providers.dart';
 import '../../auth/data/auth_repository.dart';
@@ -87,10 +89,13 @@ class FixedExpensesNotifier extends StateNotifier<List<FixedExpense>> {
         .toList();
 
     if (!wasPaid) {
-      await _ref.read(cloudFunctionsServiceProvider).markFixedPaid(
+      final result = await _ref.read(cloudFunctionsServiceProvider).markFixedPaid(
             fixedId: id,
             monthKey: monthKey,
           );
+      if (result['status'] != 'error') {
+        _ref.read(feedbackServiceProvider).play(SiphoCue.fixedPaid);
+      }
     }
   }
 
