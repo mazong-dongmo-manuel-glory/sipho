@@ -26,6 +26,7 @@ class SiphoPageHeader extends StatelessWidget {
         ],
         Text(
           title,
+          softWrap: true,
           style: SiphoTypography.title.copyWith(
             fontSize: 28,
             color: SiphoPalette.textPrimary(context),
@@ -36,6 +37,7 @@ class SiphoPageHeader extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             lead!,
+            softWrap: true,
             style: SiphoTypography.body.copyWith(
               fontSize: 16,
               color: SiphoPalette.textSecondary(context),

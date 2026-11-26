@@ -95,16 +95,20 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
             const SizedBox(height: 16),
             Row(
               children: [
-                _TabChip(
-                  label: l10n.friendsTabFriends,
-                  selected: _tab == 0,
-                  onTap: () => setState(() => _tab = 0),
+                Flexible(
+                  child: _TabChip(
+                    label: l10n.friendsTabFriends,
+                    selected: _tab == 0,
+                    onTap: () => setState(() => _tab = 0),
+                  ),
                 ),
                 const SizedBox(width: 8),
-                _TabChip(
-                  label: l10n.friendsTabChallenges,
-                  selected: _tab == 1,
-                  onTap: () => setState(() => _tab = 1),
+                Flexible(
+                  child: _TabChip(
+                    label: l10n.friendsTabChallenges,
+                    selected: _tab == 1,
+                    onTap: () => setState(() => _tab = 1),
+                  ),
                 ),
               ],
             ),
@@ -535,6 +539,8 @@ class _TabChip extends StatelessWidget {
         ),
         child: Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: SiphoTypography.bodyBold.copyWith(
             fontSize: 14,
             color: SiphoPalette.textPrimary(context),

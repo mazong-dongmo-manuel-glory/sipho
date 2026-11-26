@@ -61,13 +61,20 @@ class AndroidChromeScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
                 child: Row(
                   children: [
-                    TextButton(
-                      onPressed: () => context.pop(),
-                      child: Text(
-                        'Fermer chrome Android',
-                        style: SiphoTypography.label.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: SiphoPalette.textSecondary(context),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton(
+                          onPressed: () => context.pop(),
+                          child: Text(
+                            'Fermer chrome Android',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: SiphoTypography.label.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: SiphoPalette.textSecondary(context),
+                            ),
+                          ),
                         ),
                       ),
                     ),

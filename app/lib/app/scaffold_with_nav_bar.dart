@@ -193,8 +193,10 @@ class _NavItem extends StatelessWidget {
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              width: 70,
+              width: double.infinity,
               height: 54,
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
                 color: pill,
                 borderRadius: BorderRadius.circular(14),
@@ -208,6 +210,7 @@ class _NavItem extends StatelessWidget {
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
                     style: SiphoTypography.label.copyWith(
                       color: color,
                       fontWeight: FontWeight.w800,

@@ -27,31 +27,36 @@ class GameBar extends StatelessWidget {
     required String value,
     required VoidCallback? onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: SiphoPalette.surface(context),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: SiphoPalette.border(context),
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            icon,
-            const SizedBox(width: 5),
-            Text(
-              value,
-              style: SiphoTypography.label.copyWith(
-                fontWeight: FontWeight.w800,
-                color: SiphoPalette.textPrimary(context),
-              ),
+    return Flexible(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: SiphoPalette.surface(context),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: SiphoPalette.border(context),
+              width: 1.5,
             ),
-          ],
+          ),
+          child: Row(
+            children: [
+              icon,
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: SiphoTypography.label.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: SiphoPalette.textPrimary(context),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -62,7 +67,6 @@ class GameBar extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _buildPill(
             context: context,
@@ -70,12 +74,14 @@ class GameBar extends StatelessWidget {
             value: '$streakDays',
             onTap: onStreakTap,
           ),
+          const SizedBox(width: 8),
           _buildPill(
             context: context,
             icon: const Text('🌾', style: TextStyle(fontSize: 16)),
             value: '$seeds',
             onTap: onSeedsTap,
           ),
+          const SizedBox(width: 8),
           _buildPill(
             context: context,
             icon: const Text('⚡', style: TextStyle(fontSize: 16)),

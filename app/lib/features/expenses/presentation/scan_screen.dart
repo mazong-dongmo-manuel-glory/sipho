@@ -8,6 +8,7 @@ import '../../../core/feedback/feedback_service.dart';
 import '../../../core/theme/sipho_colors.dart';
 import '../../../core/theme/sipho_typography.dart';
 import '../../../core/widgets/sipho_button_3d.dart';
+import '../../../core/widgets/sipho_fill_scroll.dart';
 import '../data/receipt_scan_service.dart';
 
 /// Frame 11a · Scan · photo → Storage → `parseReceipt`.
@@ -67,10 +68,9 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     return Scaffold(
       backgroundColor: SiphoColors.primaryDark,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-          child: Column(
-            children: [
+        child: SiphoFillScroll(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
               Align(
                 alignment: Alignment.centerLeft,
                 child: IconButton(
@@ -80,6 +80,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
               ),
               Text(
                 l10n.scanTitle,
+                textAlign: TextAlign.center,
                 style: SiphoTypography.title.copyWith(
                   fontSize: 28,
                   color: Colors.white,
@@ -88,6 +89,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
               const SizedBox(height: 8),
               Text(
                 l10n.scanHint,
+                textAlign: TextAlign.center,
                 style: SiphoTypography.body.copyWith(
                   fontSize: 16,
                   color: Colors.white70,
@@ -95,7 +97,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
               ),
               const Spacer(),
               Container(
-                height: 320,
+                height: MediaQuery.sizeOf(context).height < 500 ? 160 : 320,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: SiphoColors.accentGold, width: 3),
@@ -111,6 +113,9 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                               const SizedBox(height: 16),
                               Text(
                                 _status!,
+                                textAlign: TextAlign.center,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
                                 style: SiphoTypography.body.copyWith(color: Colors.white70),
                               ),
                             ],
@@ -143,11 +148,13 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                 onPressed: _busy ? null : () => _scan(ImageSource.gallery),
                 child: Text(
                   l10n.scanGallery,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                   style: SiphoTypography.bodyBold.copyWith(color: Colors.white),
                 ),
               ),
-            ],
-          ),
+          ],
         ),
       ),
     );

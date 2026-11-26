@@ -320,6 +320,8 @@ class _LessonPathRow extends StatelessWidget {
                 children: [
                   Text(
                     title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: SiphoTypography.bodyBold.copyWith(
                       fontSize: 16,
                       color: SiphoPalette.textPrimary(context),
@@ -329,6 +331,8 @@ class _LessonPathRow extends StatelessWidget {
                   if (subtitle != null)
                     Text(
                       subtitle!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: SiphoTypography.label.copyWith(
                         fontWeight: FontWeight.w700,
                         fontSize: 13,

@@ -76,10 +76,13 @@ class GaugeCircular extends StatelessWidget {
                 Text(
                   caption,
                   textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: SiphoTypography.label.copyWith(
                     fontWeight: FontWeight.w400,
                     fontSize: size * 0.059,
                     color: captionCol,
+                    height: 1.15,
                   ),
                 ),
               ],

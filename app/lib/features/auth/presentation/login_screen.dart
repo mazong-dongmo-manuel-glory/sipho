@@ -9,6 +9,7 @@ import '../../../core/theme/sipho_colors.dart';
 import '../../../core/theme/sipho_palette.dart';
 import '../../../core/theme/sipho_typography.dart';
 import '../../../core/widgets/sipho_button_3d.dart';
+import '../../../core/widgets/sipho_fill_scroll.dart';
 import '../../../core/widgets/sipho_list_row.dart';
 import '../data/auth_repository.dart';
 import '../data/user_profile_provider.dart';
@@ -96,11 +97,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Scaffold(
       backgroundColor: SiphoPalette.background(context),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: SiphoFillScroll(
+          children: [
               Text(
                 l10n.welcomeTitle,
                 style: SiphoTypography.title.copyWith(
@@ -187,14 +185,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       : () => _run(auth.signInAnonymously),
                   child: Text(
                     'Continuer sans compte (debug)',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
                     style: SiphoTypography.bodyBold.copyWith(
                       color: SiphoPalette.textSecondary(context),
                     ),
                   ),
                 ),
               ],
-            ],
-          ),
+          ],
         ),
       ),
     );
