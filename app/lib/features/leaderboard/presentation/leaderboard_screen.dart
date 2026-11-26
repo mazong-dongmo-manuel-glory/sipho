@@ -65,32 +65,29 @@ class LeaderboardScreen extends ConsumerWidget {
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(
-                  child: Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          text: l10n.leagueTab,
-                          style: SiphoTypography.bodyBold.copyWith(
-                            fontSize: 16,
-                            color: SiphoPalette.textPrimary(context),
-                          ),
-                        ),
-                        WidgetSpan(
-                          alignment: PlaceholderAlignment.baseline,
-                          baseline: TextBaseline.alphabetic,
-                          child: GestureDetector(
-                            onTap: () => context.push('/friends'),
-                            child: Text(
-                              '     ${l10n.leagueFriends}',
-                              style: SiphoTypography.bodyBold.copyWith(
-                                fontSize: 16,
-                                color: SiphoPalette.textSecondary(context),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                Flexible(
+                  child: Text(
+                    l10n.leagueTab,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: SiphoTypography.bodyBold.copyWith(
+                      fontSize: 16,
+                      color: SiphoPalette.textPrimary(context),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Flexible(
+                  child: GestureDetector(
+                    onTap: () => context.push('/friends'),
+                    child: Text(
+                      l10n.leagueFriends,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: SiphoTypography.bodyBold.copyWith(
+                        fontSize: 16,
+                        color: SiphoPalette.textSecondary(context),
+                      ),
                     ),
                   ),
                 ),

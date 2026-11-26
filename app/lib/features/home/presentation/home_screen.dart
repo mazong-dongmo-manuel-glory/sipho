@@ -154,6 +154,8 @@ class HomeScreen extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     l10n.homeStreakDays(game.streakDays),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: SiphoTypography.bodyBold.copyWith(
                       fontSize: 16,
                       color: SiphoPalette.textPrimary(context),
@@ -161,16 +163,22 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                Text(
-                  l10n.homeSeedsLevel(
-                    NumberFormat.decimalPattern().format(game.seeds),
-                    game.level,
-                  ),
-                  style: SiphoTypography.label.copyWith(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                    color: SiphoPalette.textPrimary(context),
-                    height: 1.25,
+                Flexible(
+                  flex: 0,
+                  child: Text(
+                    l10n.homeSeedsLevel(
+                      NumberFormat.decimalPattern().format(game.seeds),
+                      game.level,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: SiphoTypography.label.copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: SiphoPalette.textPrimary(context),
+                      height: 1.25,
+                    ),
                   ),
                 ),
               ],
@@ -185,6 +193,8 @@ class HomeScreen extends ConsumerWidget {
                     children: [
                       Text(
                         l10n.homeHello(user.displayName),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: SiphoTypography.title.copyWith(
                           fontSize: 28,
                           color: SiphoPalette.textPrimary(context),
@@ -348,6 +358,8 @@ class HomeScreen extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     l10n.homeQuests,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: SiphoTypography.bodyBold.copyWith(
                       fontSize: 16,
                       color: SiphoPalette.textPrimary(context),
@@ -355,13 +367,19 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                Text(
-                  l10n.homeQuestCount(doneQuests, activeQuests.length),
-                  style: SiphoTypography.label.copyWith(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                    color: SiphoPalette.textPrimary(context),
-                    height: 1.25,
+                Flexible(
+                  flex: 0,
+                  child: Text(
+                    l10n.homeQuestCount(doneQuests, activeQuests.length),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: SiphoTypography.label.copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: SiphoPalette.textPrimary(context),
+                      height: 1.25,
+                    ),
                   ),
                 ),
               ],
@@ -682,6 +700,8 @@ class _QuestProgressRow extends StatelessWidget {
                   Expanded(
                     child: Text(
                       title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: SiphoTypography.bodyBold.copyWith(
                         fontSize: 14,
                         color: SiphoPalette.textPrimary(context),
@@ -689,12 +709,17 @@ class _QuestProgressRow extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Text(
-                    progressLabel,
-                    style: SiphoTypography.label.copyWith(
+                  Flexible(
+                    flex: 0,
+                    child: Text(
+                      progressLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: SiphoTypography.label.copyWith(
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
                       color: SiphoPalette.textSecondary(context),
+                    ),
                     ),
                   ),
                 ],

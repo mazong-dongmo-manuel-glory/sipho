@@ -8,6 +8,7 @@ import '../../../core/theme/sipho_colors.dart';
 import '../../../core/theme/sipho_palette.dart';
 import '../../../core/theme/sipho_typography.dart';
 import '../../../core/widgets/sipho_button_3d.dart';
+import '../../../core/widgets/sipho_fill_scroll.dart';
 import '../../../core/widgets/sipho_list_row.dart';
 import '../../auth/data/user_profile_provider.dart';
 import '../../expenses/data/expenses_provider.dart';
@@ -144,8 +145,8 @@ class _RecapScreenState extends ConsumerState<RecapScreen> {
               ),
               const SizedBox(height: 16),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: SiphoFillScroll(
+                  padding: EdgeInsets.zero,
                   children: [
                     Text(
                       page.$2,
@@ -155,11 +156,17 @@ class _RecapScreenState extends ConsumerState<RecapScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Text(
-                      page.$3,
-                      style: SiphoTypography.amountHero.copyWith(
-                        fontSize: 48,
-                        color: SiphoPalette.textPrimary(context),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        page.$3,
+                        maxLines: 1,
+                        softWrap: false,
+                        style: SiphoTypography.amountHero.copyWith(
+                          fontSize: 48,
+                          color: SiphoPalette.textPrimary(context),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),

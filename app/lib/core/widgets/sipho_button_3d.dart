@@ -151,22 +151,28 @@ class _SiphoButton3DState extends State<SiphoButton3D> {
                       )
                     : null,
               ),
-              child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     if (widget.icon != null) ...[
                       widget.icon!,
                       const SizedBox(width: 8),
                     ],
-                    Text(
-                      widget.label,
-                      style: SiphoTypography.button.copyWith(
-                        color: textColor,
-                        fontSize: 16,
-                        letterSpacing: 0,
-                        fontWeight: FontWeight.w800,
+                    Flexible(
+                      child: Text(
+                        widget.label,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: SiphoTypography.button.copyWith(
+                          color: textColor,
+                          fontSize: 16,
+                          letterSpacing: 0,
+                          fontWeight: FontWeight.w800,
+                          height: 1.15,
+                        ),
                       ),
                     ),
                   ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/l10n/app_localizations.dart';
 import 'app/routes.dart';
@@ -10,6 +11,10 @@ import 'features/notifications/data/device_registration.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations(const [
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]);
   await bootstrapFirebase();
   runApp(
     const ProviderScope(

@@ -34,6 +34,8 @@ class SiphoListRow extends StatelessWidget {
               children: [
                 Text(
                   title,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                   style: SiphoTypography.bodyBold.copyWith(
                     fontSize: 16,
                     color: SiphoPalette.textPrimary(context),
@@ -44,6 +46,8 @@ class SiphoListRow extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     subtitle!,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
                     style: SiphoTypography.label.copyWith(
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
@@ -56,13 +60,19 @@ class SiphoListRow extends StatelessWidget {
             ),
           ),
           if (trailing != null || showChevron)
-            Text(
-              trailing ?? '→',
-              style: SiphoTypography.label.copyWith(
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-                color: SiphoPalette.textPrimary(context),
-                height: 1.3,
+            Flexible(
+              flex: 0,
+              child: Text(
+                trailing ?? '→',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.end,
+                style: SiphoTypography.label.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  color: SiphoPalette.textPrimary(context),
+                  height: 1.3,
+                ),
               ),
             ),
         ],

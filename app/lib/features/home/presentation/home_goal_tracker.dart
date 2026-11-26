@@ -52,16 +52,21 @@ class HomeGoalTrackerSection extends ConsumerWidget {
                 ],
               ),
             ),
-            TextButton(
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                context.push('/goals');
-              },
-              child: Text(
-                l10n.addGoalBtn,
-                style: SiphoTypography.label.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: SiphoColors.primaryDark,
+            Flexible(
+              flex: 0,
+              child: TextButton(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  context.push('/goals');
+                },
+                child: Text(
+                  l10n.addGoalBtn,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: SiphoTypography.label.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: SiphoColors.primaryDark,
+                  ),
                 ),
               ),
             ),

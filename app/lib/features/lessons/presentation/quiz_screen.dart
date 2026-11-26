@@ -286,6 +286,8 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
                                 Expanded(
                                   child: Text(
                                     options[i],
+                                    maxLines: 4,
+                                    overflow: TextOverflow.ellipsis,
                                     style: SiphoTypography.bodyBold.copyWith(
                                       fontSize: 16,
                                       color: SiphoPalette.textPrimary(context),
