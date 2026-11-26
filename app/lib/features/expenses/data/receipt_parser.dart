@@ -21,7 +21,7 @@ class ReceiptParser {
   ReceiptParser({
     GenerativeModel? model,
     SiphoAiClient? aiClient,
-  })  : _model = model,
+  })  : _model = model, // ignore: prefer_initializing_formals
         _aiClient = aiClient ?? SiphoAiClient();
 
   final GenerativeModel? _model;

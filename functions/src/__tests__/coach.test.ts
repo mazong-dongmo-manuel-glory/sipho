@@ -45,7 +45,7 @@ describe("education progress", () => {
 
 describe("pickCoachTip", () => {
   test("never repeats the previous tip when another exists", () => {
-    const last = COACH_TIPS[0]!.id;
+    const last = COACH_TIPS[0].id;
     for (let i = 0; i < 20; i++) {
       const picked = pickCoachTip({
         stage: 4,

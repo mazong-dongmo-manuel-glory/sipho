@@ -283,9 +283,10 @@ export const completeLesson = onCall(SECURE_CALLABLE_OPTIONS, async (request) =>
   });
 
   // Strip internal hook field from the callable response.
-  const { dayKey: _dayKey, ...clientResult } = result as typeof result & {
+  const { dayKey, ...clientResult } = result as typeof result & {
     dayKey?: string;
   };
+  void dayKey;
   return clientResult;
 });
 

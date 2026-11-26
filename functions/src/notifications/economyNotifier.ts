@@ -103,7 +103,8 @@ async function loadHeadline(country: string): Promise<string | null> {
   for (const code of [country, "WORLD"]) {
     const snap = await db().doc(`economyNews/${code}`).get();
     if (!snap.exists) continue;
-    const items = snap.data()?.items;
+    const data = snap.data() as { items?: unknown } | undefined;
+    const items = data?.items;
     if (!Array.isArray(items) || items.length === 0) continue;
     for (const raw of items) {
       if (!raw || typeof raw !== "object") continue;

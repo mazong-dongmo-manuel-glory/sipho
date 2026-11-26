@@ -476,7 +476,7 @@ export function pickCoachTip(input: PickCoachTipInput): PickedCoachTip | null {
     prefer.length - 1,
     Math.floor(input.roll * prefer.length)
   );
-  const tip = prefer[index]!;
+  const tip = prefer[index];
   const locale = input.locale === "en" ? "en" : "fr";
   return {
     tip,

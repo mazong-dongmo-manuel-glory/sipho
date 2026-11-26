@@ -151,10 +151,11 @@ final GoRouter siphoRouter = GoRouter(
       path: '/quiz',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (_, state) {
-        final extra = state.extra as Map<String, String>? ?? const {};
+        final extra = state.extra as Map<String, dynamic>? ?? const {};
         return QuizScreen(
-          lessonId: extra['id'] ?? 'emergency_fund',
-          title: extra['title'] ?? 'Un coussin pour les imprévus',
+          lessonId: (extra['id'] as String?) ?? 'emergency_fund',
+          title: (extra['title'] as String?) ?? 'Un coussin pour les imprévus',
+          priorMistakes: (extra['priorMistakes'] as int?) ?? 0,
         );
       },
     ),
@@ -172,6 +173,7 @@ final GoRouter siphoRouter = GoRouter(
           kind: LessonStepKind.card,
           lessonId: (extra['id'] as String?) ?? 'emergency_fund',
           title: (extra['title'] as String?) ?? 'Un coussin pour les imprévus',
+          priorMistakes: (extra['priorMistakes'] as int?) ?? 0,
         );
       },
     ),
@@ -184,6 +186,7 @@ final GoRouter siphoRouter = GoRouter(
           kind: LessonStepKind.trueFalse,
           lessonId: (extra['id'] as String?) ?? 'emergency_fund',
           title: (extra['title'] as String?) ?? 'Un coussin pour les imprévus',
+          priorMistakes: (extra['priorMistakes'] as int?) ?? 0,
         );
       },
     ),
@@ -196,6 +199,7 @@ final GoRouter siphoRouter = GoRouter(
           kind: LessonStepKind.simulation,
           lessonId: (extra['id'] as String?) ?? 'emergency_fund',
           title: (extra['title'] as String?) ?? 'Un coussin pour les imprévus',
+          priorMistakes: (extra['priorMistakes'] as int?) ?? 0,
         );
       },
     ),

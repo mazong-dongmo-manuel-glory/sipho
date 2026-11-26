@@ -67,7 +67,7 @@ export function countryLessonCountries(lessonId: string): readonly string[] | nu
 }
 
 export function isCountryLesson(lessonId: string): boolean {
-  return countryLessonCountries(lessonId) != null;
+  return countryLessonCountries(lessonId) !== null;
 }
 
 /** True when a country module is available for this user's countryCode. */
@@ -79,7 +79,7 @@ export function isCountryLessonAllowed(
   if (!countries) return false;
   if (countries.includes("*")) return true;
   const code = (countryCode ?? "").toUpperCase();
-  return code.length === 2 && (countries as readonly string[]).includes(code);
+  return code.length === 2 && countries.includes(code);
 }
 
 export interface UnitBonus {
@@ -111,7 +111,7 @@ export function generatedLessonIndex(lessonId: string): number | null {
 }
 
 export function isGeneratedLessonId(lessonId: string): boolean {
-  return generatedLessonIndex(lessonId) != null;
+  return generatedLessonIndex(lessonId) !== null;
 }
 
 export function generatedLessonIdFor(index: number): string {
@@ -120,7 +120,7 @@ export function generatedLessonIdFor(index: number): string {
 
 export function previousGeneratedLessonId(lessonId: string): string | null {
   const index = generatedLessonIndex(lessonId);
-  if (index == null || index <= 1) return null;
+  if (index === null || index <= 1) return null;
   return generatedLessonIdFor(index - 1);
 }
 
@@ -138,11 +138,11 @@ export function isGeneratedLessonUnlocked(
   completed: ReadonlySet<string>
 ): boolean {
   const index = generatedLessonIndex(lessonId);
-  if (index == null) return false;
+  if (index === null) return false;
   if (!corePathCompleted(completed)) return false;
   if (index === 1) return true;
   const previous = previousGeneratedLessonId(lessonId);
-  return previous != null && completed.has(previous);
+  return previous !== null && completed.has(previous);
 }
 
 export function isLessonUnlocked(lessonId: string, completed: ReadonlySet<string>): boolean {

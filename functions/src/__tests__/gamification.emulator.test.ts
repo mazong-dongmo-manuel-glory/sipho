@@ -259,12 +259,14 @@ describe("badges", () => {
     );
 
     const first = await syncBadges("ub1");
-    expect(first).toEqual(["first_lesson", "streak_7", "level_5"]);
+    expect(first).toEqual(["builder", "first_lesson", "streak_7", "level_5"]);
     expect((await game("ub1")).badges.sort()).toEqual(
-      ["first_lesson", "level_5", "streak_7"].sort()
+      ["builder", "first_lesson", "level_5", "streak_7"].sort()
     );
     const pub = (await db.doc("publicProfiles/ub1").get()).data() as { badges: string[] };
-    expect(pub.badges.sort()).toEqual(["first_lesson", "level_5", "streak_7"].sort());
+    expect(pub.badges.sort()).toEqual(
+      ["builder", "first_lesson", "level_5", "streak_7"].sort()
+    );
 
     // running again adds nothing (the trigger re-fires on its own write)
     expect(await syncBadges("ub1")).toEqual([]);
@@ -275,8 +277,9 @@ describe("badges", () => {
     expect(await syncBadges("ub2")).toEqual([]);
 
     await seedUser("ub3");
-    expect(await syncBadges("ub3")).toEqual([]);
-    expect((await game("ub3")).badges).toEqual([]);
+    // Onboarding is done in the seed, so the builder badge is earned.
+    expect(await syncBadges("ub3")).toEqual(["builder"]);
+    expect((await game("ub3")).badges).toEqual(["builder"]);
   });
 
   test("finishing a unit through completeLesson makes the unit badge available", async () => {
@@ -290,7 +293,7 @@ describe("badges", () => {
       });
     }
     // the trigger is not running in this suite: evaluate as it would
-    expect(await syncBadges("ub4")).toEqual(["first_lesson", "unit_1"]);
+    expect(await syncBadges("ub4")).toEqual(["builder", "first_lesson", "unit_1"]);
   });
 });
 
@@ -441,7 +444,8 @@ describe("referralRedeem", () => {
     await db.doc("referrals/CODETWO").set({ ownerUid: "owner2", uses: [], maxUses: 50 });
 
     await call(referralRedeem, "invitee", { referralCode: "CODEONE" });
-    expect((await game("invitee")).xp).toBe(25);
+    // XP waits until the invitee is active on enough distinct days.
+    expect((await game("invitee")).xp).toBe(0);
 
     // Simulate the old exploit: the field is wiped.
     await db.doc("users/invitee").update({ redeemedReferralCode: admin.firestore.FieldValue.delete() });
@@ -449,7 +453,7 @@ describe("referralRedeem", () => {
     expect(await callError(referralRedeem, "invitee", { referralCode: "CODETWO" })).toBe(
       "already-exists"
     );
-    expect((await game("invitee")).xp).toBe(25);
+    expect((await game("invitee")).xp).toBe(0);
   });
 
   test("redeeming a code makes inviter and invitee friends", async () => {
@@ -588,8 +592,10 @@ describe("daily rollover", () => {
     expect(today.progress).toBe(0);
     // Expires at the user's next LOCAL midnight (Toronto, EST): 2026-11-12T05:00Z.
     expect(today.expiresAt.toDate().toISOString()).toBe("2026-11-12T05:00:00.000Z");
-    // Yesterday's quests (expired, kept for a while) + today's: one doc per template and day.
-    expect(quests.size).toBe(2 * DAILY_QUEST_TEMPLATES.length);
+    // Yesterday's quests (expired, kept for a while) + today's: one doc per template
+    // and day, plus today's catch-up quest because yesterday's dailies were left open.
+    expect(quests.size).toBe(2 * DAILY_QUEST_TEMPLATES.length + 1);
+    expect(byId["catchup_2026-11-11"].status).toBe("active");
     for (const tpl of DAILY_QUEST_TEMPLATES) {
       expect(byId[dailyQuestId(tpl.templateId, "2026-11-10")].status).toBe("expired");
       expect(byId[dailyQuestId(tpl.templateId, "2026-11-11")].status).toBe("active");

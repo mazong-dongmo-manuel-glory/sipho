@@ -30,8 +30,10 @@ class FeedbackService {
     required SoundService sound,
     required FeedbackSettings Function() settings,
     HapticPerformer haptic = performSystemHaptic,
-  })  : _sound = sound,
+  })  : _sound = sound, // ignore: prefer_initializing_formals
+        // ignore: prefer_initializing_formals
         _settings = settings,
+        // ignore: prefer_initializing_formals
         _haptic = haptic;
 
   final SoundService _sound;

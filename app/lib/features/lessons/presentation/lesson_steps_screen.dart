@@ -11,6 +11,7 @@ import '../../../core/theme/sipho_typography.dart';
 import '../../../core/widgets/sipho_button_3d.dart';
 import '../../../core/widgets/sipho_page_header.dart';
 import '../domain/lesson_content.dart';
+import '../domain/lesson_score.dart';
 
 enum LessonStepKind { card, trueFalse, simulation }
 
@@ -19,12 +20,14 @@ class LessonStepsScreen extends ConsumerStatefulWidget {
   final LessonStepKind kind;
   final String lessonId;
   final String title;
+  final int priorMistakes;
 
   const LessonStepsScreen({
     super.key,
     required this.kind,
     this.lessonId = 'emergency_fund',
     this.title = 'Un coussin pour les imprévus',
+    this.priorMistakes = 0,
   });
 
   @override
@@ -232,9 +235,20 @@ class _LessonStepsScreenState extends ConsumerState<LessonStepsScreen> {
                 label: l10n.continueBtn,
                 variant: SiphoButtonVariant.dark,
                 onPressed: () {
+                  final mistakes = lessonMistakesAfterAnswer(
+                    priorMistakes: widget.priorMistakes,
+                    answered: widget.kind == LessonStepKind.trueFalse
+                        ? _checked
+                        : widget.kind == LessonStepKind.simulation &&
+                            _simChoice != null,
+                    correct: widget.kind == LessonStepKind.trueFalse
+                        ? _trueFalseAnswer == content.tfAnswer
+                        : _simChoice == content.simCorrectIndex,
+                  );
                   final extra = {
                     'id': widget.lessonId,
                     'title': widget.title,
+                    'priorMistakes': mistakes,
                   };
                   if (widget.kind == LessonStepKind.card) {
                     context.pushReplacement('/lesson/true-false', extra: extra);

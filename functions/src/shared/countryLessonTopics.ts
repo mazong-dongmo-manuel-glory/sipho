@@ -292,7 +292,7 @@ export const TOPIC_BANK: readonly TopicSeed[] = buildTopicBank();
 /** @deprecated alias kept for older imports — prefer TOPIC_BANK. */
 export const COUNTRY_LESSON_TOPICS = TOPIC_BANK;
 
-export type CountryLessonId = (typeof COUNTRY_SLOTS)[number]["id"] | string;
+export type CountryLessonId = string;
 
 /** Modules used by lessonPath gate + ALL_AWARDABLE_LESSON_IDS (slots only). */
 export const COUNTRY_LESSON_MODULES = COUNTRY_SLOTS.map((s) => ({

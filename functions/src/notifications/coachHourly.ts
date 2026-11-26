@@ -140,7 +140,7 @@ export async function maybeRefreshCoach(
   const lastTipId =
     typeof prev?.lastTipId === "string" ? prev.lastTipId : null;
   const recentTipIds = Array.isArray(prev?.recentTipIds)
-    ? prev!.recentTipIds.filter((x): x is string => typeof x === "string")
+    ? prev.recentTipIds.filter((x): x is string => typeof x === "string")
     : [];
 
   const locale: CoachLocale = profile.locale === "en" ? "en" : "fr";

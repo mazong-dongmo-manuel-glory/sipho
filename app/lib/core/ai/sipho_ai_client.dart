@@ -151,15 +151,22 @@ class SiphoAiClient {
     String? apiKey,
     String? appId,
     bool useDirectGeminiApi = false,
-  })  : _app = app,
+  })  : // Public names stay stable for tests; initializing formals would hide them.
+        // ignore: prefer_initializing_formals
+        _app = app,
+        // ignore: prefer_initializing_formals
         _auth = auth,
+        // ignore: prefer_initializing_formals
         _appCheck = appCheck,
+        // ignore: prefer_initializing_formals
         _remoteConfig = remoteConfig,
         _transport = transport ?? _defaultHttpTransport,
+        // ignore: prefer_initializing_formals
         _candidateModels = candidateModels,
         _projectIdOverride = projectId,
         _apiKeyOverride = apiKey,
         _appIdOverride = appId,
+        // ignore: prefer_initializing_formals
         _useDirectGeminiApi = useDirectGeminiApi;
 
   final FirebaseApp? _app;

@@ -96,9 +96,12 @@ export async function processUserRollover(
   }
 
   // Delayed referral reward: count yesterday if the user was active that day.
+  const gameData = gameProbe.data() as
+    | { streak?: { lastActiveDay?: unknown } }
+    | undefined;
   const lastActive =
-    typeof gameProbe.data()?.streak?.lastActiveDay === "string"
-      ? (gameProbe.data()?.streak?.lastActiveDay as string)
+    typeof gameData?.streak?.lastActiveDay === "string"
+      ? gameData.streak.lastActiveDay
       : "";
   if (lastActive === yesterdayKey || lastActive === todayKey) {
     await trackReferralActiveDay(uid, lastActive === yesterdayKey ? yesterdayKey : todayKey);

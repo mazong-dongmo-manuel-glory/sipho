@@ -28,10 +28,6 @@ jobs:
         working-directory: app
         run: flutter pub get
 
-      - name: Run code generation
-        working-directory: app
-        run: flutter pub run build_runner build --delete-conflicting-outputs
-
       # google-services.json is git-ignored; the Android module reads it from android/app/.
       - name: Write google-services.json (staging/dev)
         working-directory: app

@@ -16,18 +16,21 @@ import '../../expenses/data/expenses_provider.dart';
 import '../../fixed_expenses/data/fixed_expenses_provider.dart';
 import '../data/lesson_ai_tutor_service.dart';
 import '../domain/lesson_content.dart';
+import '../domain/lesson_score.dart';
 
 /// Frames 16a / 16b · Quiz + bonne réponse + tuteur IA.
 class QuizScreen extends ConsumerStatefulWidget {
   final String lessonId;
   final String title;
   final bool startCorrect;
+  final int priorMistakes;
 
   const QuizScreen({
     super.key,
     this.lessonId = 'emergency_fund',
     this.title = 'Un coussin pour les imprévus',
     this.startCorrect = false,
+    this.priorMistakes = 0,
   });
 
   @override
@@ -352,7 +355,11 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
                         }
                         final seconds =
                             DateTime.now().difference(_startedAt).inSeconds;
-                        final perfect = !_everWrong;
+                        final score = lessonCompletionScore(
+                          priorMistakes: widget.priorMistakes,
+                          quizEverWrong: _everWrong,
+                        );
+                        final perfect = score == 100;
                         context.push('/lesson-done', extra: {
                           'lessonId': widget.lessonId,
                           'xp': perfect ? 30 : 20,

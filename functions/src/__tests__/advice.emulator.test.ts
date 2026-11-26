@@ -193,10 +193,15 @@ describe("maybeSendAdvice", () => {
       });
     }
     let prompt = "";
-    await send("d1", LUNCH, (p) => {
-      prompt = p;
-      return Promise.resolve(null);
-    });
+    await send(
+      "d1",
+      LUNCH,
+      (p) => {
+        prompt = p;
+        return Promise.resolve(null);
+      },
+      0,
+    );
     expect(mockSent[0].data).toMatchObject({ focus: "budget_over", route: "/budget" });
     // 1000 − 800 − 600 = −400: the learner is 400 over.
     expect(prompt).toContain("400 CAD");

@@ -123,11 +123,13 @@ describe('Firestore Security Rules', () => {
 
   test('Contact discovery state is readable by its owner, never writable, and the index is private', async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
-      await ctx
-        .firestore()
+      // One Firestore instance per context: a second firestore() call tries to
+      // reapply emulator settings and throws.
+      const admin = ctx.firestore();
+      await admin
         .doc(`users/${aliceUid}/social/contacts`)
         .set({ enabled: true, emailHash: 'a'.repeat(64) });
-      await ctx.firestore().doc(`contactIndex/${'a'.repeat(64)}`).set({ uid: aliceUid });
+      await admin.doc(`contactIndex/${'a'.repeat(64)}`).set({ uid: aliceUid });
     });
     const state = `users/${aliceUid}/social/contacts`;
     await assertSucceeds(testEnv.authenticatedContext(aliceUid).firestore().doc(state).get());

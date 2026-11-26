@@ -127,7 +127,7 @@ const kLessonContent = <String, LessonQuizContent>{
       'Loyer',
       'Nouveau casque audio',
       'Abonnement streaming en plus',
-      'Fine dining',
+      'Restaurant gastronomique',
     ],
     optionsEn: [
       'Rent',

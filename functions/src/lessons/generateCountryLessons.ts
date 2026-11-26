@@ -119,7 +119,7 @@ export const generateCountryLessons = onCall(SECURE_CALLABLE_OPTIONS, async (req
     throw new HttpsError("failed-precondition", "No country lesson slots available.");
   }
 
-  let slotId = requestedSlotId ?? availableSlots[0].id;
+  const slotId = requestedSlotId ?? availableSlots[0].id;
   const slot = slotById(slotId);
   if (!slot || !isAwardableSlot(slotId)) {
     throw new HttpsError("invalid-argument", "Unknown lesson slot.");
@@ -136,21 +136,30 @@ export const generateCountryLessons = onCall(SECURE_CALLABLE_OPTIONS, async (req
 
   if (!forceNew) {
     const existing = await lessonRef.get();
+    const existingData = existing.data() as
+      | {
+          locale?: unknown;
+          personalized?: unknown;
+          topicId?: unknown;
+        }
+      | undefined;
     const existingLocale =
-      existing.data()?.locale === "en" || existing.data()?.locale === "fr"
-        ? (existing.data()?.locale as "fr" | "en")
+      existingData?.locale === "en" || existingData?.locale === "fr"
+        ? existingData.locale
         : null;
     if (
       existing.exists &&
-      existing.data()?.personalized === true &&
+      existingData?.personalized === true &&
       existingLocale === locale
     ) {
+      const topicId =
+        typeof existingData?.topicId === "string" ? existingData.topicId : null;
       return {
         slotId,
-        topicId: existing.data()?.topicId ?? null,
+        topicId,
         locale: existingLocale,
         reused: true,
-        lesson: existing.data(),
+        lesson: existingData,
         countryCode: countryCode || null,
       };
     }
@@ -171,9 +180,12 @@ export const generateCountryLessons = onCall(SECURE_CALLABLE_OPTIONS, async (req
   }
 
   const metaSnap = await metaRef.get();
+  const meta = metaSnap.data() as
+    | { lastTopicId?: unknown; recentTopicIds?: unknown }
+    | undefined;
   const lastTopicId =
-    typeof metaSnap.data()?.lastTopicId === "string" ? metaSnap.data()?.lastTopicId : null;
-  const recentRaw = metaSnap.data()?.recentTopicIds;
+    typeof meta?.lastTopicId === "string" ? meta.lastTopicId : null;
+  const recentRaw = meta?.recentTopicIds;
   const recentTopicIds = Array.isArray(recentRaw)
     ? recentRaw.filter((x): x is string => typeof x === "string").slice(0, 20)
     : [];
@@ -341,7 +353,7 @@ async function generateOne(params: {
     const start = text.indexOf("{");
     const end = text.lastIndexOf("}");
     if (start < 0 || end <= start) return null;
-    const raw = JSON.parse(text.slice(start, end + 1));
+    const raw: unknown = JSON.parse(text.slice(start, end + 1));
     const parsed = AiLessonSchema.safeParse(raw);
     if (!parsed.success) {
       logger.warn("generateCountryLessons: schema fail", {

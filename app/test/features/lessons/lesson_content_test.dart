@@ -6,6 +6,7 @@ import 'package:sipho/features/gamification/domain/game_cues.dart';
 import 'package:sipho/features/gamification/domain/game_state.dart';
 import 'package:sipho/features/lessons/domain/lesson_catalog.dart';
 import 'package:sipho/features/lessons/domain/lesson_content.dart';
+import 'package:sipho/features/lessons/domain/lesson_score.dart';
 
 void main() {
   test('every catalog lesson has its own quiz text', () {
@@ -23,11 +24,47 @@ void main() {
       expect(content!.optionsFr.length, 4);
       expect(content.optionsEn.length, 4);
       expect(content.correctIndex, inInclusiveRange(0, 3));
+      expect(content.optionsFr.every((o) => o.trim().isNotEmpty), isTrue);
       expect(content.simOptionsFr.length, 3);
       expect(content.simCorrectIndex, inInclusiveRange(0, 2));
       expect(lessonContentFor(id).questionFr, content.questionFr);
     }
     expect(lessonContentFor('missing').questionFr, emergency);
+    expect(
+      lessonContentFor('needs_wants').optionsFr[3],
+      'Restaurant gastronomique',
+    );
+  });
+
+  test('earlier true/false and simulation misses block a perfect score', () {
+    expect(
+      lessonMistakesAfterAnswer(
+        priorMistakes: 0,
+        answered: false,
+        correct: false,
+      ),
+      0,
+    );
+    expect(
+      lessonMistakesAfterAnswer(
+        priorMistakes: 0,
+        answered: true,
+        correct: false,
+      ),
+      1,
+    );
+    expect(
+      lessonCompletionScore(priorMistakes: 0, quizEverWrong: false),
+      100,
+    );
+    expect(
+      lessonCompletionScore(priorMistakes: 1, quizEverWrong: false),
+      70,
+    );
+    expect(
+      lessonCompletionScore(priorMistakes: 0, quizEverWrong: true),
+      70,
+    );
   });
 
   test('cues map to distinct celebration sounds', () {
